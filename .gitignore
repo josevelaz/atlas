@@ -54,6 +54,6 @@ apps/web/.tanstack/tmp/
 # OS files
 .DS_Store
 
-# Weave runtime state
+# Weave runtime/session files — ephemeral, not for version control
 .weave/runtime/
 .weave/state.json
