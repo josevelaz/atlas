@@ -2,18 +2,32 @@
 
 A monorepo containing the Hay application stack.
 
-### Stack
+## Stack
 
-- **Server** (`apps/server`) — [ElysiaJS](https://elysiajs.com/) API with [Drizzle ORM](https://orm.drizzle.team/) ([libSQL/Turso](https://turso.tech/libsql)) and [Better Auth](https://www.better-auth.com/)
+| App | Path | Framework | Purpose |
+|---|---|---|---|
+| `@hay/web` | `apps/web/` | **SolidJS** + TanStack Start | Web frontend (SPA, static output) |
+| `@hay/desktop` | `apps/desktop/` | Tauri v2 | Desktop shell (loads `apps/web` build) |
+| `@hay/server` | `apps/server/` | ElysiaJS | API backend |
+
 - **Linter** — [Biome](https://biomejs.dev/)
 - **Build system** — [Turborepo](https://turbo.build/repo)
+
+---
 
 ## Getting started
 
 ### Prerequisites
 
 ```sh
+# Turso CLI (local libSQL server for development)
 brew install tursodatabase/tap/turso
+
+# Rust toolchain (required for Tauri desktop builds only)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Docker (required for production container builds only — not needed for local dev)
+# https://docs.docker.com/get-docker/
 ```
 
 ### 1. Install dependencies
@@ -38,16 +52,22 @@ openssl rand -base64 32
 # Paste the output as BETTER_AUTH_SECRET in apps/server/.env
 ```
 
+`apps/web` also has an `.env.example` — copy it if you need to override web-side variables:
+
+```sh
+cp apps/web/.env.example apps/web/.env
+```
+
 ### 3. Start the local database
 
-The server uses the Turso CLI's local libSQL server for development. Run from the repo root (or directly from `apps/server`):
+The server uses the Turso CLI's local libSQL server for development:
 
 ```sh
 # From repo root (delegates to @hay/server via Turbo)
 bun run dev:db
 
-# Or directly from apps/server
-cd apps/server && bun run dev:db
+# Package-local escape hatch
+bun run --cwd apps/server dev:db
 ```
 
 This starts a local Turso server and persists data to `apps/server/local.db`.
@@ -63,34 +83,78 @@ DATABASE_AUTH_TOKEN="your-turso-auth-token"
 
 ### 4. Run database migrations
 
-From the repo root (delegates to `@hay/server` via Turbo):
-
 ```sh
-bun run generate
-bun run migrate
+# From repo root (delegates to @hay/server via Turbo)
+bun run generate   # generate migration files from schema changes
+bun run migrate    # apply pending migrations
+
+# Package-local escape hatch
+bun run --cwd apps/server generate
+bun run --cwd apps/server migrate
 ```
 
-Or directly from `apps/server`:
+### 5. Start the dev servers
 
 ```sh
-cd apps/server
-bun run generate
-bun run migrate
-```
-
-### 5. Start the dev server
-
-```sh
+# Start server + web together (recommended)
 bun run dev
 ```
 
-Or from `apps/server` directly:
+- API server → `http://localhost:3000`
+- Web dev server → `http://localhost:3001`
+
+To start individual apps:
 
 ```sh
-cd apps/server && bun run dev
+bun run dev:server   # API server only
+bun run dev:web      # Web dev server only
 ```
 
-The API is available at `http://localhost:3000`. Auth endpoints are at `http://localhost:3000/api/auth/*`.
+Package-local escape hatches:
+
+```sh
+bun run --cwd apps/server dev
+bun run --cwd apps/web dev
+```
+
+### 6. Start the desktop app (Tauri)
+
+```sh
+bun run dev:desktop
+```
+
+This runs `tauri dev` inside `apps/desktop`, which automatically starts the web dev server on `:3001` via `beforeDevCommand` before opening the Tauri window. You do **not** need to run `bun run dev:web` separately.
+
+Package-local escape hatch:
+
+```sh
+bun run --cwd apps/desktop dev
+```
+
+---
+
+## Root commands
+
+All commands run from the repo root via Turborepo:
+
+| Command | Description |
+|---|---|
+| `bun run dev` | Start server + web dev servers concurrently |
+| `bun run dev:server` | Start API server only |
+| `bun run dev:web` | Start web dev server only |
+| `bun run dev:desktop` | Start Tauri desktop app (auto-starts web dev server) |
+| `bun run dev:db` | Start local Turso libSQL server |
+| `bun run build` | Build all packages |
+| `bun run start` | Start production server |
+| `bun run lint` | Lint all packages |
+| `bun run lint:fix` | Lint and auto-fix all packages |
+| `bun run typecheck` | Type-check all packages |
+| `bun run generate` | Generate Drizzle migrations (`@hay/server` only) |
+| `bun run push` | Push schema directly to DB (`@hay/server` only) |
+| `bun run migrate` | Apply pending migrations (`@hay/server` only) |
+| `bun run studio` | Open Drizzle Studio (`@hay/server` only) |
+
+Root Drizzle commands (`generate`, `push`, `migrate`, `studio`, `dev:db`) are scoped to `@hay/server` via `--filter=@hay/server`.
 
 ---
 
@@ -100,20 +164,61 @@ The API is available at `http://localhost:3000`. Auth endpoints are at `http://l
 
 ElysiaJS API server. See [`apps/server/.env.example`](apps/server/.env.example) for all environment variables.
 
-**Key scripts** — run from repo root (via Turbo) or directly from `apps/server`:
+- **Port**: `3000`
+- **Auth endpoints**: `http://localhost:3000/api/auth/*`
+- **Drizzle schema**: `apps/server/src/db/schema.ts`
+- **Migrations**: `apps/server/drizzle/`
 
-| Script | Root (`bun run <script>`) | Package (`cd apps/server && bun run <script>`) |
-|---|---|---|
-| `dev` | Start all dev servers | Start server only |
-| `dev:db` | Start local Turso libSQL server | Start local Turso libSQL server |
-| `generate` | Generate Drizzle migrations | Generate Drizzle migrations |
-| `migrate` | Apply pending migrations | Apply pending migrations |
-| `push` | Push schema directly to DB | Push schema directly to DB |
-| `studio` | Open Drizzle Studio | Open Drizzle Studio |
+**Package-local scripts:**
 
-Root Drizzle commands (`generate`, `push`, `migrate`, `studio`, `dev:db`) are scoped to `@hay/server` via `--filter=@hay/server`.
+```sh
+bun run --cwd apps/server dev        # start dev server
+bun run --cwd apps/server generate   # generate migrations
+bun run --cwd apps/server migrate    # apply migrations
+bun run --cwd apps/server push       # push schema directly
+bun run --cwd apps/server studio     # open Drizzle Studio
+```
 
-**Drizzle migrations** are stored under `apps/server/drizzle/` and the schema lives at `apps/server/src/db/schema.ts`.
+### `apps/web`
+
+SolidJS + TanStack Start SPA. Builds to a fully static `dist/client/` directory — no runtime server needed.
+
+> ⚠️ **This app is SolidJS, NOT React.** The TanStack CLI scaffold produces React output — that scaffold is reference material only. All source in `apps/web` uses SolidJS primitives, imports, and conventions.
+
+- **Dev port**: `3001`
+- **Build output**: `apps/web/dist/client/` (static SPA — serve this directory)
+- **`dist/server/`** is generated at build time for prerendering only; **not needed at runtime**
+
+**Package-local scripts:**
+
+```sh
+bun run --cwd apps/web dev        # dev server on :3001
+bun run --cwd apps/web build      # production build → dist/client/
+bun run --cwd apps/web preview    # preview production build
+bun run --cwd apps/web typecheck  # tsc --noEmit
+bun run --cwd apps/web intent:list  # list TanStack Intent skills (read-only)
+```
+
+#### Web demo routes
+
+`http://localhost:3001/dev/tanstack-libraries` — a **blank, no-product demo page** that exercises the TanStack library integrations (Query, Form, Store, Hotkeys, Pacer, Virtual) and `solid-motionone` animations. This page contains no real product UI or data — it exists solely to verify library wiring.
+
+### `apps/desktop`
+
+Tauri v2 desktop shell. Loads `apps/web/dist/client/` as its frontend.
+
+- **Dev URL**: `http://localhost:3001` (web dev server)
+- **Frontend dist**: `apps/web/dist/client/` (relative: `../../web/dist/client` from `src-tauri/`)
+- **`beforeDevCommand`**: automatically starts `apps/web` dev server before Tauri dev
+- **`beforeBuildCommand`**: automatically builds `apps/web` before Tauri bundles
+
+**Package-local scripts:**
+
+```sh
+bun run --cwd apps/desktop dev    # tauri dev (also starts web dev server)
+bun run --cwd apps/desktop build  # tauri build
+bun run --cwd apps/desktop info   # tauri info (system/environment diagnostics)
+```
 
 ---
 
@@ -188,11 +293,15 @@ npx @tanstack/intent@latest list
 
 Intent v0.0.41 — 9 packages, 31 skills installed. Key finding: the `router-plugin` skill requires `target: 'solid'` in the Vite plugin config (already applied in `apps/web/vite.config.ts`). No `@tanstack/solid-start` intent skill exists; only React skills ship with the scaffold.
 
+> **Intent skills are React-only.** Applying them will produce React code — adapt manually to SolidJS. See `AGENTS.md` and `apps/web/AGENTS.md` for full TanStack/Solid context.
+
 ### Inspect available Intent skills
 
 From `apps/web`, run the read-only helper to list current Intent skills:
 
 ```sh
+bun run --cwd apps/web intent:list
+# or from inside apps/web:
 bun run intent:list
 ```
 
@@ -202,6 +311,37 @@ This runs `bunx @tanstack/intent@latest list` and does **not** modify the projec
 
 ## Production
 
-```bash
+### Docker (server only)
+
+The Dockerfile builds and runs `apps/server` only. Docker is **not** required for local development.
+
+```sh
+# Build the server image
+docker build -t hay-server-monorepo .
+
+# Run with docker compose (production)
 docker compose up -d
+
+# Run with docker compose (development override)
+docker compose -f docker-compose.dev.yml up
 ```
+
+> **Prerequisite**: Docker must be installed. See [docs.docker.com/get-docker](https://docs.docker.com/get-docker/).
+
+### Web (static SPA)
+
+The web app builds to a fully static directory — deploy `apps/web/dist/client/` to any static host (Cloudflare Pages, Vercel, S3, etc.):
+
+```sh
+bun run --cwd apps/web build
+# Output: apps/web/dist/client/
+```
+
+### Desktop (Tauri)
+
+```sh
+bun run dev:desktop   # development
+bun run --cwd apps/desktop build  # production bundle
+```
+
+The Tauri build automatically runs `bun run --cwd ../web build` before bundling.
