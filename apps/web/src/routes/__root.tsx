@@ -6,7 +6,6 @@ import {
 	createRootRoute,
 } from "@tanstack/solid-router";
 import type * as Solid from "solid-js";
-import { HydrationScript } from "solid-js/web";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -45,7 +44,6 @@ function RootDocument(props: { children: Solid.JSX.Element }) {
 	return (
 		<html lang="en">
 			<head>
-				<HydrationScript />
 				<HeadContent />
 			</head>
 			<body>
