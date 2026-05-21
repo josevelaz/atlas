@@ -4,6 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "tauri dev",
+		"dev:desktop": "tauri dev",
 		"build": "tauri build",
 		"info": "tauri info",
 		"lint": "biome lint ./src",
