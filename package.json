@@ -1,16 +1,24 @@
 {
   "name": "atlas",
+  "private": true,
   "type": "module",
+  "packageManager": "bun@1.3.13",
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "dev:db": "turso dev --db-file local.db",
-    "start": "NODE_ENV=production bun run ./src/index.ts",
-    "lint": "bun x @biomejs/biome check src",
-    "lint:fix": "bun lint --write",
-    "generate": "bun x drizzle-kit generate",
-    "push": "bun x drizzle-kit push",
-    "migrate": "bun x drizzle-kit migrate",
-    "studio": "bun x drizzle-kit studio",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:server": "turbo run dev:server",
+    "dev:web": "turbo run dev:web",
+    "dev:desktop": "turbo run dev:desktop",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "typecheck": "turbo run typecheck",
+    "dev:db": "turbo run dev:db",
+    "generate": "turbo run generate",
+    "push": "turbo run push",
+    "migrate": "turbo run migrate",
+    "studio": "turbo run studio",
     "prepare": "husky"
   },
   "dependencies": {
@@ -33,10 +41,11 @@
     "posthog-node": "^5.11.2"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "@types/bun": "^1.3.2",
     "@biomejs/biome": "^2.3.5",
+    "@types/bun": "^1.3.2",
     "drizzle-kit": "^0.31.7",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "turbo": "^2.5.4",
+    "typescript": "^5.9.3"
   }
 }
