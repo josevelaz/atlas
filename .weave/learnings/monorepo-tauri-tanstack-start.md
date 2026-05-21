@@ -203,3 +203,73 @@ File extensions remain `.tsx` for SolidJS (SolidJS uses TSX with `jsxImportSourc
   "check": "biome check"
 }
 ```
+
+---
+
+## Task 18: Production Build Verification — TanStack Start Solid for Tauri
+
+**Date**: 2026-05-21  
+**Worktree**: `hay.worktrees/chore/monorepo-tauri-tanstack-start-solid`
+
+### Build Command
+
+```sh
+bun run --cwd apps/web build
+```
+
+### Build Output
+
+```
+dist/client/
+  index.html                          ← HTML entrypoint (prerendered SPA shell)
+  assets/
+    styles-C4rhZ_Zb.css               12.86 kB (gzip: 3.25 kB)
+    index-C4yti9ds.js                  0.23 kB (gzip: 0.21 kB)
+    tanstack-libraries-CEJz5hs-.js   105.60 kB (gzip: 32.33 kB)
+    index-DVxwEGNP.js                188.40 kB (gzip: 61.57 kB)
+
+dist/server/                          ← SSR bundle (build-time prerender only)
+  server.js
+  assets/...
+```
+
+### Static vs SSR
+
+**Output is STATIC — no server required at runtime.**
+
+- `dist/client/` contains a fully prerendered `index.html` + hashed JS/CSS assets
+- `dist/server/` is used **only at build time** for prerendering the SPA shell; it is not needed at runtime
+- SPA mode (`spa: { enabled: true, prerender: { outputPath: '/index' } }`) ensures the prerendered shell is written as `index.html`
+- All client-side routing is handled by TanStack Router in the browser
+
+### Preview Verification
+
+```sh
+bun run --cwd apps/web preview
+# → Vite preview server on http://localhost:4173/
+```
+
+- `GET /` → HTTP 200, returns `index.html` with full prerendered HTML
+- `GET /assets/styles-C4rhZ_Zb.css` → HTTP 200
+
+### Tauri `frontendDist` Configuration
+
+When `apps/desktop/src-tauri/tauri.conf.json` is created, set:
+
+```json
+{
+  "build": {
+    "frontendDist": "../../web/dist/client"
+  }
+}
+```
+
+**Path resolution**: relative to `apps/desktop/src-tauri/tauri.conf.json`  
+→ `apps/desktop/src-tauri/` + `../../web/dist/client` = `apps/web/dist/client` ✅
+
+### No Blockers
+
+- Output is fully static; Tauri can load `dist/client/index.html` directly via `frontendDist`
+- No Node/Bun SSR server is needed at runtime
+- All assets use relative paths (`/assets/...`) which Tauri resolves correctly from the `frontendDist` root
+- Build is reproducible and fast (~1.1s total)
