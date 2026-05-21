@@ -1,0 +1,20 @@
+{
+	"name": "@hay/desktop",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tauri dev",
+		"build": "tauri build",
+		"info": "tauri info",
+		"lint": "biome lint ./src",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@tauri-apps/api": "^2"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.5",
+		"@tauri-apps/cli": "^2",
+		"typescript": "^5.9.3"
+	}
+}
