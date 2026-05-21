@@ -3,7 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "src-tauri/target/debug/**"]
     },
     "typecheck": {
       "dependsOn": ["^build"]
