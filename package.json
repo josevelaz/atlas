@@ -14,11 +14,11 @@
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "typecheck": "turbo run typecheck",
-    "dev:db": "turbo run dev:db",
-    "generate": "turbo run generate",
-    "push": "turbo run push",
-    "migrate": "turbo run migrate",
-    "studio": "turbo run studio",
+    "dev:db": "turbo run dev:db --filter=@hay/server",
+    "generate": "turbo run generate --filter=@hay/server",
+    "push": "turbo run push --filter=@hay/server",
+    "migrate": "turbo run migrate --filter=@hay/server",
+    "studio": "turbo run studio --filter=@hay/server",
     "prepare": "husky"
   },
   "devDependencies": {

@@ -40,9 +40,13 @@ openssl rand -base64 32
 
 ### 3. Start the local database
 
-The server uses the Turso CLI's local libSQL server for development. Run from the `apps/server` directory (or via Turborepo):
+The server uses the Turso CLI's local libSQL server for development. Run from the repo root (or directly from `apps/server`):
 
 ```sh
+# From repo root (delegates to @hay/server via Turbo)
+bun run dev:db
+
+# Or directly from apps/server
 cd apps/server && bun run dev:db
 ```
 
@@ -59,7 +63,14 @@ DATABASE_AUTH_TOKEN="your-turso-auth-token"
 
 ### 4. Run database migrations
 
-From `apps/server`:
+From the repo root (delegates to `@hay/server` via Turbo):
+
+```sh
+bun run generate
+bun run migrate
+```
+
+Or directly from `apps/server`:
 
 ```sh
 cd apps/server
@@ -89,16 +100,18 @@ The API is available at `http://localhost:3000`. Auth endpoints are at `http://l
 
 ElysiaJS API server. See [`apps/server/.env.example`](apps/server/.env.example) for all environment variables.
 
-**Key scripts** (run from `apps/server`):
+**Key scripts** — run from repo root (via Turbo) or directly from `apps/server`:
 
-| Script | Description |
-|---|---|
-| `bun run dev` | Start dev server with hot reload |
-| `bun run dev:db` | Start local Turso libSQL server (creates `local.db`) |
-| `bun run generate` | Generate Drizzle migration files |
-| `bun run migrate` | Apply pending migrations |
-| `bun run push` | Push schema directly to DB (no migration file) |
-| `bun run studio` | Open Drizzle Studio |
+| Script | Root (`bun run <script>`) | Package (`cd apps/server && bun run <script>`) |
+|---|---|---|
+| `dev` | Start all dev servers | Start server only |
+| `dev:db` | Start local Turso libSQL server | Start local Turso libSQL server |
+| `generate` | Generate Drizzle migrations | Generate Drizzle migrations |
+| `migrate` | Apply pending migrations | Apply pending migrations |
+| `push` | Push schema directly to DB | Push schema directly to DB |
+| `studio` | Open Drizzle Studio | Open Drizzle Studio |
+
+Root Drizzle commands (`generate`, `push`, `migrate`, `studio`, `dev:db`) are scoped to `@hay/server` via `--filter=@hay/server`.
 
 **Drizzle migrations** are stored under `apps/server/drizzle/` and the schema lives at `apps/server/src/db/schema.ts`.
 
