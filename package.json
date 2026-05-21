@@ -5,8 +5,8 @@
   "packageManager": "bun@1.3.13",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
+    "build": "turbo run build --filter=!@hay/desktop",
+    "dev": "turbo run dev --filter=@hay/server --filter=@hay/web",
     "dev:server": "turbo run dev:server",
     "dev:web": "turbo run dev:web",
     "dev:desktop": "turbo run dev:desktop",

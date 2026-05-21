@@ -8,9 +8,6 @@ export default defineConfig({
 	server: {
 		port: 3001,
 	},
-	resolve: {
-		tsconfigPaths: true,
-	},
 	plugins: [
 		tailwindcss(),
 		tanstackRouter({ target: "solid", autoCodeSplitting: true }),
