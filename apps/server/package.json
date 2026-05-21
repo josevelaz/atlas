@@ -1,0 +1,9 @@
+{
+  "name": "@hay/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "biome check ./src",
+    "typecheck": "tsc --noEmit"
+  }
+}
