@@ -7,8 +7,9 @@
 		"dev:desktop": "tauri dev",
 		"build": "tauri build",
 		"info": "tauri info",
-		"lint": "biome lint ./src",
-		"typecheck": "tsc --noEmit"
+		"lint": "echo 'No TypeScript sources to lint'",
+		"lint:fix": "echo 'No TypeScript sources to lint'",
+		"typecheck": "cargo check --manifest-path src-tauri/Cargo.toml"
 	},
 	"dependencies": {
 		"@tauri-apps/api": "^2"
