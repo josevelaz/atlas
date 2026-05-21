@@ -6,10 +6,13 @@ dist/
 build/
 out/
 
-# Environment files
+# Environment files — ignore all .env variants, but allow example files
 .env
 .env.*
 !.env.example
+apps/**/.env
+apps/**/.env.*
+!apps/**/.env.example
 
 # Logs
 *.log
@@ -30,7 +33,7 @@ coverage/
 # TypeScript
 *.tsbuildinfo
 
-# Databases
+# SQLite / libSQL local database files
 *.db
 *.db-shm
 *.db-wal
