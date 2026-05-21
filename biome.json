@@ -7,7 +7,14 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!**/routeTree.gen.ts"]
+		"includes": [
+			"**",
+			"!**/routeTree.gen.ts",
+			"!apps/**/dist/**",
+			"!apps/desktop/src-tauri/target/**",
+			"!.tmp/**",
+			"!node_modules/**"
+		]
 	},
 	"formatter": {
 		"enabled": true,
