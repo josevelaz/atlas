@@ -1,0 +1,31 @@
+services:
+    redis:
+                container_name: atlas-redis
+                image: redis:latest
+                command: [ "redis-server", "--maxmemory-policy", "noeviction" ]
+                restart: unless-stopped
+                ports:
+                    - 6379:6379
+                volumes:
+                    - redis_data:/data
+    minio:
+                container_name: atlas-minio
+                image: minio/minio:latest
+                command: [ "minio", "server", "/data", "--console-address", ":9001" ]
+                restart: unless-stopped
+                environment:
+                    - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:?required}
+                    - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:?required}
+                volumes:
+                    - minio_data:/data
+                healthcheck:
+                    test: ["CMD", "mc", "ready", "local"]
+                    interval: 5s
+                    timeout: 5s
+                    retries: 5
+volumes:
+    redis_data:
+    minio_data:
+    
+networks:
+    default: {}
