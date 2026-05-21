@@ -41,6 +41,16 @@ coverage/
 # Temporary files
 .tmp/
 
+# Rust build artifacts
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/Cargo.lock
+
+# Tauri icon generation artifacts
+apps/desktop/src-tauri/icons/icon.iconset/
+
+# TanStack router tmp files
+apps/web/.tanstack/tmp/
+
 # OS files
 .DS_Store
 

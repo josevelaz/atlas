@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "tauri dev",
 		"dev:desktop": "tauri dev",
-		"build": "tauri build",
+		"build": "cargo build --manifest-path src-tauri/Cargo.toml",
 		"info": "tauri info",
 		"lint": "echo 'No TypeScript sources to lint'",
 		"lint:fix": "echo 'No TypeScript sources to lint'",
