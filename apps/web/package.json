@@ -24,6 +24,7 @@
 		"@tanstack/solid-virtual": "^3.13.25",
 		"lucide-solid": "^0.545.0",
 		"solid-js": "^1.9.13",
+		"solid-motionone": "^1.0.4",
 		"tailwindcss": "^4.1.18",
 		"vite-plugin-solid": "^2.11.6",
 		"zod": "^3.25.67"

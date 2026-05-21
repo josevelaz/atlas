@@ -5,8 +5,10 @@ import {
 	Scripts,
 	createRootRoute,
 } from "@tanstack/solid-router";
+import { QueryClientProvider } from "@tanstack/solid-query";
 import type * as Solid from "solid-js";
 import appCss from "../styles.css?url";
+import { queryClient } from "../lib/tanstack/query";
 
 export const Route = createRootRoute({
 	head: () => ({
@@ -35,7 +37,9 @@ export const Route = createRootRoute({
 function RootComponent() {
 	return (
 		<RootDocument>
-			<Outlet />
+			<QueryClientProvider client={queryClient}>
+				<Outlet />
+			</QueryClientProvider>
 		</RootDocument>
 	);
 }
