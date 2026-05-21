@@ -9,7 +9,8 @@
 		"preview": "vite preview",
 		"lint": "biome lint ./src",
 		"lint:fix": "biome lint --write ./src",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit",
+		"intent:list": "bunx @tanstack/intent@latest list"
 	},
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.18",

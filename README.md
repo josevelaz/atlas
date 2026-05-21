@@ -148,6 +148,45 @@ Social providers (Google, GitHub, Microsoft, etc.) are configured in `apps/serve
 
 ---
 
+## TanStack CLI & Intent
+
+### Scaffold provenance
+
+`apps/web` was bootstrapped using TanStack CLI in a scratch directory (`.tmp/tanstack-cli/`, gitignored). The exact command used:
+
+```sh
+npx @tanstack/cli@latest create my-tanstack-app \
+  --agent \
+  --package-manager bun \
+  --toolchain biome \
+  --add-ons tanstack-query,form
+```
+
+> **Note:** The scaffold output is **React**. `apps/web` was manually recreated as **SolidJS** and is the authoritative source — the scaffold directory is not used at runtime.
+
+### TanStack Intent
+
+[TanStack Intent](https://tanstack.com/intent) was used to enumerate available skills. Commands run in the scratch directory:
+
+```sh
+npx @tanstack/intent@latest install
+npx @tanstack/intent@latest list
+```
+
+Intent v0.0.41 — 9 packages, 31 skills installed. Key finding: the `router-plugin` skill requires `target: 'solid'` in the Vite plugin config (already applied in `apps/web/vite.config.ts`). No `@tanstack/solid-start` intent skill exists; only React skills ship with the scaffold.
+
+### Inspect available Intent skills
+
+From `apps/web`, run the read-only helper to list current Intent skills:
+
+```sh
+bun run intent:list
+```
+
+This runs `bunx @tanstack/intent@latest list` and does **not** modify the project.
+
+---
+
 ## Production
 
 ```bash
