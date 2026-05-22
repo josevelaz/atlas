@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# Preview stack — example tfvars
+#
+# Copy to preview.tfvars and fill in values before applying:
+#
+#   terraform -chdir=infra/preview apply \
+#     -var-file=preview.tfvars \
+#     -backend-config="key=preview/pr-123/terraform.tfstate"
+#
+# Or set individual variables via TF_VAR_* environment variables in CI.
+# ---------------------------------------------------------------------------
+
+# Pull request number — used in resource names, tags, S3 prefix, Redis key prefix,
+# and the state key (preview/pr-{pr_number}/terraform.tfstate).
+pr_number = 123
+
+# Full ECR image URI for the API container.
+# Set to the image built and pushed by the PR's CI workflow.
+# Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/hay-server:abc1234"
+api_image_uri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/hay-server:abc1234"
+
+# Turso group for preview databases (must already exist).
+# Create once with: turso group create hay-preview --location iad
+# turso_group_name = "hay-preview"
+
+# S3 bucket holding the staging Terraform state (used to read shared network outputs).
+# staging_state_bucket = "hay-terraform-state"
