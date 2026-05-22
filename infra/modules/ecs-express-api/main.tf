@@ -18,7 +18,7 @@ locals {
 # ---------------------------------------------------------------------------
 
 resource "aws_cloudwatch_log_group" "api" {
-  name              = "/ecs-express/${var.name_prefix}-api"
+  name              = "/hay/${var.env}/api"
   retention_in_days = var.log_retention_days
 
   tags = merge(var.tags, {
