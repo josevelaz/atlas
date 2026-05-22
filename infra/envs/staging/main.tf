@@ -8,6 +8,7 @@
 #   4. secrets    — secret name/ARN placeholders + ECS task role read policy
 #   5. dns_acm    — Route 53 + ACM certificate
 #   6. static_spa — S3 + CloudFront for the web SPA
+#   7. turso      — Turso database (auth token managed out-of-band)
 #
 # The secrets module requires the ECS task role to already exist.
 # ecs_api creates the role; secrets attaches the read policy to it.
@@ -115,4 +116,20 @@ module "static_spa" {
     Environment = "staging"
     ManagedBy   = "terraform"
   }
+}
+
+# ---------------------------------------------------------------------------
+# Turso database — staging
+#
+# The group (var.turso_group_name) must already exist in the Turso organisation
+# before applying this stack. Create it once with:
+#   turso group create hay-staging --location iad
+#
+# Auth token is NOT managed here — see infra/README.md § Turso token rotation.
+# ---------------------------------------------------------------------------
+module "turso" {
+  source = "../../modules/turso"
+
+  database_name = "hay-staging"
+  group_name    = var.turso_group_name
 }
