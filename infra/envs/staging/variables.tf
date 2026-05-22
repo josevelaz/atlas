@@ -32,6 +32,12 @@ variable "staging_acm_certificate_arn" {
     then re-apply so static_spa attaches the cert + alias to CloudFront.
     Leave null on the initial bootstrap apply.
   EOT
-  type    = string
-  default = null
+  type        = string
+  default     = null
+}
+
+variable "turso_group_name" {
+  description = "Name of the existing Turso group to create the staging database in (e.g. 'hay-staging'). The group must already exist — create it with: turso group create hay-staging --location iad"
+  type        = string
+  default     = "hay-staging"
 }

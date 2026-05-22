@@ -9,6 +9,23 @@ variable "prod_zone_name" {
 }
 
 variable "prod_cloudfront_domain_name" {
-  description = "CloudFront distribution domain name for the production SPA (output from the static-spa module, e.g. \"d5678efgh.cloudfront.net\")."
-  type        = string
+  description = <<-EOT
+    CloudFront distribution domain name for the production SPA (e.g. "d5678efgh.cloudfront.net").
+    Set this to the cloudfront_domain_name output after the first apply of static_spa,
+    then re-apply so the dns_acm Route 53 ALIAS record points to CloudFront.
+    Leave empty string on the initial bootstrap apply.
+  EOT
+  type    = string
+  default = ""
+}
+
+variable "prod_acm_certificate_arn" {
+  description = <<-EOT
+    ARN of the validated ACM certificate for app.<prod_zone_name>.
+    Set this to the acm_certificate_arn output after dns_acm is applied,
+    then re-apply so static_spa attaches the cert + alias to CloudFront.
+    Leave null on the initial bootstrap apply.
+  EOT
+  type    = string
+  default = null
 }
