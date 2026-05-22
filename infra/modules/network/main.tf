@@ -28,9 +28,9 @@ resource "aws_vpc" "this" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-vpc"
-  }
+  })
 }
 
 # ---------------------------------------------------------------------------
@@ -40,9 +40,9 @@ resource "aws_vpc" "this" {
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-igw"
-  }
+  })
 }
 
 # ---------------------------------------------------------------------------
@@ -57,10 +57,10 @@ resource "aws_subnet" "public" {
   availability_zone       = local.azs[count.index]
   map_public_ip_on_launch = true
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-public-${local.azs[count.index]}"
     Tier = "public"
-  }
+  })
 }
 
 resource "aws_route_table" "public" {
@@ -71,9 +71,9 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.this.id
   }
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-rt-public"
-  }
+  })
 }
 
 resource "aws_route_table_association" "public" {
@@ -91,9 +91,9 @@ resource "aws_eip" "nat" {
   count  = var.is_production ? var.az_count : 1
   domain = "vpc"
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-eip-nat-${count.index}"
-  }
+  })
 }
 
 resource "aws_nat_gateway" "this" {
@@ -102,9 +102,9 @@ resource "aws_nat_gateway" "this" {
   allocation_id = aws_eip.nat[count.index].id
   subnet_id     = aws_subnet.public[count.index].id
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-nat-${count.index}"
-  }
+  })
 
   depends_on = [aws_internet_gateway.this]
 }
@@ -120,10 +120,10 @@ resource "aws_subnet" "private" {
   cidr_block        = local.private_cidrs[count.index]
   availability_zone = local.azs[count.index]
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-private-${local.azs[count.index]}"
     Tier = "private"
-  }
+  })
 }
 
 resource "aws_route_table" "private" {
@@ -137,9 +137,9 @@ resource "aws_route_table" "private" {
     nat_gateway_id = aws_nat_gateway.this[count.index].id
   }
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-rt-private-${count.index}"
-  }
+  })
 }
 
 resource "aws_route_table_association" "private" {
@@ -167,9 +167,9 @@ resource "aws_security_group" "ecs" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-ecs-sg"
-  }
+  })
 }
 
 resource "aws_security_group" "redis" {
@@ -193,7 +193,7 @@ resource "aws_security_group" "redis" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-redis-sg"
-  }
+  })
 }

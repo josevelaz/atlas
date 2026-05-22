@@ -12,6 +12,11 @@
 #
 # The secrets module requires the ECS task role to already exist.
 # ecs_api creates the role; secrets attaches the read policy to it.
+#
+# Tagging strategy:
+#   Required tags (app, env, managed-by, owner) are applied via provider
+#   default_tags in versions.tf — no per-resource repetition needed.
+#   Module tags = {} passes an empty map; modules merge it with Name tags.
 # ---------------------------------------------------------------------------
 
 module "network" {
@@ -19,6 +24,7 @@ module "network" {
 
   name_prefix   = "hay-staging"
   is_production = false
+  tags          = {}
 }
 
 module "redis" {
@@ -35,11 +41,7 @@ module "redis" {
   max_storage_gb          = 5
   snapshot_retention_days = 1
 
-  tags = {
-    Project     = "hay"
-    Environment = "staging"
-    ManagedBy   = "terraform"
-  }
+  tags = {}
 }
 
 module "ecs_api" {
@@ -67,11 +69,7 @@ module "ecs_api" {
   log_retention_days = 30
   is_preview         = false
 
-  tags = {
-    Project     = "hay"
-    Environment = "staging"
-    ManagedBy   = "terraform"
-  }
+  tags = {}
 }
 
 module "secrets" {
@@ -81,11 +79,7 @@ module "secrets" {
   ecs_task_role_name = module.ecs_api.task_role_name
   is_preview         = false
 
-  tags = {
-    Environment = "staging"
-    ManagedBy   = "terraform"
-    Project     = "hay"
-  }
+  tags = {}
 }
 
 module "dns_acm" {
@@ -94,6 +88,7 @@ module "dns_acm" {
   zone_name              = var.staging_zone_name
   cloudfront_domain_name = module.static_spa.cloudfront_domain_name
   name_prefix            = "hay-staging"
+  tags                   = {}
 
   providers = {
     aws.us_east_1 = aws.us_east_1
@@ -111,11 +106,7 @@ module "static_spa" {
   bucket_name   = "hay-web-nonprod"
   s3_key_prefix = "staging/"
 
-  tags = {
-    Project     = "hay"
-    Environment = "staging"
-    ManagedBy   = "terraform"
-  }
+  tags = {}
 }
 
 # ---------------------------------------------------------------------------

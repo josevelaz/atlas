@@ -11,9 +11,7 @@ module "remote_state" {
   bucket_name = var.bucket_name
 
   tags = {
-    Project   = "hay"
-    ManagedBy = "terraform"
-    Stack     = "bootstrap"
+    stack = "bootstrap"
   }
 }
 
@@ -34,8 +32,6 @@ module "ecr" {
   name = var.ecr_repository_name
 
   tags = {
-    Project   = "hay"
-    ManagedBy = "terraform"
-    Stack     = "bootstrap"
+    stack = "bootstrap"
   }
 }

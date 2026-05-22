@@ -18,3 +18,9 @@ variable "az_count" {
     error_message = "az_count must be at least 2 for high availability."
   }
 }
+
+variable "tags" {
+  description = "Additional tags to merge onto all resources in this module."
+  type        = map(string)
+  default     = {}
+}

@@ -26,12 +26,23 @@
 # is_preview = true adds an explicit Deny on hay/staging/* and hay/production/*
 # so preview task roles can never read long-lived environment secrets even if
 # an Allow is accidentally granted elsewhere.
+#
+# Tagging strategy:
+#   provider default_tags (versions.tf) sets: app, env=preview, managed-by, owner, ttl=cleanup
+#   pr-number cannot be set in default_tags (no variable interpolation), so it is
+#   applied via local.preview_tags merged into every module's tags argument.
 # ---------------------------------------------------------------------------
 
 locals {
   # secrets_env must match ^[a-z][a-z0-9-]*$ (secrets module validation)
   secrets_env = "preview-pr-${var.pr_number}"
   name_prefix = "hay-preview-pr-${var.pr_number}"
+
+  # pr-number tag applied to every module/resource in this stack.
+  # Merged on top of the provider default_tags at apply time.
+  preview_tags = {
+    pr-number = tostring(var.pr_number)
+  }
 }
 
 # ---------------------------------------------------------------------------
@@ -96,12 +107,7 @@ module "static_spa" {
   bucket_name   = "hay-web-nonprod"
   s3_key_prefix = "previews/pr-${var.pr_number}/"
 
-  tags = {
-    Project     = "hay"
-    Environment = "preview"
-    PR          = tostring(var.pr_number)
-    ManagedBy   = "terraform"
-  }
+  tags = local.preview_tags
 }
 
 # ---------------------------------------------------------------------------
@@ -141,12 +147,7 @@ module "ecs_api" {
   desired_count      = 1
   is_preview         = true
 
-  tags = {
-    Project     = "hay"
-    Environment = "preview"
-    PR          = tostring(var.pr_number)
-    ManagedBy   = "terraform"
-  }
+  tags = local.preview_tags
 }
 
 # ---------------------------------------------------------------------------
@@ -164,10 +165,5 @@ module "secrets" {
   ecs_task_role_name = module.ecs_api.task_role_name
   is_preview         = true
 
-  tags = {
-    Environment = "preview"
-    PR          = tostring(var.pr_number)
-    ManagedBy   = "terraform"
-    Project     = "hay"
-  }
+  tags = local.preview_tags
 }

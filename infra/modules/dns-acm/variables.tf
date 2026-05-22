@@ -21,3 +21,9 @@ variable "name_prefix" {
   type        = string
   default     = "hay"
 }
+
+variable "tags" {
+  description = "Additional tags to merge onto all resources in this module."
+  type        = map(string)
+  default     = {}
+}

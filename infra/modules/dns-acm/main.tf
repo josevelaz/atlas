@@ -34,9 +34,9 @@ resource "aws_acm_certificate" "app" {
     create_before_destroy = true
   }
 
-  tags = {
+  tags = merge(var.tags, {
     Name = "${var.name_prefix}-acm-app"
-  }
+  })
 }
 
 # ---------------------------------------------------------------------------
