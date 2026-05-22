@@ -1,0 +1,23 @@
+{
+	"name": "@hay/desktop",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tauri dev",
+		"dev:desktop": "tauri dev",
+		"build": "tauri build",
+		"check:rust": "cargo check --manifest-path src-tauri/Cargo.toml",
+		"info": "tauri info",
+		"lint": "echo 'No TypeScript sources to lint'",
+		"lint:fix": "echo 'No TypeScript sources to lint'",
+		"typecheck": "cargo check --manifest-path src-tauri/Cargo.toml"
+	},
+	"dependencies": {
+		"@tauri-apps/api": "^2"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.5",
+		"@tauri-apps/cli": "^2",
+		"typescript": "^5.9.3"
+	}
+}

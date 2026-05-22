@@ -6,10 +6,13 @@ dist/
 build/
 out/
 
-# Environment files
+# Environment files — ignore all .env variants, but allow example files
 .env
 .env.*
 !.env.example
+apps/**/.env
+apps/**/.env.*
+!apps/**/.env.example
 
 # Logs
 *.log
@@ -30,14 +33,27 @@ coverage/
 # TypeScript
 *.tsbuildinfo
 
-# Databases
+# SQLite / libSQL local database files
 *.db
 *.db-shm
 *.db-wal
 
+# Temporary files
+.tmp/
+
+# Rust build artifacts
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/Cargo.lock
+
+# Tauri icon generation artifacts
+apps/desktop/src-tauri/icons/icon.iconset/
+
+# TanStack router tmp files
+apps/web/.tanstack/tmp/
+
 # OS files
 .DS_Store
 
-# Weave runtime state
+# Weave runtime/session files — ephemeral, not for version control
 .weave/runtime/
 .weave/state.json

@@ -1,38 +1,51 @@
 # use the official Bun image
 # see all versions at https://hub.docker.com/r/oven/bun/tags
-FROM oven/bun:1.3.2 AS base
+FROM oven/bun:1.3.13 AS base
 WORKDIR /usr/src/app
 
-# install dependencies into temp directory
-# this will cache them and speed up future builds
+# ── install stage ────────────────────────────────────────────────────────────
+# Copy workspace manifests so Bun can resolve the full workspace dependency graph
 FROM base AS install
+
+# dev deps (for typecheck / build steps)
 RUN mkdir -p /temp/dev
-COPY package.json bun.lock /temp/dev/
+COPY package.json bun.lock tsconfig.base.json turbo.json /temp/dev/
+COPY apps/server/package.json /temp/dev/apps/server/package.json
 RUN cd /temp/dev && bun install --frozen-lockfile
 
-# install with --production (exclude devDependencies)
+# prod deps only
 RUN mkdir -p /temp/prod
-COPY package.json bun.lock /temp/prod/
+COPY package.json bun.lock tsconfig.base.json turbo.json /temp/prod/
+COPY apps/server/package.json /temp/prod/apps/server/package.json
 RUN cd /temp/prod && bun install --frozen-lockfile --production
 
-# copy node_modules from temp directory
-# then copy all (non-ignored) project files into the image
+# ── prerelease (typecheck) stage ─────────────────────────────────────────────
 FROM base AS prerelease
-COPY --from=install /temp/dev/node_modules node_modules
-COPY . .
+COPY --from=install /temp/dev/node_modules ./node_modules
+COPY --from=install /temp/dev/apps/server/node_modules ./apps/server/node_modules
+
+COPY package.json bun.lock tsconfig.base.json turbo.json ./
+COPY apps/server/ ./apps/server/
 
 ENV NODE_ENV=production
-RUN bun x tsc --noEmit
+RUN cd apps/server && bun x tsc --noEmit
 
-# copy production dependencies and source code into final image
+# ── release (final) stage ────────────────────────────────────────────────────
 FROM base AS release
-COPY --from=install /temp/prod/node_modules node_modules
-COPY --from=prerelease /usr/src/app/bun.lock .
-RUN mkdir -p /usr/src/app/src
-COPY --from=prerelease /usr/src/app/src ./src
-COPY --from=prerelease /usr/src/app/package.json .
-COPY --from=prerelease /usr/src/app/tsconfig.json .
-COPY --from=prerelease /usr/src/app/drizzle ./drizzle
-COPY --from=prerelease /usr/src/app/drizzle.config.ts .
 
-ENTRYPOINT [ "bun", "start" ]
+# Copy production node_modules (workspace root + server package)
+COPY --from=install /temp/prod/node_modules ./node_modules
+COPY --from=install /temp/prod/apps/server/node_modules ./apps/server/node_modules
+
+# Copy workspace root manifests needed at runtime
+COPY --from=prerelease /usr/src/app/package.json ./package.json
+COPY --from=prerelease /usr/src/app/bun.lock ./bun.lock
+COPY --from=prerelease /usr/src/app/tsconfig.base.json ./tsconfig.base.json
+
+# Copy server source, config, and migrations
+COPY --from=prerelease /usr/src/app/apps/server/ ./apps/server/
+
+ENV NODE_ENV=production
+WORKDIR /usr/src/app/apps/server
+
+ENTRYPOINT [ "bun", "run", "start" ]

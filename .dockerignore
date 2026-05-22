@@ -1,10 +1,36 @@
+# Version control
 .git
+.gitignore
+
+# Environment & secrets
 .env
 .env.*
+!.env.example
+
+# Local databases
 *.db
 *.db-shm
 *.db-wal
+
+# Dependencies (installed fresh in Docker)
 node_modules
+**/node_modules
+
+# Build outputs
 dist
-drizzle
+**/dist
+apps/*/dist
+
+# Temp / tooling
+.tmp
 .weave
+.turbo
+**/.turbo
+
+# Apps not needed in the server image
+apps/web
+apps/desktop
+apps/desktop/src-tauri/target
+
+# Misc
+*.log

@@ -1,0 +1,35 @@
+{
+	"$schema": "./gen/schemas/desktop-schema.json",
+	"productName": "Hay",
+	"version": "0.1.0",
+	"identifier": "com.hay.desktop",
+	"build": {
+		"devUrl": "http://localhost:3001",
+		"frontendDist": "../../web/dist/client",
+		"beforeDevCommand": "bun run --cwd ../web dev",
+		"beforeBuildCommand": "bun run --cwd ../web build"
+	},
+	"app": {
+		"windows": [
+			{
+				"label": "main",
+				"title": "Hay",
+				"width": 1280,
+				"height": 800
+			}
+		],
+		"security": {
+			"csp": "default-src 'self'; img-src 'self' data:",
+			"capabilities": ["default"]
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": "all",
+		"icon": [
+			"icons/icon.icns",
+			"icons/icon.ico",
+			"icons/icon.png"
+		]
+	}
+}
