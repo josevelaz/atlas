@@ -221,9 +221,18 @@ jobs:
           role-to-assume: ${{ secrets.STAGING_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Fetch TURSO_AUTH_TOKEN from Secrets Manager
-        id: turso-secret
+      - name: Fetch migration secrets from Secrets Manager
+        id: migration-secrets
         run: |
+          # ::add-mask:: prevents values from appearing in any subsequent log line.
+          # Apply before writing to GITHUB_ENV so the runner redacts them immediately.
+          DB_URL=$(aws secretsmanager get-secret-value \
+            --secret-id "hay/staging/TURSO_DATABASE_URL" \
+            --query SecretString \
+            --output text)
+          echo "::add-mask::$DB_URL"
+          echo "TURSO_DATABASE_URL=$DB_URL" >> "$GITHUB_ENV"
+
           TOKEN=$(aws secretsmanager get-secret-value \
             --secret-id "hay/staging/TURSO_AUTH_TOKEN" \
             --query SecretString \

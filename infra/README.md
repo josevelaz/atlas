@@ -91,6 +91,75 @@ In local dev the API runs on `http://localhost:3000`. `Secure` cookies are silen
 
 ---
 
+## Database migrations
+
+### Step order
+
+Migrations must run **after** Terraform apply (infrastructure exists) and **before** ECS task update (new code is deployed). The deploy workflows enforce this order:
+
+```
+terraform-apply → migrate → deploy-ecs (ECS task update / SPA deploy)
+```
+
+Never run migrations against a database that does not yet exist. Never deploy new server code before its required schema changes are applied.
+
+### Running migrations in CI
+
+Migrations run via:
+
+```sh
+bun run --cwd apps/server migrate
+```
+
+This calls `drizzle-kit migrate` using `apps/server/drizzle.config.ts`, which reads:
+
+| Env var | Source in CI |
+|---|---|
+| `TURSO_DATABASE_URL` | Fetched from AWS Secrets Manager (`hay/{env}/TURSO_DATABASE_URL`) |
+| `TURSO_AUTH_TOKEN` | Fetched from AWS Secrets Manager (`hay/{env}/TURSO_AUTH_TOKEN`) |
+
+Both values are masked with `::add-mask::` immediately after fetching, before being written to `GITHUB_ENV`. This prevents them from appearing in any subsequent log line.
+
+If either variable is missing and the database URL is not a local URL, the migration command exits with a non-zero code and a clear error message — it will never silently succeed against localhost.
+
+### Smoke test (CI)
+
+The CI workflow runs a non-destructive smoke test:
+
+```sh
+bun run --cwd apps/server migrate -- --help
+```
+
+This verifies the migration CLI is importable and the config parses without errors, without touching any database. It runs with `continue-on-error: true` because `drizzle-kit` may exit non-zero for `--help` on some versions.
+
+### Rollback
+
+**There is no automatic rollback.** Drizzle Kit does not support down migrations by default.
+
+If a migration causes a problem:
+
+1. **Assess impact** — determine whether the schema change is destructive (column drop, rename) or additive (new column, new table).
+2. **Additive changes** — deploy a hotfix that is compatible with both old and new schema, then write a corrective migration.
+3. **Destructive changes** — restore from the most recent Turso database backup (contact Turso support or use point-in-time recovery if enabled on the group).
+4. **Never** manually edit the `drizzle/__drizzle_migrations` journal table to fake a rollback — this will desync the migration state.
+
+### Token masking
+
+All CI workflows that run migrations follow this pattern:
+
+```sh
+VALUE=$(aws secretsmanager get-secret-value \
+  --secret-id "hay/{env}/SECRET_NAME" \
+  --query SecretString \
+  --output text)
+echo "::add-mask::$VALUE"          # mask BEFORE writing to env
+echo "VAR_NAME=$VALUE" >> "$GITHUB_ENV"
+```
+
+`::add-mask::` must be called **before** the value is written to `GITHUB_ENV` or used in any shell expansion. Once masked, the runner redacts the value from all subsequent log output in the job.
+
+---
+
 ## Turso database management
 
 ### Groups (one-time setup)

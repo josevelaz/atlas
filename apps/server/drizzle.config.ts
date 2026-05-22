@@ -19,16 +19,20 @@ const isLocalDatabaseUrl = (url: string) => {
 	}
 };
 
+// TURSO_DATABASE_URL / TURSO_AUTH_TOKEN are the canonical CI env var names.
+// They are fetched from AWS Secrets Manager in CI (staging/production) or
+// passed directly as GitHub Actions secrets (preview). Never hardcode values.
 const DATABASE_URL = env
-	.get("DATABASE_URL")
+	.get("TURSO_DATABASE_URL")
 	.default(LOCAL_DATABASE_URL)
 	.asString();
-const DATABASE_AUTH_TOKEN = env.get("DATABASE_AUTH_TOKEN").asString();
+const DATABASE_AUTH_TOKEN = env.get("TURSO_AUTH_TOKEN").asString();
 const IS_LOCAL_DATABASE = isLocalDatabaseUrl(DATABASE_URL);
 
 if (!IS_LOCAL_DATABASE && !DATABASE_AUTH_TOKEN) {
 	throw new Error(
-		"DATABASE_AUTH_TOKEN is required for remote libsql databases",
+		"TURSO_AUTH_TOKEN is required for remote libsql databases. " +
+			"Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN before running migrations.",
 	);
 }
 
