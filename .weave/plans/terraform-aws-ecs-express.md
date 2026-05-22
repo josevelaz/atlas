@@ -21,7 +21,7 @@
 - Desktop/Tauri remains supported through CORS, Better Auth trusted origins/cookie config, and Tauri CSP `connect-src` for staging/production APIs.
 
 ### Naming and environment strategy
-- AWS account model: one AWS account initially. Compensating controls are mandatory: separate preview/staging/production deploy roles, separate state keys, tag-conditioned preview permissions, scoped Secrets Manager/KMS permissions, and no preview role access to production resources.
+- AWS account model: one AWS account initially. Compensating controls are mandatory: separate preview/staging/production deploy roles, separate state keys, tag-conditioned preview permissions, scoped Secrets Manager permissions, AWS-managed KMS keys, and no preview role access to production/staging secrets or production resources.
 - AWS region: `us-east-1` for production, staging, and previews initially.
 - Long-lived environments: `staging`, `production`.
 - Ephemeral previews: one `preview/pr-<number>` environment per open same-repo PR after a trusted maintainer applies the GitHub `preview` label.
@@ -29,7 +29,7 @@
 - VPCs: separate production and nonproduction VPCs; staging and previews share the nonproduction VPC.
 - Redis/Valkey: production and staging have environment Redis. Previews share staging/nonproduction Redis and must use key prefixes.
 - S3 isolation: production bucket; shared nonproduction bucket using prefixes `staging/` and `previews/pr-<number>/`.
-- DNS uses environment subdomain Route 53 zones:
+- DNS uses required Route 53 variables `prod_zone_name` and `staging_zone_name`; exact zone names are supplied during implementation and must not be hardcoded in this plan or Terraform examples:
   - Production: `app.<prod-zone>`, `api.<prod-zone>`.
   - Staging: `app.<staging-zone>`, `api.<staging-zone>`.
   - Previews: deterministic PR-specific CloudFront/API origins unless Phase 0 approves preview custom domains.
@@ -38,16 +38,16 @@
 - Terraform CLI only; do not use OpenTofu. Pin providers in every stack. Target AWS provider `>= 6.43.0` or a similarly pinned recent v6 provider because `aws_ecs_express_gateway_service` was added in v6.23.0 and later fixes are required.
 - ECS Express is available in `us-east-1`; keep ECS Express as the target unless the Phase 0 API custom-domain spike proves safe custom domains are not automatable.
 - `aws_ecs_express_gateway_service` does not provide first-class custom-domain support. Validate a safe path for `api.<env-zone>` before implementation; if not safe, choose explicitly between deferring the API custom domain or switching API hosting to raw ECS/ALB. Do not ad-hoc mutate Express-generated ALB resources in a drift-prone way.
-- Terraform manages secret names, ARNs, IAM permissions, KMS access, and ECS secret references only. Secret values are seeded through a protected manual GitHub Actions workflow using AWS OIDC and GitHub Environment approval. No secret values may appear in Terraform variables, state, plans, logs, docs comments, or PR comments.
-- Preview AWS trust is same-repo only: fork PRs run non-privileged checks only and never receive AWS credentials or preview deploys. Same-repo PRs deploy previews only after a trusted maintainer applies `preview`.
-- Preview DB seed source is a sanitized template Turso DB only. Maintainers update the template via a protected workflow. Raw production/staging user or email data is forbidden.
+- Terraform manages secret names, ARNs, IAM permissions, AWS-managed KMS key usage, and ECS secret references only. Secret values are seeded through a protected manual GitHub Actions workflow using AWS OIDC and GitHub Environment approval. No secret values may appear in Terraform variables, state, plans, logs, docs comments, or PR comments. Customer-managed KMS keys are intentionally deferred.
+- GitHub Actions uses a two-workflow preview safety model. All PRs, including forks, run only unprivileged `pull_request` checks. Privileged preview deploys run only from a maintainer-approved path (`workflow_dispatch` and/or protected GitHub Environment approval), check out only same-repo PR branches, and require all of: `head.repo.full_name == github.repository`, exact `preview` label present, trusted maintainer/write-permission actor/deployer, no AWS credentials for fork PRs, and no unsafe `pull_request_target` checkout of untrusted code.
+- Preview DB seed source is a sanitized template Turso DB only. Maintainers update the template via a protected workflow that records audit/evidence before previews may seed from it. The template must exclude emails, names, OAuth IDs, provider account IDs, access/refresh tokens, user content, auth sessions, and production/staging-derived message data.
 - Turso provider may manage groups/databases. Turso tokens are created outside Terraform and written to Secrets Manager by the protected secret-seeding workflow.
 - CORS and Better Auth origins must be exact deterministic allowlists including scheme, host, and optional port. No wildcard origins with credentials. Preview origins are PR-specific. Tauri custom protocols are explicit exceptions, not broad localhost allowances.
 - Cookies are scoped to the API host, Secure/HTTPS only, and require explicit CSRF/session-fixation validation.
-- Terraform plan output in PR comments must be sanitized summaries only. Raw plan output is limited to restricted, short-retention artifacts. Sensitive outputs must be marked `sensitive`.
+- Terraform plan output in PR comments must be sanitized allowlisted summaries only, generated from explicit allowlisted fields/redaction tooling. Never paste raw `terraform show` output into comments. Binary/JSON plan artifacts are retained exactly 1 day with restricted GitHub Actions artifact access. Sensitive outputs must be marked `sensitive`.
 - Static web buckets are private with public access blocked and mandatory CloudFront Origin Access Control. Deploy roles can write only scoped environment/prefix paths.
 - Tauri CSP must use exact per-environment `connect-src`: production desktop builds may reach only production API/required endpoints; staging builds may reach only staging API/required endpoints. Do not use broad `https:`.
-- Redis/Valkey must use TLS/auth where supported, security group restrictions, and per-env/PR key prefixes. Implement one Redis wrapper/prefix discipline covering direct Redis, jobify, and verrou.
+- Redis/Valkey must use TLS/auth where supported, security group restrictions, and per-env/PR key prefixes. Redis/ElastiCache auth token values must not be Terraform-managed or stored in Terraform state; seed/rotate them out-of-band into AWS Secrets Manager where possible. If required ElastiCache auth cannot be configured without secret-in-state, block implementation or document an explicit security exception with compensating controls. Implement one Redis wrapper/prefix discipline covering direct Redis, jobify, and verrou.
 - GitHub Actions builds/pushes the server image. Terraform owns ECS updates using an immutable image digest/tag variable.
 - Terraform provisions S3/CloudFront/IAM. CI builds/uploads web artifacts using Terraform outputs and invalidates CloudFront.
 - Drizzle migration failure stops before ECS image or web update. No automatic migration rollback. If post-migration app deploy fails, operators manually roll back/forward using the recorded prior image digest and migration notes.
@@ -88,6 +88,9 @@ Create an execution-ready implementation path for Terraform-based AWS deployment
 - Do not proceed past Phase 0 until Warp and Weft re-review the amended plan and remove their BLOCK findings.
 - Do not use `|| true` on validation gates. If a local prerequisite is missing, the task must fail with an explicit blocker and owner.
 - Do not use macOS-incompatible `timeout` in validation commands.
+- Do not manage Redis/ElastiCache auth token values in Terraform state. If a provider/resource path would leak auth tokens to state, stop or obtain a documented security exception with compensating controls.
+- Do not use `pull_request_target` to check out or execute untrusted PR code in privileged preview workflows.
+- Do not publish raw Terraform plans or `terraform show` output in PR comments.
 
 ## Proposed file layout
 ```text
@@ -149,7 +152,7 @@ apps/desktop/src-tauri/
 ## Execution milestones and gates
 
 - **Gate 0 — Blocking decisions/validation**: Complete Phase 0, including the API custom-domain spike and explicit security decision records. Owner: infra implementer with Warp/Weft reviewers. Inputs: this plan, AWS/Terraform provider docs, existing repo status, domain/delegation details, GitHub environment/role names. Acceptance: every Phase 0 task is complete, the ECS Express custom-domain path is approved or an alternative is chosen, and Warp/Weft re-review removes BLOCK.
-- **Gate 1 — ADR/docs foundation**: Complete Phase 1 before editing app or Terraform runtime code. ADRs must match repository ADR style and include required sections, not merely exist.
+- **Gate 1 — ADR/docs foundation**: Complete Phase 1 before editing app or Terraform runtime code. ADRs must match the existing repository style: concise `# Title` plus prose, not mandatory Status/Context/Decision/Consequences headings.
 - **Gate 2 — App readiness**: Complete server/web/desktop readiness Phases 2–3 before infra workflows depend on those contracts.
 - **Gate 3 — Terraform foundation**: Complete modules and stacks Phases 4–5 before GitHub Actions deploy workflows use their outputs. Stacks must run `terraform init -backend=false` before every local `terraform validate`.
 - **Gate 4 — CI/CD handoff**: Complete Phases 6–7 after Terraform outputs exist. Workflows must encode image digest, migration, web upload, and rollback handoff ordering.
@@ -209,7 +212,7 @@ apps/desktop/src-tauri/
 - [ ] 0.4 Record single-account AWS isolation model
   **Owner**: infra/security owner.
   **Inputs**: AWS account ID, GitHub repo/environment names, planned state key names, production/nonproduction resource names.
-  **What**: Document strict separation within one AWS account: preview/staging/prod OIDC roles, state keys, KMS/secrets scopes, tag-conditioned preview permissions, and no preview role access to production resources.
+  **What**: Document strict separation within one AWS account: preview/staging/prod OIDC roles, state keys, AWS-managed KMS usage, strict Secrets Manager ARN/path scopes, tag-conditioned preview permissions, and no preview role access to production resources or production/staging secrets.
   **Files likely touched**: `docs/adr/0007-use-staging-production-and-pr-preview-environments.md`, `docs/adr/0008-define-terraform-turso-and-secrets-boundaries.md`, `infra/README.md`.
   **Acceptance**: ADRs/README state the compensating controls and role/resource boundaries clearly enough for Warp review.
 
@@ -228,22 +231,34 @@ apps/desktop/src-tauri/
 - [ ] 0.6 Record DNS/environment zone model
   **Owner**: infra owner.
   **Inputs**: delegated production and staging Route 53 zone names.
-  **What**: Record the exact environment subdomain zones and hostnames: `app.<prod-zone>`, `api.<prod-zone>`, `app.<staging-zone>`, `api.<staging-zone>`.
-  **Acceptance**: Terraform variables and ADRs use environment zones and the resolved `app.<zone>` / `api.<zone>` naming convention.
+  **What**: Record the exact environment subdomain zones and hostnames derived from required variables `prod_zone_name` and `staging_zone_name`: `app.<prod-zone>`, `api.<prod-zone>`, `app.<staging-zone>`, `api.<staging-zone>`. Exact hosted zone names are supplied at implementation time, not hardcoded in the plan or module examples.
+  **Acceptance**: Terraform variables and ADRs use required variables `prod_zone_name` and `staging_zone_name` plus the resolved `app.<zone>` / `api.<zone>` naming convention.
 
 - [ ] 0.7 Record secrets/Turso/preview trust model
   **Owner**: security/platform owner.
   **Inputs**: GitHub Environment approval policy, protected manual workflow design, Turso sanitized template DB owner, Secrets Manager/KMS scope.
-  **What**: Document protected secret seeding, Turso token lifecycle outside Terraform, same-repo preview label trust, fork PR non-privileged behavior, and sanitized template-only preview DB seeding.
-  **Acceptance**: No task later in the plan requires secret values in Terraform, raw prod/staging data in previews, or AWS credentials for fork PRs.
+  **What**: Document protected secret seeding, Turso token lifecycle outside Terraform, Redis/ElastiCache auth token lifecycle outside Terraform state, same-repo preview label trust, fork PR non-privileged behavior, and sanitized template-only preview DB seeding. Define the two-workflow preview safety model: unprivileged `pull_request` checks for every PR; privileged preview deploy only via maintainer-approved `workflow_dispatch` and/or protected environment approval. The privileged path must check out only same-repo PR branches and require `head.repo.full_name == github.repository`, exact `preview` label, and actor/deployer write or maintainer trust.
+  **Acceptance**: No task later in the plan requires secret values in Terraform, raw prod/staging data in previews, AWS credentials for fork PRs, or unsafe `pull_request_target` checkout of untrusted code.
 
 - [ ] 0.8 Record auth/CORS/cookie/Tauri/Redis security contracts
   **Owner**: app/security owner.
   **Inputs**: production/staging/preview origins, Tauri desktop origins, Redis/Valkey capabilities, Better Auth config surface.
-  **What**: Record exact origin allowlists, no credentialed wildcards, scoped Secure cookies, CSRF/session fixation validation, exact Tauri CSP `connect-src`, Redis TLS/auth where supported, SG restrictions, and single Redis prefix wrapper discipline.
-  **Acceptance**: Phases 2–4 have concrete env var names and acceptance criteria for Warp review.
+  **What**: Record the computed origin matrix before implementation: web origins, API origins, preview origin pattern, Tauri origins (`tauri://localhost`, `https://tauri.localhost`), cookie domain/path/SameSite/Secure rules, CSRF validation steps, session-fixation validation steps, exact Tauri CSP `connect-src`, Redis TLS/auth where supported, SG restrictions, and single Redis prefix wrapper discipline.
+  **Acceptance**: Phases 2–4 have concrete env var names, the origin/cookie/CSRF/session matrix is recorded, and acceptance criteria are ready for Warp review.
 
-- [ ] 0.9 Re-review Phase 0 outputs with Warp and Weft
+- [ ] 0.10 Record Terraform plan/comment/artifact policy
+  **Owner**: infra/security owner.
+  **Inputs**: GitHub Actions artifact retention/access behavior, Terraform JSON plan shape, redaction/allowlist tooling design.
+  **What**: Define plan handling before any workflow implementation. PR comments and job summaries may include only sanitized allowlisted summaries generated from explicit fields/redaction tooling. Never publish raw `terraform show` output. Binary/JSON plan artifacts are retained exactly 1 day with restricted GitHub Actions artifact access.
+  **Acceptance**: Workflow tasks have a concrete redaction/allowlist mechanism and retention setting; raw plans are restricted artifacts only.
+
+- [ ] 0.11 Record KMS/IAM secret isolation model
+  **Owner**: infra/security owner.
+  **Inputs**: Secrets Manager path/ARN convention, preview/staging/production role names, AWS-managed KMS behavior.
+  **What**: Use AWS-managed KMS keys rather than customer-managed keys. Compensate with strict Secrets Manager ARN/path IAM, role separation, and explicit denial/no access from preview roles to production and staging secrets. Note that CMK-level encryption-context controls are intentionally deferred.
+  **Acceptance**: IAM design proves preview roles cannot read prod/staging secrets and documents the deferred CMK encryption-context tradeoff.
+
+- [ ] 0.12 Re-review Phase 0 outputs with Warp and Weft
   **Owner**: implementation lead.
   **What**: Request Warp security review and Weft quality review after Phase 0 decisions/spikes are recorded.
   **Acceptance**: No implementation starts while either reviewer remains BLOCK.
@@ -255,27 +270,30 @@ apps/desktop/src-tauri/
   **Files likely touched**: `docs/adr/0006-use-ecs-express-and-aws-managed-app-infra.md`.
   **Validation**:
   ```sh
-  grep -E "^# |^## Status|^## Context|^## Decision|^## Consequences" docs/adr/0006-use-ecs-express-and-aws-managed-app-infra.md
+  grep -n "^# " docs/adr/0006-use-ecs-express-and-aws-managed-app-infra.md
+  test -s docs/adr/0006-use-ecs-express-and-aws-managed-app-infra.md
   ```
-  **Acceptance**: ADR includes context, decision, and consequences in concise prose.
+  **Acceptance**: ADR follows existing repo style: one `# Title` and concise prose covering context, decision, and consequences without requiring `Status`, `Context`, `Decision`, or `Consequences` headings.
 
 - [ ] 1.2 Add ADR for environment and preview strategy
   **What**: Document staging/production, ephemeral previews, state key separation, nonprod sharing rules, custom domains, and preview cleanup lifecycle.
   **Files likely touched**: `docs/adr/0007-use-staging-production-and-pr-preview-environments.md`.
   **Validation**:
   ```sh
-  grep -E "^# |^## Status|^## Context|^## Decision|^## Consequences" docs/adr/0007-use-staging-production-and-pr-preview-environments.md
+  grep -n "^# " docs/adr/0007-use-staging-production-and-pr-preview-environments.md
+  test -s docs/adr/0007-use-staging-production-and-pr-preview-environments.md
   ```
-  **Acceptance**: ADR explicitly states prod/nonprod VPC split, staging/preview nonprod sharing, preview label behavior, and production approval gate.
+  **Acceptance**: ADR follows existing repo style and explicitly states prod/nonprod VPC split, staging/preview nonprod sharing, preview label behavior, and production approval gate.
 
 - [ ] 1.3 Add ADR for Terraform/Turso/secrets boundaries
   **What**: Document what Terraform manages, what Terraform references only by ARN/name, and what is created/rotated outside Terraform.
   **Files likely touched**: `docs/adr/0008-define-terraform-turso-and-secrets-boundaries.md`.
   **Validation**:
   ```sh
-  grep -E "^# |^## Status|^## Context|^## Decision|^## Consequences" docs/adr/0008-define-terraform-turso-and-secrets-boundaries.md
+  grep -n "^# " docs/adr/0008-define-terraform-turso-and-secrets-boundaries.md
+  test -s docs/adr/0008-define-terraform-turso-and-secrets-boundaries.md
   ```
-  **Acceptance**: ADR states Turso tokens are never stored in Terraform state and secret values are written to AWS Secrets Manager outside Terraform.
+  **Acceptance**: ADR follows existing repo style and states Turso tokens, Redis/ElastiCache auth tokens, and other secret values are never stored in Terraform state and are written to AWS Secrets Manager outside Terraform where possible.
 
 - [ ] 1.4 Add infrastructure README skeleton
   **What**: Add operator-oriented docs for bootstrap order, env stacks, preview stack, required local tools, state keys, and secret seeding expectations.
@@ -387,14 +405,19 @@ apps/desktop/src-tauri/
   **Acceptance**: CSP includes exact `connect-src` entries and does not broadly allow `*` or `https:`.
 
 - [ ] 3.4 Validate frontend changes in browser
-  **What**: After frontend/API URL changes, run the web app locally and validate it does not error and points to the expected API origin.
+  **What**: After frontend/API URL changes, run the web app locally or use the staging web app and validate deterministically that it does not error and points to the expected API origin. `npx agent-browser --help` may be used only as an availability precheck; it is not sufficient acceptance evidence.
   **Files likely touched**: none unless fixing validation failures.
   **Validation**:
   ```sh
   bun run --cwd apps/web build
+  bun run --cwd apps/web dev &
+  web_pid=$!
+  trap 'kill "$web_pid"' EXIT
   npx agent-browser --help
+  npx agent-browser open http://localhost:3001 --screenshot /tmp/hay-web-validation.png
+  kill "$web_pid"
   ```
-  **Acceptance**: Implementer runs `npx agent-browser` against the local/staging web UI after frontend changes and records results; failures block merge.
+  **Acceptance**: Implementer runs `npx agent-browser` against a running local or staging web UI after frontend changes and records deterministic result/evidence such as checked URL, console status, expected API origin, screenshot, or trace. Availability precheck alone does not satisfy acceptance; failures block merge.
 
 - [ ] 3.3 Validate static SPA output path for deployment
   **What**: Confirm the build output to upload to S3/CloudFront, expected `apps/web/dist/client` based on current monorepo notes.
@@ -432,7 +455,7 @@ apps/desktop/src-tauri/
   **Acceptance**: Bootstrap plan creates only remote-state/locking resources and outputs backend settings.
 
 - [ ] 4.3 Implement GitHub OIDC IAM module
-  **What**: Create deploy roles for preview, staging, and production with least-privilege trust policies scoped to repo, refs/environments, labels, tags, and workflow needs. Preview permissions must be tag-conditioned and unable to access production resources, secrets, KMS keys, buckets, or state.
+  **What**: Create deploy roles for preview, staging, and production with least-privilege trust policies scoped to repo, refs/environments, labels, tags, and workflow needs. Preview permissions must be tag-conditioned and unable to access production resources, production/staging Secrets Manager paths/ARNs, buckets, or state. Use AWS-managed KMS keys, not CMKs; compensate with strict Secrets Manager ARN/path IAM, role separation, and explicit denial/no access from preview roles to production/staging secrets.
   **Files likely touched**: `infra/bootstrap/**`, `infra/modules/github-oidc/**`.
   **Validation**:
   ```sh
@@ -441,7 +464,7 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/bootstrap validate
   terraform -chdir=infra/bootstrap plan -out=tfplan
   ```
-  **Acceptance**: Roles are separate; production trust is environment/ref constrained; outputs expose role ARNs for GitHub secrets/variables.
+  **Acceptance**: Roles are separate; production trust is environment/ref constrained; preview roles cannot read prod/staging secrets or state; outputs expose role ARNs for GitHub secrets/variables; CMK-level encryption-context controls are intentionally deferred and documented.
 
 - [ ] 4.4 Implement network module
   **What**: Create production and nonproduction VPC/network resources sufficient for ECS Express and Redis, with outputs consumed by env/preview stacks.
@@ -465,7 +488,7 @@ apps/desktop/src-tauri/
   **Acceptance**: Actions can push SHA-tagged images and Terraform/ECS can deploy by image digest/tag.
 
 - [ ] 4.6 Implement Redis/Valkey module
-  **What**: Create production/staging ElastiCache/Valkey resources with TLS/auth where supported, security group access only from ECS tasks, and connection host/port/auth/TLS config via outputs or secrets/env injection.
+  **What**: Create production/staging ElastiCache/Valkey resources with TLS/auth where supported, security group access only from ECS tasks, and connection host/port/TLS config via outputs plus auth secret ARN/name references. Redis/ElastiCache auth token values must not be Terraform-managed or stored in Terraform state; prefer protected out-of-band seeding/rotation into AWS Secrets Manager. If required ElastiCache auth cannot be configured without secret-in-state, block implementation or document an explicit security exception with compensating controls before proceeding.
   **Files likely touched**: `infra/modules/redis/**`, `infra/env/**`.
   **Validation**:
   ```sh
@@ -473,10 +496,10 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/env validate
   terraform -chdir=infra/env plan -var-file=envs/staging.tfvars.example -out=tfplan
   ```
-  **Acceptance**: Production and staging have Redis; preview stack does not create preview Redis and instead consumes nonprod/staging Redis host/port with distinct `REDIS_KEY_PREFIX`.
+  **Acceptance**: Production and staging have Redis; preview stack does not create preview Redis and instead consumes nonprod/staging Redis host/port with distinct `REDIS_KEY_PREFIX`; Redis auth token values are absent from Terraform state/plans or an explicit reviewed exception exists.
 
 - [ ] 4.7 Implement Secrets Manager module
-  **What**: Create/declare secret names, KMS scopes, and IAM read permissions for ECS task roles while avoiding Terraform-managed secret values. Secret value seeding belongs to a protected manual GitHub Actions workflow with environment approval.
+  **What**: Create/declare secret names, AWS-managed KMS usage, and IAM read permissions for ECS task roles while avoiding Terraform-managed secret values. Secret value seeding belongs to a protected manual GitHub Actions workflow with environment approval. Use strict Secrets Manager ARN/path IAM and role separation; explicitly deny/no-access preview roles from production and staging secrets.
   **Files likely touched**: `infra/modules/secrets/**`, `infra/env/**`, `infra/preview/**`.
   **Validation**:
   ```sh
@@ -484,7 +507,7 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/env validate
   ! grep -R "secret_string\|secret_binary" -n infra
   ```
-  **Acceptance**: Terraform references secret ARNs/names only; no secret value resources are added unless explicitly non-sensitive placeholders.
+  **Acceptance**: Terraform references secret ARNs/names only; no secret value resources are added unless explicitly non-sensitive placeholders; AWS-managed KMS keys are used and CMK encryption-context controls are documented as deferred.
 
 - [ ] 4.8 Implement Turso module/boundary
   **What**: Use the Turso provider for groups/databases, outputs for database URLs/names, and documentation for out-of-band token creation/rotation into Secrets Manager.
@@ -508,14 +531,14 @@ apps/desktop/src-tauri/
   **Acceptance**: Production uses private prod bucket; staging uses `staging/` prefix in private nonprod bucket; previews use `previews/pr-<number>/` prefix; all bucket public access is blocked and deploy roles write only scoped env/prefixes.
 
 - [ ] 4.10 Implement DNS/ACM module
-  **What**: Wire environment Route 53 zones, ACM certificates, and CloudFront/API hostnames for staging/production according to Phase 0 domain decision.
+  **What**: Wire environment Route 53 zones, ACM certificates, and CloudFront/API hostnames for staging/production according to Phase 0 domain decision. Use required variables `prod_zone_name` and `staging_zone_name`; exact zone names are provided by implementation configuration, not hardcoded.
   **Files likely touched**: `infra/modules/dns-acm/**`, `infra/env/**`.
   **Validation**:
   ```sh
   terraform -chdir=infra/env init -backend=false
   terraform -chdir=infra/env validate
   ```
-  **Acceptance**: Env stack supports `app.<prod-zone>`, `api.<prod-zone>`, `app.<staging-zone>`, and `api.<staging-zone>`, or records the Phase 0-approved API-domain deferral/alternative.
+  **Acceptance**: Env stack requires `prod_zone_name` and `staging_zone_name` and supports `app.<prod-zone>`, `api.<prod-zone>`, `app.<staging-zone>`, and `api.<staging-zone>`, or records the Phase 0-approved API-domain deferral/alternative.
 
 - [ ] 4.11 Implement ECS Express API module
   **What**: Define ECS Express Gateway service with container image, port, shallow health check, task role, secret injection, env vars, logs, Redis/S3/Turso env, and network integration.
@@ -544,7 +567,7 @@ apps/desktop/src-tauri/
 ### Phase 5 — Terraform stacks
 
 - [ ] 5.1 Create thin environment stack
-  **What**: Compose modules for staging/production with variable-driven environment selection, backend key examples, and outputs consumed by Actions.
+  **What**: Compose modules for staging/production with variable-driven environment selection, required `prod_zone_name` and `staging_zone_name` inputs, backend key examples, and outputs consumed by Actions.
   **Files likely touched**: `infra/env/**`.
   **Validation**:
   ```sh
@@ -554,7 +577,7 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/env plan -var-file=envs/staging.tfvars.example -out=tfplan
   terraform -chdir=infra/env plan -var-file=envs/production.tfvars.example -out=tfplan
   ```
-  **Acceptance**: Same stack can target staging or production using different backend keys and vars.
+  **Acceptance**: Same stack can target staging or production using different backend keys and vars; zone names are supplied by `prod_zone_name` and `staging_zone_name`, not hardcoded.
 
 - [ ] 5.2 Create thin preview stack
   **What**: Compose modules for a single PR preview using `pr_number`, shared nonprod VPC/Redis/bucket, preview Turso DB, preview secrets references, preview API, and preview web distribution/prefix.
@@ -627,7 +650,7 @@ apps/desktop/src-tauri/
   **Acceptance**: Production cannot deploy without GitHub Environment approval and separate production OIDC role.
 
 - [ ] 6.5 Add preview lifecycle workflow
-  **What**: On same-repo PR label `preview`, create/update preview infra; on label removal or PR close, destroy preview infra. Fork PRs get non-privileged checks only. Build/push image, create preview Turso DB, seed from sanitized template only, write required secret values to Secrets Manager by approved protected mechanism, run migrations, deploy API through Terraform with immutable digest, build/upload preview web using Terraform outputs.
+  **What**: Implement the two-workflow preview safety model. All PRs run unprivileged `pull_request` checks. Privileged preview create/update runs only via maintainer-approved `workflow_dispatch` and/or protected environment approval, checks out only same-repo PR branches, and requires all of: `head.repo.full_name == github.repository`, exact `preview` label present, actor/deployer has trusted maintainer/write permission, fork PRs never receive AWS credentials, and no unsafe `pull_request_target` checkout of untrusted code. On label removal or PR close, destroy preview infra. Build/push image, create preview Turso DB, seed from sanitized template only, write required secret values to Secrets Manager by approved protected mechanism, run migrations, deploy API through Terraform with immutable digest, build/upload preview web using Terraform outputs.
   **Files likely touched**: `.github/workflows/preview.yml`, scripts if absolutely necessary under `scripts/` or `infra/scripts/`.
   **Validation**:
   ```sh
@@ -635,7 +658,7 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/preview init -backend=false
   terraform -chdir=infra/preview validate
   ```
-  **Acceptance**: Preview exists only while label is present/open PR; state key and resources include PR number; preview DB is isolated and disposable.
+  **Acceptance**: Preview exists only while label is present/open same-repo PR and maintainer approval remains valid; state key and resources include PR number; preview DB is isolated and disposable; fork PRs never receive AWS credentials; privileged jobs never use `pull_request_target` to execute untrusted code.
 
 - [ ] 6.6 Add scheduled preview cleanup
   **What**: Add a scheduled workflow that lists preview state/resources/PRs and destroys stale previews for closed/unlabeled PRs.
@@ -647,23 +670,23 @@ apps/desktop/src-tauri/
   **Acceptance**: Stale preview infrastructure has an automated cleanup path with safe logging and no production access.
 
 - [ ] 6.7 Add Terraform plan artifacts/comments
-  **What**: Surface sanitized Terraform plan summaries in Actions summaries or PR comments without leaking secrets. Keep raw plan output only as restricted, short-retention artifacts. Separate preview/staging/production plan scopes and mark Terraform sensitive outputs as sensitive.
+  **What**: Surface sanitized Terraform plan summaries in Actions summaries or PR comments without leaking secrets. Summaries must be generated only from explicit allowlisted fields/redaction tooling and must never include raw `terraform show` output. Keep binary/JSON plan artifacts only as restricted GitHub Actions artifacts retained exactly 1 day. Separate preview/staging/production plan scopes and mark Terraform sensitive outputs as sensitive.
   **Files likely touched**: `.github/workflows/*.yml`.
   **Validation**:
   ```sh
   npx actionlint .github/workflows/*.yml
   ```
-  **Acceptance**: Reviewers can inspect sanitized infra changes before apply; raw plan output is not pasted into comments and restricted artifacts have short retention.
+  **Acceptance**: Reviewers can inspect sanitized allowlisted infra summaries before apply; raw plan output is never pasted into comments; binary/JSON plan artifacts have `retention-days: 1` and restricted artifact access.
 
 - [ ] 6.8 Add protected manual secret seeding workflow
-  **What**: Add a manual GitHub Actions workflow that uses AWS OIDC and GitHub Environment approval to write Turso, Better Auth, OAuth, Redis auth, and other secret values into AWS Secrets Manager. Terraform must consume only names/ARNs.
+  **What**: Add a manual GitHub Actions workflow that uses AWS OIDC and GitHub Environment approval to write Turso, Better Auth, OAuth, Redis/ElastiCache auth, and other secret values into AWS Secrets Manager. Terraform must consume only names/ARNs and must not manage Redis auth token values in state.
   **Files likely touched**: `.github/workflows/seed-secrets.yml`, `infra/README.md`.
   **Validation**:
   ```sh
   npx actionlint .github/workflows/seed-secrets.yml
   ! grep -R "secret_string\|secret_binary\|TURSO_AUTH_TOKEN=.*\|BETTER_AUTH_SECRET=.*" -n infra .github docs
   ```
-  **Acceptance**: Secret values never enter Terraform state/plans/comments/logs; workflow is protected by environment approval and scoped role permissions.
+  **Acceptance**: Secret values, including Redis/ElastiCache auth tokens, never enter Terraform state/plans/comments/logs; workflow is protected by environment approval and scoped role permissions.
 
 ### Phase 7 — Database migrations and Turso preview lifecycle
 
@@ -678,13 +701,13 @@ apps/desktop/src-tauri/
   **Acceptance**: Workflows can run migrations as explicit deployment steps before ECS/web update; migration failure stops deployment and records prior image digest plus migration notes.
 
 - [ ] 7.2 Define preview DB create/seed/migrate/destroy steps
-  **What**: Implement or document the exact commands used by Actions to create an isolated Turso DB per preview, seed it from staging/sanitized template, write token to Secrets Manager, run migrations, and destroy it on cleanup.
+  **What**: Implement or document the exact commands used by Actions to create an isolated Turso DB per preview, seed it only from the sanitized template, write token to Secrets Manager, run migrations, and destroy it on cleanup. The template must forbid emails, names, OAuth IDs, provider account IDs, access/refresh tokens, user content, auth sessions, and production/staging-derived message data. A maintainer protected workflow must refresh the template and record audit/evidence before previews may seed from it.
   **Files likely touched**: `.github/workflows/preview.yml`, `.github/workflows/preview-cleanup.yml`, `infra/README.md`, optional scripts.
   **Validation**:
   ```sh
   grep -R "turso\|drizzle\|migrate" -n .github/workflows infra apps/server
   ```
-  **Acceptance**: Preview DB lifecycle is deterministic and does not copy production data unsafely.
+  **Acceptance**: Preview DB lifecycle is deterministic; previews seed only from the audited sanitized template; forbidden identity/token/session/user-content/message fields are absent; production/staging-derived message data is never copied into previews.
 
 ### Phase 8 — End-to-end deployment validation
 
@@ -763,6 +786,15 @@ apps/desktop/src-tauri/
   ```
   **Acceptance**: Staging API health and static web shell are reachable over HTTPS.
 
+- [ ] 8.7 Validate browser UI deterministically
+  **What**: After a local or staging web app is running, use `agent-browser` to validate the UI and record evidence. `npx agent-browser --help` is allowed only as an availability precheck.
+  **Commands**:
+  ```sh
+  npx agent-browser --help
+  # Then run agent-browser against the live local or staging URL and record screenshot/trace/console evidence.
+  ```
+  **Acceptance**: A deterministic local or staging browser validation result is recorded, including target URL, expected API origin, console/error result, and screenshot or trace evidence. Help output alone does not satisfy this gate.
+
 ### Phase 9 — Security and review gates
 
 - [ ] 9.1 Run secret/state leakage audit
@@ -787,7 +819,7 @@ apps/desktop/src-tauri/
 
 1. GitHub Actions runs install/lint/typecheck/build gates.
 2. GitHub Actions builds the server Docker image, pushes it to ECR with the commit SHA, captures the immutable image digest, and records the previously deployed digest for rollback.
-3. GitHub Actions runs Terraform plan/apply for the target environment using separate backend keys and the image digest/tag variable. Terraform owns ECS service updates; workflows do not manually mutate ECS resources.
+3. GitHub Actions runs Terraform plan/apply for the target environment using separate backend keys and the image digest/tag variable. PR comments/job summaries expose only sanitized allowlisted plan summaries; binary/JSON plan artifacts are restricted and retained exactly 1 day. Terraform owns ECS service updates; workflows do not manually mutate ECS resources.
 4. GitHub Actions runs Drizzle migrations after infra prerequisites exist but before ECS service/web artifact updates. If migrations fail, deployment stops before the new ECS image or web artifact is deployed. There is no automatic migration rollback.
 5. If migrations succeed, Terraform updates the ECS Express service to the immutable image digest. If app deploy fails after migrations, operators manually roll back/forward using recorded prior image digest and migration notes.
 6. Terraform outputs S3 bucket/prefix, CloudFront distribution ID, API URL, and web URL. CI builds the static web app with the target API URL, uploads artifacts only to scoped Terraform-provided bucket/prefix, and invalidates CloudFront.
@@ -806,7 +838,7 @@ apps/desktop/src-tauri/
 - Drizzle migrations must succeed before ECS service update and web artifact upload.
 - Static SPA Terraform outputs must exist before CI uploads web artifacts or invalidates CloudFront.
 - Actionlint/workflow validation must pass before relying on deployment workflows.
-- `npx agent-browser` validation must run after frontend changes and before review completion.
+- `npx agent-browser` validation must run against a running local or staging web app after frontend changes and before review completion; CLI help output is only an availability precheck.
 
 ## Rollback notes
 - **Application code rollback**: Revert the deployment-readiness commit(s). `/health` is additive and can usually remain, but Redis/S3/auth config changes must be reverted if they break runtime behavior.
@@ -822,9 +854,11 @@ apps/desktop/src-tauri/
 ## Risks and mitigations
 - **ECS Express Terraform provider support may be new or region-limited**: Validate provider version and AWS region early. If unsupported, stop and document alternatives rather than silently switching compute platform.
 - **ECS Express API custom domains are not first-class**: Phase 0 must validate an automatable custom-domain path. If unsafe, explicitly defer the API custom domain or switch to raw ECS/ALB.
-- **Terraform state secret leakage**: Never manage secret values in Terraform; audit plans/state and use Secrets Manager ARNs only.
+- **Terraform state secret leakage**: Never manage secret values in Terraform; audit plans/state and use Secrets Manager ARNs only. Redis/ElastiCache auth tokens are included in this boundary; if ElastiCache auth cannot be configured without secret-in-state, stop or document an explicit reviewed security exception with compensating controls.
 - **Turso token lifecycle ambiguity**: Keep token creation/rotation outside Terraform and explicitly document CI/operator steps.
-- **Preview data exposure**: Seed previews only from a sanitized template; never seed from raw production or staging user/email data.
+- **Preview data exposure**: Seed previews only from an audited sanitized template; never seed emails, names, OAuth IDs, provider account IDs, access/refresh tokens, user content, auth sessions, or production/staging-derived message data.
+- **Preview workflow privilege escalation**: Keep unprivileged `pull_request` checks separate from privileged maintainer-approved preview deploys. Never give fork PRs AWS credentials and never use `pull_request_target` to check out or execute untrusted code.
+- **Plan/comment leakage**: Use allowlisted redacted summaries only in comments and summaries; keep binary/JSON plan artifacts restricted with exactly 1-day retention.
 - **Shared nonprod Redis collisions**: Enforce `REDIS_KEY_PREFIX` for staging and every preview across ioredis/jobify/verrou.
 - **S3 prefix isolation mistakes**: Encode prefixes in Terraform outputs and workflow inputs; avoid hand-typed upload paths in multiple places.
 - **CORS/auth regressions**: Test browser web and Tauri origins; require security review for credentialed CORS and `SameSite=None; Secure`.
@@ -839,36 +873,40 @@ apps/desktop/src-tauri/
 - [ ] Terraform uses `aws_ecs_express_gateway_service` for the API service.
 - [ ] AWS provider is pinned to `>= 6.43.0` or a similarly pinned recent v6 provider; Terraform CLI is used, not OpenTofu.
 - [ ] Remote state keys are distinct for `staging`, `production`, and `preview/pr-<number>`.
-- [ ] One AWS account is used with separate preview/staging/prod OIDC roles, tag-conditioned preview permissions, scoped Secrets Manager/KMS access, and no preview access to prod resources.
+- [ ] One AWS account is used with separate preview/staging/prod OIDC roles, tag-conditioned preview permissions, scoped Secrets Manager ARN/path access, AWS-managed KMS keys, and no preview access to prod/staging secrets or prod resources.
 - [ ] Production and nonproduction VPCs are separate; staging/previews share nonprod VPC.
-- [ ] Production and staging have Redis/Valkey with TLS/auth where supported and SG restrictions; previews share nonprod/staging Redis with unique prefixes.
+- [ ] Production and staging have Redis/Valkey with TLS/auth where supported and SG restrictions; previews share nonprod/staging Redis with unique prefixes; Redis/ElastiCache auth token values are not Terraform-managed or stored in Terraform state.
 - [ ] Server config supports Redis host/port/TLS/auth or URL plus `REDIS_KEY_PREFIX`; ioredis/jobify/verrou keys are namespaced through one wrapper/prefix discipline.
 - [ ] S3 config supports bucket, region, and prefix; ECS uses task-role access rather than long-lived S3 keys where possible.
 - [ ] Static web S3 buckets are private, block public access, and require CloudFront OAC; deploy roles write only scoped env/prefixes.
-- [ ] Secrets Manager ARNs/names are managed/referenced by Terraform, but secret values are not stored in Terraform state.
+- [ ] Secrets Manager ARNs/names are managed/referenced by Terraform, but secret values are not stored in Terraform state; AWS-managed KMS keys are used and CMK encryption-context controls are intentionally deferred.
 - [ ] Turso databases/groups are managed by Terraform where appropriate; Turso tokens are external and stored in AWS Secrets Manager.
 - [ ] Secret values are seeded only by protected manual GitHub Actions workflow with AWS OIDC and environment approval.
-- [ ] Each preview has an isolated disposable Turso DB seeded only from the sanitized template, migrated after creation and destroyed on cleanup.
-- [ ] Production and staging custom domains are wired as `app.<prod-zone>`, `api.<prod-zone>`, `app.<staging-zone>`, `api.<staging-zone>`, or the Phase 0 API-domain alternative is recorded.
+- [ ] Each preview has an isolated disposable Turso DB seeded only from the audited sanitized template, migrated after creation and destroyed on cleanup; template excludes emails, names, OAuth IDs, provider account IDs, access/refresh tokens, user content, auth sessions, and production/staging-derived message data.
+- [ ] Production and staging custom domains are wired from required variables `prod_zone_name` and `staging_zone_name` as `app.<prod-zone>`, `api.<prod-zone>`, `app.<staging-zone>`, `api.<staging-zone>`, or the Phase 0 API-domain alternative is recorded.
 - [ ] `apps/web` builds a static SPA with environment-specific API URL and uploads to S3 + CloudFront.
-- [ ] GitHub Actions include CI gates, staging deploy, production deploy with approval, preview lifecycle, and scheduled preview cleanup.
+- [ ] GitHub Actions include CI gates, staging deploy, production deploy with approval, preview lifecycle, and scheduled preview cleanup; preview deploy follows the two-workflow model with unprivileged `pull_request` checks and maintainer-approved privileged deploys only for same-repo PRs with exact `preview` label and trusted write/maintainer actor.
+- [ ] Fork PRs never receive AWS credentials and privileged preview workflows never use `pull_request_target` to check out or execute untrusted code.
+- [ ] Terraform PR comments/job summaries contain sanitized allowlisted summaries only; raw `terraform show` is never published; binary/JSON plan artifacts are restricted and retained exactly 1 day.
 - [ ] Docker images are pushed to ECR with immutable SHA/digest references.
 - [ ] Terraform owns ECS updates using immutable image digest/tag variables supplied by GitHub Actions.
 - [ ] Drizzle migrations run as explicit deployment steps before ECS service/web update and fail closed with recorded rollback notes.
-- [ ] CORS/Better Auth origins are exact deterministic allowlists with no credentialed wildcards; preview origins are PR-specific and Tauri custom protocols are explicit.
-- [ ] Cookies are host-scoped, Secure/HTTPS, and CSRF/session-fixation behavior is validated.
+- [ ] CORS/Better Auth origin matrix is recorded before implementation and uses exact deterministic allowlists with no credentialed wildcards; matrix includes web origins, API origins, preview origin pattern, and explicit Tauri custom protocols.
+- [ ] Cookie domain/path/SameSite/Secure rules are recorded; cookies are host-scoped, Secure/HTTPS, and CSRF/session-fixation behavior is validated.
 - [ ] Tauri CSP `connect-src` is exact per environment and does not broadly allow `https:`.
 - [ ] `/health` is unauthenticated, shallow, and suitable for ECS health checks.
 - [ ] CloudWatch log retention is 30 days for staging/production and 7 days for previews.
-- [ ] ADRs under `docs/adr/` for ECS Express/AWS infra, environment/preview strategy, and Terraform/Turso/secrets boundaries match repository ADR style and include status/context/decision/consequences.
+- [ ] ADRs under `docs/adr/` for ECS Express/AWS infra, environment/preview strategy, and Terraform/Turso/secrets boundaries match existing repository ADR style: concise `# Title` plus prose; no mandatory Status/Context/Decision/Consequences headings.
 - [ ] Validation commands are deterministic and non-silent: no `|| true`, no macOS `timeout`, Terraform init before validate, and actionlint or explicit blocker.
-- [ ] `npx agent-browser` validation is run after frontend changes.
+- [ ] `npx agent-browser` validation is run after frontend changes against a running local or staging web app with recorded result/evidence; `--help` alone is not accepted.
 - [ ] Security review is completed before merge; Warp/Weft BLOCK remains hard gate until re-reviewed.
 
 ## Remaining blockers before implementation
 1. **Warp/Weft re-review**: Existing Warp and Weft BLOCK findings remain a hard gate until this amended plan and Phase 0 outputs are re-reviewed.
 2. **API custom-domain spike**: Implementation must validate a safe `api.<env-zone>` path for ECS Express before coding DNS/ECS modules. If unsafe, decide explicitly between deferring API custom domains or switching API to raw ECS/ALB.
-3. **Exact Route 53 zone names**: Production and staging environment zone names must be provided as Phase 0 inputs before Terraform variables/backends are finalized.
+3. **Exact Route 53 zone names**: Production and staging environment zone names must be provided as Phase 0 inputs through required `prod_zone_name` and `staging_zone_name` variables before Terraform variables/backends are finalized.
 4. **Dirty generated file**: `apps/web/src/routeTree.gen.ts` is already modified and must be handled separately before implementation commits begin.
 5. **Actionlint availability**: If `npx actionlint` is unavailable, add an equivalent CI validation gate and record the blocker; do not silently skip workflow validation.
 6. **S3 SDK/runtime details**: Confirm the current app S3 implementation and whether AWS SDK default credential provider is already available or must be added.
+7. **Redis auth state boundary**: Confirm ElastiCache auth can be configured without storing token values in Terraform state, or stop for a documented security exception with compensating controls.
+8. **Preview safety evidence**: Define and test the same-repo, maintainer-approved preview deploy path before any AWS credentials are exposed to preview workflows.
