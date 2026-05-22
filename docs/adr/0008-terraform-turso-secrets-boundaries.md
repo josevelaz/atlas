@@ -1,0 +1,9 @@
+# Keep Terraform out of secret values
+
+Terraform manages AWS infrastructure and durable resource boundaries, not runtime secret values. The AWS-managed surface includes VPCs, ECR, ECS Express services, ElastiCache, S3, CloudFront, Route53, ACM, IAM, GitHub OIDC roles, and AWS Secrets Manager secret names and ARNs. Terraform may define which secrets exist and which roles can read them, but the secret values themselves must never enter Terraform variables, plan output, state, workflow logs, pull request comments, or generated artifacts intended for reviewers.
+
+Terraform also uses the community `celest-dev/turso` provider to manage Turso databases and groups only. Turso auth tokens are created and rotated outside Terraform by protected CI workflows or operators, then written directly to AWS Secrets Manager. AWS Secrets Manager is the runtime source of truth for secret values, and ECS Express injects application secrets from Secrets Manager ARNs. This keeps revocable Turso credentials out of Terraform state while still allowing Terraform to own the database topology and application permissions.
+
+Secret seeding and rotation happen through protected manual GitHub Actions workflows with environment approval before AWS credentials are issued. Those workflows write environment-scoped values to Secrets Manager and provide audit evidence through workflow runs and approvals. ElastiCache uses IAM authentication from the ECS task role, so there is no Redis or Valkey token material to generate, seed, rotate, or store in Terraform state.
+
+Terraform plan handling follows the same boundary. CI suppresses raw plan stdout, publishes only sanitized allowlisted summaries in pull request comments, and allows raw binary or JSON plan artifacts only in a confirmed private repository with restricted access and one-day retention. Raw artifacts must not be copied into comments, logs, issues, or external systems.
