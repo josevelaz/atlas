@@ -48,6 +48,7 @@ export const app = new Elysia()
 	.use(html())
 	.use(serverTiming())
 	.use(staticPlugin())
+	.get("/health", () => ({ status: "ok" }))
 	.all("/api/auth/*", ({ request }) => auth.handler(request))
 	// Derive authSession / authUser for every downstream route
 	.use(authSessionPlugin)
