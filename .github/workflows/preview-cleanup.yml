@@ -1,0 +1,292 @@
+# ---------------------------------------------------------------------------
+# Preview environment cleanup — scheduled + manual
+#
+# Runs daily at 02:00 UTC (and on demand). For every preview/pr-{N}/
+# state key found in S3, checks whether the PR is still open AND has the
+# `preview` label. If either condition is false the preview stack is torn
+# down:
+#
+#   1. terraform destroy  — ECS service, CloudFront, IAM roles, log groups
+#   2. turso db destroy   — per-PR Turso database (hay-preview-pr-{N})
+#   3. aws secretsmanager — force-delete all hay/preview-pr-{N}/* secrets
+#
+# Safety constraints:
+#   - Preview OIDC role only — no production access
+#   - No secret values are ever logged
+#   - Idempotent: safe to run multiple times
+#   - Each PR is processed independently; one failure does not abort others
+# ---------------------------------------------------------------------------
+
+name: Preview Cleanup
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # daily at 02:00 UTC
+  workflow_dispatch: # manual trigger
+
+# Minimal top-level permissions — id-token is granted per-job via environment
+permissions:
+  contents: read
+
+jobs:
+  # ── 1. Discover stale previews ─────────────────────────────────────────────
+  discover:
+    name: Discover preview state keys
+    runs-on: ubuntu-latest
+    environment: preview # OIDC gate — grants id-token write
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+
+    outputs:
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
+      has_previews: ${{ steps.build-matrix.outputs.has_previews }}
+
+    steps:
+      - name: Configure AWS credentials (preview role)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.PREVIEW_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      # List all preview/pr-*/terraform.tfstate keys in the state bucket.
+      # Output is a JSON array of PR numbers for the matrix strategy below.
+      - name: List preview state keys
+        id: list-states
+        env:
+          BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+
+          echo "Listing preview state keys in s3://${BUCKET}/preview/"
+
+          # aws s3 ls returns lines like:
+          #   PRE preview/pr-42/
+          # We extract the numeric PR number from each prefix.
+          PR_NUMBERS=$(
+            aws s3 ls "s3://${BUCKET}/preview/" --delimiter "/" \
+              | awk '/PRE preview\/pr-[0-9]+\/$/ { match($0, /pr-([0-9]+)\//, a); if (a[1] != "") print a[1] }' \
+              | sort -n
+          )
+
+          echo "Found PR state keys: ${PR_NUMBERS:-<none>}"
+
+          # Write to a temp file so the next step can read it
+          printf '%s\n' ${PR_NUMBERS} > /tmp/pr_numbers.txt
+          echo "count=$(echo "${PR_NUMBERS}" | grep -c '[0-9]' || echo 0)" >> "$GITHUB_OUTPUT"
+
+      # For each PR number, check open status + preview label via GitHub API.
+      # Build a JSON matrix of PRs that should be destroyed.
+      - name: Build stale-preview matrix
+        id: build-matrix
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          STALE=()
+
+          while IFS= read -r PR_NUM; do
+            [[ -z "$PR_NUM" ]] && continue
+
+            echo "Checking PR #${PR_NUM}..."
+
+            # Fetch PR state and labels from GitHub API
+            PR_JSON=$(
+              gh api "repos/${REPO}/pulls/${PR_NUM}" \
+                --jq '{state: .state, labels: [.labels[].name]}' \
+                2>/dev/null || echo '{"state":"not_found","labels":[]}'
+            )
+
+            PR_STATE=$(echo "$PR_JSON" | jq -r '.state')
+            HAS_LABEL=$(echo "$PR_JSON" | jq -r '[.labels[] | select(. == "preview")] | length > 0')
+
+            echo "  PR #${PR_NUM}: state=${PR_STATE} has_preview_label=${HAS_LABEL}"
+
+            # Destroy if: PR is closed/merged/not found, OR preview label was removed
+            if [[ "$PR_STATE" != "open" || "$HAS_LABEL" == "false" ]]; then
+              echo "  → Marking PR #${PR_NUM} for cleanup (state=${PR_STATE}, label=${HAS_LABEL})"
+              STALE+=("$PR_NUM")
+            else
+              echo "  → PR #${PR_NUM} is active — skipping"
+            fi
+          done < /tmp/pr_numbers.txt
+
+          # Build JSON matrix
+          if [[ ${#STALE[@]} -eq 0 ]]; then
+            echo "No stale previews found."
+            echo "matrix={\"pr_number\":[]}" >> "$GITHUB_OUTPUT"
+            echo "has_previews=false" >> "$GITHUB_OUTPUT"
+          else
+            MATRIX_JSON=$(printf '%s\n' "${STALE[@]}" | jq -R . | jq -sc '{pr_number: .}')
+            echo "Stale previews to destroy: ${STALE[*]}"
+            echo "matrix=${MATRIX_JSON}" >> "$GITHUB_OUTPUT"
+            echo "has_previews=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── 2. Destroy each stale preview ─────────────────────────────────────────
+  destroy:
+    name: Destroy preview PR #${{ matrix.pr_number }}
+    runs-on: ubuntu-latest
+    environment: preview # OIDC gate — preview role only
+    needs: discover
+    if: needs.discover.outputs.has_previews == 'true'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    strategy:
+      fail-fast: false # process all PRs even if one fails
+      matrix: ${{ fromJson(needs.discover.outputs.matrix) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Configure AWS credentials (preview role)
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.PREVIEW_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      # ── 2a. Terraform destroy ──────────────────────────────────────────────
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269ef065 # v3.1.2
+
+      - name: Terraform init (preview/pr-${{ matrix.pr_number }})
+        working-directory: infra/preview
+        env:
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${TF_STATE_BUCKET}" \
+            -backend-config="key=preview/pr-${PR_NUMBER}/terraform.tfstate" \
+            -backend-config="region=us-east-1" \
+            -backend-config="use_lockfile=true" \
+            -input=false \
+            -reconfigure
+
+      - name: Terraform destroy (preview/pr-${{ matrix.pr_number }})
+        working-directory: infra/preview
+        env:
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          # api_image_uri is required by the variable definition but unused during destroy.
+          # A placeholder satisfies the validation without triggering any real resource lookup.
+          TF_VAR_api_image_uri: "placeholder/destroy-only:latest"
+          TF_VAR_pr_number: ${{ matrix.pr_number }}
+          TF_VAR_staging_state_bucket: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          set -euo pipefail
+          echo "Running terraform destroy for PR #${TF_VAR_pr_number}..."
+          terraform destroy \
+            -auto-approve \
+            -input=false
+          echo "terraform destroy completed for PR #${TF_VAR_pr_number}"
+
+      # ── 2b. Delete Turso database ──────────────────────────────────────────
+      # The Turso database (hay-preview-pr-{N}) is managed by the turso module
+      # and should be destroyed by terraform destroy above. This step is a
+      # belt-and-suspenders cleanup in case the Turso provider fails or the
+      # state was already deleted.
+      - name: Delete Turso database (belt-and-suspenders)
+        env:
+          TURSO_API_TOKEN: ${{ secrets.TURSO_API_TOKEN }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+        run: |
+          set -euo pipefail
+          DB_NAME="hay-preview-pr-${PR_NUMBER}"
+          echo "Attempting to delete Turso database: ${DB_NAME}"
+
+          HTTP_STATUS=$(
+            curl -s -o /dev/null -w "%{http_code}" \
+              -X DELETE \
+              -H "Authorization: Bearer ${TURSO_API_TOKEN}" \
+              "https://api.turso.tech/v1/organizations/hay/databases/${DB_NAME}"
+          )
+
+          case "$HTTP_STATUS" in
+            200|204)
+              echo "Turso database ${DB_NAME} deleted (HTTP ${HTTP_STATUS})"
+              ;;
+            404)
+              echo "Turso database ${DB_NAME} not found — already deleted or never created"
+              ;;
+            *)
+              echo "WARNING: Unexpected HTTP ${HTTP_STATUS} deleting Turso database ${DB_NAME}"
+              # Non-fatal: Terraform destroy already handled the primary path
+              ;;
+          esac
+
+      # ── 2c. Force-delete Secrets Manager entries ───────────────────────────
+      # Secrets have a 7-day recovery window by default. Force-delete removes
+      # them immediately so the name can be reused if the PR is reopened.
+      - name: Force-delete Secrets Manager entries
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+        run: |
+          set -euo pipefail
+          SECRET_PREFIX="hay/preview-pr-${PR_NUMBER}/"
+          echo "Force-deleting Secrets Manager entries under ${SECRET_PREFIX}..."
+
+          # List all secret ARNs under the preview prefix
+          SECRET_ARNS=$(
+            aws secretsmanager list-secrets \
+              --filter Key=name,Values="${SECRET_PREFIX}" \
+              --query "SecretList[].ARN" \
+              --output text
+          )
+
+          if [[ -z "$SECRET_ARNS" ]]; then
+            echo "No secrets found under ${SECRET_PREFIX} — nothing to delete"
+          else
+            for ARN in $SECRET_ARNS; do
+              # Log ARN (not values — ARNs are safe to log)
+              echo "Deleting secret: ${ARN}"
+              aws secretsmanager delete-secret \
+                --secret-id "$ARN" \
+                --force-delete-without-recovery \
+                --no-cli-pager
+              echo "Deleted: ${ARN}"
+            done
+          fi
+
+      # ── 2d. Delete Terraform state key ────────────────────────────────────
+      # After a successful destroy the state file is empty but still present.
+      # Remove it so the discover step won't pick it up on the next run.
+      - name: Remove Terraform state key from S3
+        env:
+          BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+        run: |
+          set -euo pipefail
+          STATE_KEY="preview/pr-${PR_NUMBER}/terraform.tfstate"
+          LOCK_KEY="preview/pr-${PR_NUMBER}/terraform.tfstate.tflock"
+
+          echo "Removing state key: s3://${BUCKET}/${STATE_KEY}"
+          aws s3 rm "s3://${BUCKET}/${STATE_KEY}" --only-show-errors || \
+            echo "State key not found — already removed"
+
+          echo "Removing lock key (if present): s3://${BUCKET}/${LOCK_KEY}"
+          aws s3 rm "s3://${BUCKET}/${LOCK_KEY}" --only-show-errors || \
+            echo "Lock key not found — already removed"
+
+      # ── 2e. Summary ────────────────────────────────────────────────────────
+      - name: Log destroyed resources
+        env:
+          PR_NUMBER: ${{ matrix.pr_number }}
+        run: |
+          echo "=== Preview cleanup complete for PR #${PR_NUMBER} ==="
+          echo "Resources destroyed:"
+          echo "  - Terraform stack: preview/pr-${PR_NUMBER}"
+          echo "    (ECS service, CloudFront distribution, IAM roles, log groups)"
+          echo "  - Turso database: hay-preview-pr-${PR_NUMBER}"
+          echo "  - Secrets Manager: hay/preview-pr-${PR_NUMBER}/*"
+          echo "  - Terraform state: preview/pr-${PR_NUMBER}/terraform.tfstate"
+          echo "No secret values were logged."
