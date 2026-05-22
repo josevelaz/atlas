@@ -106,12 +106,19 @@ export const config = {
 		.default("it's a secret")
 		.asString(),
 	POSTHOG_HOST: env.get("POSTHOG_HOST").default("localhost").asString(),
-	S3_ENDPOINT: env.get("S3_ENDPOINT").default("localhost").asString(),
-	S3_ACCESS_KEY_ID: env.get("S3_ACCESS_KEY_ID").default("minio").asString(),
-	S3_SECRET_ACCESS_KEY: env
-		.get("S3_SECRET_ACCESS_KEY")
-		.default("minio")
-		.asString(),
+	// S3 / object storage
+	// S3_BUCKET and S3_REGION are required for production; sensible defaults for local dev.
+	S3_BUCKET: env.get("S3_BUCKET").default("hay-local").asString(),
+	S3_REGION: env.get("S3_REGION").default("us-east-1").asString(),
+	// Optional key prefix (e.g. "uploads/"). Defaults to empty string (no prefix).
+	S3_PREFIX: env.get("S3_PREFIX").default("").asString(),
+	// Optional custom endpoint — set for local MinIO or other S3-compatible stores.
+	// Leave unset in production to use the real AWS S3 endpoint.
+	S3_ENDPOINT: env.get("S3_ENDPOINT").asString(),
+	// Long-lived credentials — only needed for local dev / MinIO.
+	// In ECS/production, leave unset and rely on the task-role credential chain.
+	S3_ACCESS_KEY_ID: env.get("S3_ACCESS_KEY_ID").asString(),
+	S3_SECRET_ACCESS_KEY: env.get("S3_SECRET_ACCESS_KEY").asString(),
 	LOCK_STORE: env
 		.get("LOCK_STORE")
 		.default("memory")
