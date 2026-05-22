@@ -43,7 +43,7 @@ Production, staging, and preview deployments use separate IAM roles:
 - Staging deployment role.
 - Preview deployment role scoped to a specific PR preview.
 
-Each environment has a separate GitHub OIDC trust policy. Production, staging, and preview trust conditions must be reviewed independently so a preview workflow cannot assume production or staging credentials.
+Each environment has a separate GitHub OIDC trust policy. Production, staging, and preview trust conditions must be reviewed independently so a preview workflow cannot assume production or staging credentials. OIDC trust policies constrain repository, ref or protected GitHub Environment, audience, subject, and workflow identity; PR same-repo checks, exact label checks, and actor permission checks must be enforced as workflow preflight before AWS credentials are requested.
 
 Preview roles are per-preview security boundaries. A preview role for PR `<number>` must not access another preview's `/preview/pr-<other-number>/*` secrets.
 

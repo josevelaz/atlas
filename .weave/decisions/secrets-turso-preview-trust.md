@@ -14,7 +14,7 @@ This deployment uses one AWS account in `us-east-1` with environment-scoped secr
 
 Preview environments are limited to same-repository branches, are gated by the exact `preview` label, and require maintainer approval before any privileged deployment workflow can receive AWS credentials.
 
-Terraform manages infrastructure shape, names, ARNs, IAM permissions, Turso database/group resources, and references to secrets. Terraform must not manage or store protected secret values, Turso auth tokens, or Redis/ElastiCache auth token values in state.
+Terraform manages infrastructure shape, names, ARNs, IAM permissions, Turso database/group resources, and references to secrets. Terraform must not manage or store protected secret values or Turso auth tokens in state. Redis/ElastiCache uses IAM authentication, so there is no Redis token material to store in Terraform state or Secrets Manager.
 
 ## Decision
 
@@ -28,12 +28,13 @@ Preview automation is split into two workflows:
    - It may perform validation, linting, tests, plan-like checks that do not require privileged credentials, and status reporting.
 2. A privileged preview deployment workflow runs only through `workflow_dispatch` and protected environment approval.
    - It is same-repository only.
-   - It must require `head.repo.full_name == github.repository` before assuming any AWS role.
-   - It must require the exact `preview` label; similarly named labels do not qualify.
-   - It must require the triggering actor to have repository write or maintainer permission.
+   - Mandatory workflow preflight checks must require `head.repo.full_name == github.repository` before `configure-aws-credentials` runs.
+   - Mandatory workflow preflight checks must require the exact `preview` label; similarly named labels do not qualify.
+   - Mandatory workflow preflight checks must require the triggering actor/deployer to have repository write or maintainer permission.
    - It receives AWS credentials only after protected environment approval.
+   - The OIDC trust policy constrains repository, ref or GitHub Environment, audience, subject, and workflow identity. It must not be described as enforcing PR labels, `head.repo.full_name`, or actor permissions; those checks happen in workflow preflight before AWS credentials are requested.
 
-Fork PRs are non-privileged by design. They may run the unprivileged `pull_request` workflow, but they must never receive AWS credentials, protected secrets, Turso tokens, Redis/ElastiCache auth tokens, or preview deployment privileges.
+Fork PRs are non-privileged by design. They may run the unprivileged `pull_request` workflow, but they must never receive AWS credentials, protected secrets, Turso tokens, or preview deployment privileges.
 
 ### 2. Protected secret seeding
 
@@ -65,18 +66,18 @@ Turso auth tokens are explicitly outside Terraform:
 
 This keeps short-lived or revocable Turso auth material out of Terraform state while allowing Terraform to own the durable Turso resource topology.
 
-### 4. Redis/ElastiCache auth token lifecycle
+### 4. Redis/ElastiCache IAM authentication
 
-Redis/ElastiCache auth token values must not enter Terraform state.
+ElastiCache/Valkey uses IAM authentication for this deployment.
 
-Required lifecycle:
+Required controls:
 
-- Generate, seed, and rotate token values through protected out-of-band workflows.
-- Store token values in AWS Secrets Manager under the environment-specific path.
-- Grant workloads permission to read only the matching secret path.
-- Do not pass auth token values through Terraform variables, resource arguments, outputs, local files, generated plans, or CI logs.
+- ECS task roles authenticate directly to Redis/Valkey through IAM.
+- Terraform configures the IAM authentication path, networking, names, ARNs, and permissions only.
+- No Redis/ElastiCache auth token values are generated, seeded, rotated, stored in Secrets Manager, passed through Terraform variables/resource arguments, written to outputs, rendered into plans, or logged in CI.
+- Secret seeding workflows have no Redis token lifecycle step.
 
-Terraform may manage Redis/ElastiCache infrastructure, names, ARNs, network placement, and IAM permissions, but token material remains external to Terraform.
+Terraform may manage Redis/ElastiCache infrastructure, names, ARNs, network placement, and IAM permissions, but there is no Redis token material to manage.
 
 ### 5. Sanitized preview database seeding
 
@@ -107,7 +108,9 @@ Privileged preview deployment requires all of the following:
 - Exact label match: `preview`.
 - Actor has write or maintainer permission.
 - Protected environment approval succeeds.
-- AWS OIDC credentials are issued only after the previous checks pass.
+- AWS OIDC credentials are issued only after the previous workflow preflight checks and protected environment approval pass.
+
+The same-repository, exact-label, and actor-permission checks are mandatory workflow preflight checks before `configure-aws-credentials` runs. The GitHub OIDC trust policy cannot inspect PR labels, `head.repo.full_name`, or actor permission; it constrains the repository, ref or protected environment, audience, subject, and workflow identity.
 
 If any condition fails, the preview deploy workflow must not assume AWS roles, read protected secrets, seed databases, or create preview infrastructure.
 
@@ -118,7 +121,7 @@ If any condition fails, the preview deploy workflow must not assume AWS roles, r
 - Privileged preview deploys are same-repository, label-gated, permission-gated, and environment-approved.
 - Terraform manages secret metadata, ARNs, resource topology, and permissions only; it never manages protected secret values.
 - Turso auth tokens are created and rotated outside Terraform and stored in Secrets Manager.
-- Redis/ElastiCache auth token values are created and rotated outside Terraform and stored in Secrets Manager.
+- Redis/ElastiCache uses IAM authentication; ECS task roles authenticate directly and no Redis token material is generated, stored, or seeded.
 - Preview DBs are seeded only from sanitized templates that exclude personal data, auth material, user content, sessions, and production/staging-derived message data.
 
 ## Consequences

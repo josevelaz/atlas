@@ -15,11 +15,11 @@ Each environment uses a delegated Route 53 hosted zone, not the root domain. Hos
 
 | Environment | Web hostname | API hostname |
 | --- | --- | --- |
-| Production | `app.<prod-zone>` | `api.<prod-zone>` |
-| Staging | `app.<staging-zone>` | `api.<staging-zone>` |
+| Production | `app.<prod-zone>` | `api.<prod-zone>` reserved/deferred |
+| Staging | `app.<staging-zone>` | `api.<staging-zone>` reserved/deferred |
 
 The web frontend is served through CloudFront with an alias at `app.<zone>`.
 
-The API hostname `api.<zone>` is reserved for future custom-domain use. Initially, the ECS Express API uses its generated `.on.aws` URL; API custom domain setup is deferred per the ECS Express custom domain spike decision.
+The API hostname `api.<zone>` is reserved for future custom-domain use. Initially, the ECS Express API uses its generated `.on.aws` URL from Terraform outputs; API custom domain setup is deferred per the ECS Express custom domain spike decision. Do not create `api.<zone>` Route 53 records or API ACM certificates in the initial implementation.
 
 Preview environments use generated CloudFront and ECS URLs only. They do not receive custom DNS names.

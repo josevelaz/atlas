@@ -83,6 +83,8 @@ Because previews share the non-production Redis deployment, preview data must us
 
 Preview roles and applications must not have access to production Redis connection details or production Redis network paths.
 
+Redis/ElastiCache authentication uses IAM. ECS task roles authenticate directly to Redis/Valkey; no Redis auth token material is created, stored in Secrets Manager, or managed in Terraform state.
+
 ### 7. VPC separation
 
 Network isolation is enforced with two VPCs in the same AWS account:
@@ -109,9 +111,13 @@ GitHub OIDC trust policies must be separated per environment:
 - Staging OIDC trust policy
 - Preview OIDC trust policy
 
-Preview OIDC trust must be restricted to same-repository branches only. Fork PRs never receive AWS credentials. In GitHub terms, preview credential issuance must require that `head.repo.full_name == github.repository` before any AWS role can be assumed.
+GitHub OIDC trust policies constrain repository, ref or protected GitHub Environment, audience, subject, and workflow identity. They cannot enforce PR labels, `head.repo.full_name`, or actor repository permissions.
+
+Preview credential issuance still requires same-repository PRs, the exact `preview` label, and a trusted actor/deployer with write or maintainer permission, but those are mandatory workflow preflight checks that must pass before `configure-aws-credentials` runs. Fork PRs never receive AWS credentials.
 
 Production deploys require GitHub Environment approval. The production role trust policy must be tied to the production GitHub Environment so protected environment approval is required before production AWS credentials are issued.
+
+Protected GitHub Environment approval is the credential gate for privileged deploy workflows.
 
 ### 10. KMS model
 

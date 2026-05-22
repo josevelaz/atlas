@@ -75,7 +75,8 @@ Production desktop release is blocked until this validation is complete.
 ## Redis/Valkey Security Contracts
 
 - Redis/Valkey must use TLS in transit wherever ElastiCache supports it.
-- Redis/Valkey auth token is required.
+- Redis/Valkey must use ElastiCache IAM authentication; the ECS task role authenticates directly to Redis/Valkey.
+- No Redis/Valkey auth token material may be generated, stored in Terraform state, seeded to Secrets Manager, or managed anywhere else.
 - Redis/Valkey security groups must restrict inbound access to ECS task security groups only.
 - No public Redis/Valkey ingress is allowed.
 - Every environment and PR preview must use a distinct key prefix.
