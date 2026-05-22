@@ -1,29 +1,34 @@
-output "bucket_name" {
-  description = "S3 bucket name — use in backend config blocks."
-  value       = module.remote_state.bucket_name
+# ---------------------------------------------------------------------------
+# Bootstrap stack outputs
+#
+# Role ARNs are the primary consumer-facing outputs — store them as GitHub
+# Actions secrets/variables after the first `terraform apply`.
+#
+# Usage in a GitHub Actions workflow:
+#
+#   - uses: aws-actions/configure-aws-credentials@v4
+#     with:
+#       role-to-assume: ${{ vars.PREVIEW_DEPLOY_ROLE_ARN }}
+#       aws-region: us-east-1
+# ---------------------------------------------------------------------------
+
+output "github_oidc_provider_arn" {
+  description = "ARN of the GitHub Actions OIDC provider. Reference this when adding new roles outside this module."
+  value       = aws_iam_openid_connect_provider.github.arn
 }
 
-output "bucket_arn" {
-  description = "S3 bucket ARN."
-  value       = module.remote_state.bucket_arn
+output "preview_deploy_role_arn" {
+  description = "ARN for the preview-deploy role. Store as GitHub Actions variable PREVIEW_DEPLOY_ROLE_ARN."
+  value       = module.github_oidc_roles.preview_role_arn
 }
 
-output "aws_region" {
-  description = "AWS region — use in backend config blocks."
-  value       = module.remote_state.aws_region
+output "staging_deploy_role_arn" {
+  description = "ARN for the staging-deploy role. Store as GitHub Actions variable STAGING_DEPLOY_ROLE_ARN."
+  value       = module.github_oidc_roles.staging_role_arn
 }
 
-output "ecr_repository_url" {
-  description = "Full URI of the ECR repository — use in docker push and image references."
-  value       = module.ecr.repository_url
-}
-
-output "ecr_repository_arn" {
-  description = "ARN of the ECR repository — use in IAM policy resources."
-  value       = module.ecr.repository_arn
-}
-
-output "ecr_registry_id" {
-  description = "Registry ID (AWS account ID) that owns the ECR repository."
-  value       = module.ecr.registry_id
+output "production_deploy_role_arn" {
+  description = "ARN for the production-deploy role. Store as GitHub Actions secret PRODUCTION_DEPLOY_ROLE_ARN."
+  value       = module.github_oidc_roles.production_role_arn
+  sensitive   = true
 }
