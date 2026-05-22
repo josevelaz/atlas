@@ -68,3 +68,22 @@ output "turso_database_url" {
   description = "Staging Turso libSQL connection URL. Seed this into Secrets Manager (hay/staging/TURSO_DATABASE_URL) — do NOT use directly in application config."
   value       = module.turso.database_url
 }
+
+# ---------------------------------------------------------------------------
+# ECS Express API outputs (staging)
+# ---------------------------------------------------------------------------
+
+output "api_url" {
+  description = "ECS Express .on.aws URL for the staging API. Use as the API base URL."
+  value       = module.ecs_api.api_url
+}
+
+output "api_task_role_arn" {
+  description = "ARN of the staging API ECS task role."
+  value       = module.ecs_api.task_role_arn
+}
+
+output "api_log_group_name" {
+  description = "CloudWatch log group name for the staging API."
+  value       = module.ecs_api.log_group_name
+}

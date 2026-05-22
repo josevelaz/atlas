@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/aws"
       version = ">= 6.43.0"
     }
+    turso = {
+      source  = "turso-community/turso"
+      version = ">= 0.2.0"
+    }
   }
 }
 
