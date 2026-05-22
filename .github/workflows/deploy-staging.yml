@@ -119,11 +119,14 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TF_DIR }}
+        env:
+          TF_BACKEND_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          TF_BACKEND_REGION: ${{ env.AWS_REGION }}
         run: |
           terraform init \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="bucket=${TF_BACKEND_BUCKET}" \
             -backend-config="key=env/staging/terraform.tfstate" \
-            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="region=${TF_BACKEND_REGION}" \
             -backend-config="use_lockfile=true" \
             -input=false
 
@@ -133,28 +136,58 @@ jobs:
         env:
           TF_VAR_api_image_uri: ${{ needs.build-push.outputs.image_uri }}
         run: |
-          # Redirect raw plan output to file — do not echo to logs
+          # Raw plan output is suppressed — only the binary plan file is kept.
           terraform plan \
             -var="api_image_uri=${TF_VAR_api_image_uri}" \
             -out=tfplan \
             -input=false \
             -no-color \
-            > /tmp/tfplan-raw.txt 2>&1 || { cat /tmp/tfplan-raw.txt; exit 1; }
+            > /dev/null 2>&1
 
       - name: Generate sanitized plan summary
         id: summary
         working-directory: ${{ env.TF_DIR }}
         run: |
+          # Only resource address and change actions — no values, no diffs.
           SUMMARY=$(terraform show -json tfplan \
-            | jq '{changes: .resource_changes | map({address, change: {actions: .change.actions}})}')
-          echo "plan_summary<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$SUMMARY" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+            | jq -r '
+                .resource_changes
+                | map(select(.change.actions != ["no-op"]))
+                | map({address, actions: .change.actions})
+                | if length == 0 then
+                    "No infrastructure changes."
+                  else
+                    (["| Resource | Actions |", "|---|---|"] +
+                     map("| `\(.address)` | \(.actions | join(", ")) |"))
+                    | join("\n")
+                  end
+              ')
+          # Use a random delimiter to prevent heredoc injection.
+          DELIMITER="EOF_$(openssl rand -hex 8)"
+          {
+            echo "plan_summary<<${DELIMITER}"
+            echo "${SUMMARY}"
+            echo "${DELIMITER}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write job summary
+        env:
+          SUMMARY: ${{ steps.summary.outputs.plan_summary }}
+        run: |
+          {
+            echo "## Terraform Plan — \`staging\`"
+            echo ""
+            echo "${SUMMARY}"
+            echo ""
+            echo "---"
+            echo "_Triggered by commit \`${{ github.sha }}\` · [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})_"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload tfplan artifact
+        if: ${{ github.event.repository.private == true }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: tfplan
+          name: tfplan-staging-${{ github.run_id }}
           path: ${{ env.TF_DIR }}/tfplan
           retention-days: 1
           if-no-files-found: error
@@ -231,11 +264,14 @@ jobs:
 
       - name: Terraform init
         working-directory: ${{ env.TF_DIR }}
+        env:
+          TF_BACKEND_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+          TF_BACKEND_REGION: ${{ env.AWS_REGION }}
         run: |
           terraform init \
-            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="bucket=${TF_BACKEND_BUCKET}" \
             -backend-config="key=env/staging/terraform.tfstate" \
-            -backend-config="region=${{ env.AWS_REGION }}" \
+            -backend-config="region=${TF_BACKEND_REGION}" \
             -backend-config="use_lockfile=true" \
             -input=false
 

@@ -112,6 +112,7 @@ jobs:
           TF_VAR_api_image_uri: ${{ needs.build-push.outputs.image_uri }}
           TF_VAR_prod_zone_name: ${{ secrets.PROD_ZONE_NAME }}
         run: |
+          # Raw plan output is suppressed — only the binary plan file is kept.
           set +e
           terraform plan \
             -var="api_image_uri=${TF_VAR_api_image_uri}" \
@@ -119,28 +120,59 @@ jobs:
             -out=tfplan \
             -input=false \
             -detailed-exitcode \
-            2>&1 | grep -v "Refreshing state\|Reading\|Read complete" \
-            | tee /tmp/plan-output.txt
-          EXITCODE=${PIPESTATUS[0]}
+            > /dev/null 2>&1
+          EXITCODE=$?
           echo "exitcode=${EXITCODE}" >> "$GITHUB_OUTPUT"
           # Exit 0 = no changes, 2 = changes present, 1 = error
           if [ "$EXITCODE" -eq 1 ]; then exit 1; fi
 
+      - name: Generate sanitized plan summary
+        id: summary
+        working-directory: ${{ env.TF_DIR }}
+        run: |
+          # Only resource address and change actions — no values, no diffs.
+          SUMMARY=$(terraform show -json tfplan \
+            | jq -r '
+                .resource_changes
+                | map(select(.change.actions != ["no-op"]))
+                | map({address, actions: .change.actions})
+                | if length == 0 then
+                    "No infrastructure changes."
+                  else
+                    (["| Resource | Actions |", "|---|---|"] +
+                     map("| `\(.address)` | \(.actions | join(", ")) |"))
+                    | join("\n")
+                  end
+              ')
+          # Use a random delimiter to prevent heredoc injection.
+          DELIMITER="EOF_$(openssl rand -hex 8)"
+          {
+            echo "plan_summary<<${DELIMITER}"
+            echo "${SUMMARY}"
+            echo "${DELIMITER}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write job summary
+        env:
+          SUMMARY: ${{ steps.summary.outputs.plan_summary }}
+        run: |
+          {
+            echo "## Terraform Plan — \`production\`"
+            echo ""
+            echo "${SUMMARY}"
+            echo ""
+            echo "---"
+            echo "_Triggered by commit \`${{ github.sha }}\` · [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})_"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload plan artifact
+        if: ${{ github.event.repository.private == true }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: tfplan-production-${{ github.sha }}
+          name: tfplan-production-${{ github.run_id }}
           path: ${{ env.TF_DIR }}/tfplan
           retention-days: 1
           if-no-files-found: error
-
-      - name: Plan summary (sanitized)
-        run: |
-          echo "### Terraform Plan — Production" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          grep -E "^(Plan:|No changes|Error)" /tmp/plan-output.txt \
-            | head -20 >> "$GITHUB_STEP_SUMMARY" || true
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
   # ── 3. Approval gate ──────────────────────────────────────────────────────
   #
@@ -237,7 +269,7 @@ jobs:
       - name: Download plan artifact
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
         with:
-          name: tfplan-production-${{ github.sha }}
+          name: tfplan-production-${{ github.run_id }}
           path: ${{ env.TF_DIR }}
 
       - name: Terraform apply (pre-approved plan)

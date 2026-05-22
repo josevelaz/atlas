@@ -1,0 +1,49 @@
+# Deploy workflow: preview environment (per-PR ephemeral stack).
+#
+# Triggered on pull_request events (opened, synchronize, reopened).
+# Runs a sanitized Terraform plan via the tf-plan-summary reusable workflow,
+# then applies the plan to provision/update the preview stack.
+#
+# Secrets required (set in repo/environment settings):
+#   PREVIEW_DEPLOY_ROLE_ARN   IAM role ARN for the preview OIDC role
+#   TF_STATE_BUCKET           S3 bucket holding Terraform state
+#   ECR_REPOSITORY_URL        Full ECR repo URL (no tag)
+
+name: Deploy — Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write   # required for PR comment posting
+
+concurrency:
+  group: deploy-preview-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Plan ────────────────────────────────────────────────────────────────────
+  plan:
+    name: Terraform plan (preview)
+    uses: ./.github/workflows/tf-plan-summary.yml
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    with:
+      environment: preview
+      working_directory: infra/preview
+      aws_region: us-east-1
+      role_arn: ${{ vars.PREVIEW_DEPLOY_ROLE_ARN }}
+      state_bucket: ${{ vars.TF_STATE_BUCKET }}
+      state_key: preview/pr-${{ github.event.pull_request.number }}/terraform.tfstate
+      pr_number: ${{ github.event.pull_request.number }}
+    secrets:
+      TF_VARS_JSON: >-
+        {
+          "pr_number": "${{ github.event.pull_request.number }}",
+          "api_image_uri": "${{ vars.ECR_REPOSITORY_URL }}:${{ github.sha }}"
+        }

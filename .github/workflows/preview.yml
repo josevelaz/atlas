@@ -308,7 +308,7 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -input=false
 
-      # ── 5. Terraform plan (sanitized output only) ─────────────────────────────
+      # ── 5. Terraform plan (raw output suppressed) ────────────────────────────
       - name: Terraform plan
         id: plan
         working-directory: infra/preview
@@ -316,28 +316,59 @@ jobs:
           TF_VAR_pr_number: ${{ env.PR_NUMBER }}
           IMAGE_URI: ${{ steps.image.outputs.image_uri }}
         run: |
+          # Raw plan output is suppressed — only the binary plan file is kept.
           set +e
           terraform plan \
             -var="pr_number=${PR_NUMBER}" \
             -var="api_image_uri=${IMAGE_URI}" \
             -out=tfplan \
             -input=false \
-            -no-color 2>&1 | tee /tmp/plan_raw.txt
-          EXIT_CODE=${PIPESTATUS[0]}
+            -no-color \
+            > /dev/null 2>&1
+          EXIT_CODE=$?
           set -e
+          exit $EXIT_CODE
 
-          # Sanitize: strip lines that may contain secret values or ARNs
-          grep -v -E '(sensitive|password|secret|token|key\s*=|arn:aws:secretsmanager)' \
-            /tmp/plan_raw.txt \
-            | head -200 > /tmp/plan_sanitized.txt || true
-
+      # ── 5a. Extract sanitized plan summary ───────────────────────────────────
+      - name: Generate sanitized plan summary
+        id: summary
+        working-directory: infra/preview
+        run: |
+          # Only resource address and change actions — no values, no diffs.
+          SUMMARY=$(terraform show -json tfplan \
+            | jq -r '
+                .resource_changes
+                | map(select(.change.actions != ["no-op"]))
+                | map({address, actions: .change.actions})
+                | if length == 0 then
+                    "No infrastructure changes."
+                  else
+                    (["| Resource | Actions |", "|---|---|"] +
+                     map("| `\(.address)` | \(.actions | join(", ")) |"))
+                    | join("\n")
+                  end
+              ')
+          # Use a random delimiter to prevent heredoc injection.
+          DELIMITER="EOF_$(openssl rand -hex 8)"
           {
-            echo "plan_summary<<PLAN_EOF"
-            cat /tmp/plan_sanitized.txt
-            echo "PLAN_EOF"
+            echo "plan_summary<<${DELIMITER}"
+            echo "${SUMMARY}"
+            echo "${DELIMITER}"
           } >> "$GITHUB_OUTPUT"
 
-          exit $EXIT_CODE
+      # ── 5b. Write job summary ─────────────────────────────────────────────────
+      - name: Write job summary
+        env:
+          SUMMARY: ${{ steps.summary.outputs.plan_summary }}
+        run: |
+          {
+            echo "## Terraform Plan — \`preview / PR #${PR_NUMBER}\`"
+            echo ""
+            echo "${SUMMARY}"
+            echo ""
+            echo "---"
+            echo "_Triggered by commit \`${{ github.sha }}\` · [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})_"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # ── 6. Terraform apply ────────────────────────────────────────────────────
       - name: Terraform apply
@@ -446,7 +477,7 @@ jobs:
         env:
           CF_DOMAIN: ${{ steps.tf-outputs.outputs.cf_domain }}
           API_URL: ${{ steps.tf-outputs.outputs.api_url }}
-          PLAN_SUMMARY: ${{ steps.plan.outputs.plan_summary }}
+          PLAN_SUMMARY: ${{ steps.summary.outputs.plan_summary }}
         with:
           script: |
             const cfDomain    = process.env.CF_DOMAIN;
