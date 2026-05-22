@@ -125,7 +125,7 @@ For button-styled links, use the helper exported by the local button component:
 ```tsx
 import { buttonVariants } from "~/components/ui/button";
 
-<a class={buttonVariants({ variant: "outline" })}>Click here</a>
+<a class={buttonVariants({ variant: "outline" })}>Click here</a>;
 ```
 
 Some components wrap Kobalte/corvu primitives and may expose Solid-specific composition props. Read the copied local component file and the matching docs page before changing APIs.

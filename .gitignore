@@ -7,3 +7,6 @@ node_modules
 *.db
 *.db-shm
 *.db-wal
+
+.weave/runtime/
+.weave/state.json
