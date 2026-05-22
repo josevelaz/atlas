@@ -136,3 +136,41 @@ cd infra/envs/staging && terraform output api_url
 ```
 
 Update `tauri.conf.json` with the real URLs as part of the desktop release pipeline before bundling.
+
+---
+
+## Static SPA output path for S3 deployment
+
+The web frontend (`apps/web`) is a fully static SPA built with TanStack Start in SPA mode. The verified build output is:
+
+```
+apps/web/dist/client/
+```
+
+### Verified contents (as of 2026-05-22)
+
+| File / Directory | Description |
+|---|---|
+| `index.html` | Prerendered SPA shell (entry point for CloudFront) |
+| `assets/styles-*.css` | Tailwind CSS bundle (~12.9 kB, ~3.3 kB gzip) |
+| `assets/index-*.js` | App entry chunk (~0.2 kB) |
+| `assets/index-*.js` | Main app bundle (~188 kB, ~62 kB gzip) |
+| `assets/tanstack-libraries-*.js` | TanStack vendor chunk (~106 kB, ~32 kB gzip) |
+
+> **Note:** Asset filenames include a content hash (e.g. `index-DVxwEGNP.js`). The hash changes on every build — always upload the full `dist/client/` directory.
+
+### Build command
+
+```sh
+bun run --cwd apps/web build
+```
+
+This produces both `dist/client/` (static SPA, deploy this) and `dist/server/` (build-time prerender only — **do not deploy**).
+
+### S3 / CloudFront deployment
+
+- Upload the entire contents of `apps/web/dist/client/` to the S3 bucket root (or the configured prefix).
+- Configure CloudFront to serve `index.html` as the default root object.
+- Set the CloudFront error page for 403/404 to `/index.html` with HTTP 200 so client-side routing works.
+- All assets under `assets/` are content-hashed and can be cached indefinitely (`Cache-Control: max-age=31536000, immutable`).
+- `index.html` itself should use a short cache TTL or `no-cache` so new deployments are picked up promptly.
