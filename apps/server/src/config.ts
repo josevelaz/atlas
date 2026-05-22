@@ -27,6 +27,28 @@ const isLocalhostUrl = (url: string) => {
 	}
 };
 
+/**
+ * Returns true for Tauri custom-protocol origins:
+ *   tauri://localhost   (macOS / Linux)
+ *   https://tauri.localhost  (Windows)
+ *
+ * These origins use "localhost" as the hostname but are NOT web-browser
+ * localhost origins — they are the Tauri desktop app's custom protocol.
+ * They must be allowed in production and must NOT be flagged by the
+ * localhost-in-production safety check.
+ */
+const isTauriOrigin = (url: string) => {
+	try {
+		const parsed = new URL(url);
+		return (
+			parsed.protocol === "tauri:" ||
+			(parsed.protocol === "https:" && parsed.hostname === "tauri.localhost")
+		);
+	} catch {
+		return false;
+	}
+};
+
 const DATABASE_URL = env
 	.get("DATABASE_URL")
 	.default(LOCAL_DATABASE_URL)
@@ -52,21 +74,52 @@ const BETTER_AUTH_URL = env
 	.default("http://localhost:3000")
 	.asString();
 
+/**
+ * Tauri desktop app custom-protocol origins.
+ *   tauri://localhost       — macOS and Linux
+ *   https://tauri.localhost — Windows
+ *
+ * These are always included regardless of environment because they are
+ * desktop-only origins that cannot be spoofed by a web browser.
+ */
+const TAURI_ORIGINS = ["tauri://localhost", "https://tauri.localhost"] as const;
+
 const DEFAULT_CORS_ORIGINS = [
+	// Local web dev servers
 	"http://localhost:3000",
 	"http://localhost:3001",
 	"http://localhost:5173",
+	// Tauri desktop app (always included — see note above)
+	...TAURI_ORIGINS,
 ];
 
 const rawCorsOrigins = env.get("CORS_ALLOWED_ORIGINS").asString();
+
+/**
+ * Build the final allowed-origins list.
+ *
+ * When CORS_ALLOWED_ORIGINS is set (production / staging / preview), we use
+ * exactly those origins PLUS the Tauri custom-protocol origins (which are
+ * always safe to include).
+ *
+ * When CORS_ALLOWED_ORIGINS is unset (local dev), we fall back to
+ * DEFAULT_CORS_ORIGINS which already includes Tauri origins.
+ *
+ * Preview deployments: set CORS_ALLOWED_ORIGINS to a comma-separated list
+ * that includes the PR-specific preview URL, e.g.:
+ *   CORS_ALLOWED_ORIGINS=https://pr-123.preview.hay.example.com,https://hay.example.com
+ */
 const CORS_ALLOWED_ORIGINS: string[] = rawCorsOrigins
 	? [
-			...new Set(
-				rawCorsOrigins
+			...new Set([
+				...rawCorsOrigins
 					.split(",")
 					.map((o) => o.trim())
 					.filter(Boolean),
-			),
+				// Always merge Tauri origins — they are desktop-only and cannot be
+				// spoofed by a web browser, so they are safe in all environments.
+				...TAURI_ORIGINS,
+			]),
 		]
 	: DEFAULT_CORS_ORIGINS;
 
@@ -77,8 +130,13 @@ if (NODE_ENV === "production") {
 		);
 	}
 
+	// Tauri custom-protocol origins are exempt from the localhost check —
+	// they use "localhost" as the hostname but are NOT web-browser localhost
+	// origins. They are the Tauri desktop app's custom protocol and are safe
+	// to allow in production.
 	const unsafeOrigins = CORS_ALLOWED_ORIGINS.filter(
-		(origin) => origin === "*" || isLocalhostUrl(origin),
+		(origin) =>
+			origin === "*" || (isLocalhostUrl(origin) && !isTauriOrigin(origin)),
 	);
 	if (unsafeOrigins.length > 0) {
 		throw new Error(
