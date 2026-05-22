@@ -1,0 +1,589 @@
+# ---------------------------------------------------------------------------
+# Preview environment — two-workflow safety model
+#
+# Workflow 1 (this file, top section): pull_request — UNPRIVILEGED
+#   Triggered by any PR event. Runs CI gates only. Zero AWS credentials.
+#   Labels the PR status so maintainers know whether it is safe to deploy.
+#
+# Workflow 2 (this file, bottom section): workflow_dispatch — PRIVILEGED
+#   Triggered manually by a maintainer. Requires `environment: preview`
+#   (protected environment with required reviewers configured in repo settings).
+#   Mandatory preflight checks run BEFORE any AWS credential is requested:
+#     1. PR is from the same repo (no forks)
+#     2. PR has the `preview` label
+#     3. Actor has write or maintain permission
+#     4. PR is open (not closed / merged)
+#   Only after all four pass does the job request OIDC credentials.
+#
+# Destroy path:
+#   A separate `destroy` job fires when the `preview` label is removed
+#   or the PR is closed/merged. It also runs under `environment: preview` and
+#   performs the same preflight (except the label check, which is intentionally
+#   skipped on removal/close events).
+#
+# Security invariants:
+#   - Fork PRs NEVER receive AWS credentials (same-repo check in preflight)
+#   - `pull_request_target` is NOT used — untrusted code is never executed with
+#     write permissions
+#   - IAM OIDC trust conditions use repo + environment subject only; label/actor
+#     checks are workflow-level, not IAM-level
+#   - Terraform plan output is sanitized before posting to PR
+#   - All step outputs used in `run:` blocks are passed via `env:` (no inline
+#     template expansion in shell — prevents template-injection)
+#   - All checkouts set persist-credentials: false (prevents artipacked)
+# ---------------------------------------------------------------------------
+
+name: Preview
+
+on:
+  # ── Unprivileged: CI gates only, no AWS credentials ──────────────────────
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, closed]
+
+  # ── Privileged: maintainer-triggered deploy / destroy ────────────────────
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to deploy preview for"
+        type: number
+        required: true
+      action:
+        description: "Action to perform"
+        type: choice
+        options:
+          - deploy
+          - destroy
+        default: deploy
+
+permissions:
+  contents: read
+
+# Cancel in-flight runs for the same PR/ref to avoid races.
+concurrency:
+  group: preview-${{ github.event.pull_request.number || inputs.pr_number }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TELEMETRY_DISABLED: 1
+  AWS_REGION: us-east-1
+  TF_VERSION: "1.12.1"
+
+# ============================================================================
+# JOB: pr-checks — runs on every pull_request event, NO credentials
+# ============================================================================
+jobs:
+  pr-checks:
+    name: PR checks (unprivileged)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write  # post plan summary comment only
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: latest
+
+      - name: Restore Bun cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Web build (smoke)
+        run: bun run --cwd apps/web build
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269ef065 # v3.1.2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      # Validate Terraform syntax only — no backend, no credentials
+      - name: Terraform validate (no backend)
+        working-directory: infra/preview
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Post preview instructions
+        if: >
+          github.event.action == 'labeled' &&
+          github.event.label.name == 'preview'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        with:
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: [
+                '### 🚀 Preview deploy requested',
+                '',
+                'The `preview` label was added. A maintainer can now trigger a preview deploy:',
+                '',
+                '1. Go to **Actions → Preview → Run workflow**',
+                '2. Enter PR number: `' + prNumber + '`',
+                '3. Select action: `deploy`',
+                '',
+                '> ⚠️ Requires `environment: preview` approval if reviewers are configured.',
+              ].join('\n'),
+            });
+
+  # ============================================================================
+  # JOB: preflight — shared gate used by both deploy and destroy
+  # Runs BEFORE any AWS credential is requested.
+  # ============================================================================
+  preflight:
+    name: Preflight checks
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    outputs:
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      pr_sha: ${{ steps.resolve.outputs.pr_sha }}
+      pr_ref: ${{ steps.resolve.outputs.pr_ref }}
+
+    steps:
+      - name: Resolve PR metadata and run preflight checks
+        id: resolve
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_ACTION: ${{ inputs.action }}
+        with:
+          script: |
+            const prNumber = Number(process.env.INPUT_PR_NUMBER);
+            const action   = process.env.INPUT_ACTION;
+
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed(`Invalid pr_number: ${prNumber}`);
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            // ── Check 1: same-repo only (no forks) ──────────────────────────
+            if (pr.head.repo.full_name !== context.repo.owner + '/' + context.repo.repo) {
+              core.setFailed(
+                `SECURITY: PR #${prNumber} is from a fork (${pr.head.repo.full_name}). ` +
+                `Fork PRs are never granted AWS credentials.`
+              );
+              return;
+            }
+
+            // ── Check 2: PR must be open ─────────────────────────────────────
+            if (pr.state !== 'open') {
+              core.setFailed(
+                `PR #${prNumber} is ${pr.state}, not open. ` +
+                `Use action=destroy to clean up a closed PR.`
+              );
+              return;
+            }
+
+            // ── Check 3: PR must have the `preview` label (deploy only) ──────
+            if (action === 'deploy') {
+              const labels = pr.labels.map(l => l.name);
+              if (!labels.includes('preview')) {
+                core.setFailed(
+                  `PR #${prNumber} does not have the \`preview\` label. ` +
+                  `Add the label before triggering a preview deploy.`
+                );
+                return;
+              }
+            }
+
+            // ── Check 4: actor must have write or maintain permission ─────────
+            const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            const allowed = ['write', 'maintain', 'admin'];
+            if (!allowed.includes(perm.permission)) {
+              core.setFailed(
+                `Actor ${context.actor} has permission '${perm.permission}'. ` +
+                `Write, maintain, or admin permission is required to deploy previews.`
+              );
+              return;
+            }
+
+            core.info(`✅ Preflight passed for PR #${prNumber} (actor: ${context.actor}, perm: ${perm.permission})`);
+            core.setOutput('pr_number', String(prNumber));
+            core.setOutput('pr_sha', pr.head.sha);
+            core.setOutput('pr_ref', pr.head.ref);
+
+  # ============================================================================
+  # JOB: deploy — privileged, runs under environment: preview
+  # Fires only after preflight passes.
+  # ============================================================================
+  deploy:
+    name: Deploy preview (PR #${{ needs.preflight.outputs.pr_number }})
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      inputs.action == 'deploy' &&
+      needs.preflight.result == 'success'
+    needs: preflight
+    runs-on: ubuntu-latest
+    environment: preview  # ← required reviewers gate lives here
+
+    permissions:
+      contents: read
+      id-token: write      # OIDC
+      pull-requests: write # post deploy comment
+
+    env:
+      PR_NUMBER: ${{ needs.preflight.outputs.pr_number }}
+      PR_SHA: ${{ needs.preflight.outputs.pr_sha }}
+      TF_STATE_KEY: preview/pr-${{ needs.preflight.outputs.pr_number }}/terraform.tfstate
+
+    steps:
+      # ── 1. Checkout PR head (same-repo, verified in preflight) ───────────────
+      - name: Checkout PR head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ needs.preflight.outputs.pr_sha }}
+          persist-credentials: false
+
+      # ── 2. Configure AWS credentials via OIDC ────────────────────────────────
+      #    Only reached after preflight (same-repo + label + permission + open).
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.PREVIEW_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ── 3. Build & push server image ─────────────────────────────────────────
+      - name: Build & push server image
+        id: image
+        uses: ./.github/workflows/build-push.yml
+        with:
+          aws_region: ${{ env.AWS_REGION }}
+          ecr_repository_url: ${{ secrets.ECR_REPOSITORY_URL }}
+          role_arn: ${{ secrets.PREVIEW_DEPLOY_ROLE_ARN }}
+
+      # ── 4. Terraform init ─────────────────────────────────────────────────────
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269ef065 # v3.1.2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra/preview
+        env:
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${TF_STATE_BUCKET}" \
+            -backend-config="key=${TF_STATE_KEY}" \
+            -backend-config="region=${AWS_REGION}" \
+            -input=false
+
+      # ── 5. Terraform plan (sanitized output only) ─────────────────────────────
+      - name: Terraform plan
+        id: plan
+        working-directory: infra/preview
+        env:
+          TF_VAR_pr_number: ${{ env.PR_NUMBER }}
+          IMAGE_URI: ${{ steps.image.outputs.image_uri }}
+        run: |
+          set +e
+          terraform plan \
+            -var="pr_number=${PR_NUMBER}" \
+            -var="api_image_uri=${IMAGE_URI}" \
+            -out=tfplan \
+            -input=false \
+            -no-color 2>&1 | tee /tmp/plan_raw.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          set -e
+
+          # Sanitize: strip lines that may contain secret values or ARNs
+          grep -v -E '(sensitive|password|secret|token|key\s*=|arn:aws:secretsmanager)' \
+            /tmp/plan_raw.txt \
+            | head -200 > /tmp/plan_sanitized.txt || true
+
+          {
+            echo "plan_summary<<PLAN_EOF"
+            cat /tmp/plan_sanitized.txt
+            echo "PLAN_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          exit $EXIT_CODE
+
+      # ── 6. Terraform apply ────────────────────────────────────────────────────
+      - name: Terraform apply
+        working-directory: infra/preview
+        env:
+          IMAGE_URI: ${{ steps.image.outputs.image_uri }}
+        run: |
+          terraform apply \
+            -auto-approve \
+            -input=false \
+            tfplan
+
+      # ── 7. Capture Terraform outputs ──────────────────────────────────────────
+      - name: Capture Terraform outputs
+        id: tf-outputs
+        working-directory: infra/preview
+        run: |
+          API_URL=$(terraform output -raw api_url)
+          CF_DOMAIN=$(terraform output -raw cloudfront_domain_name)
+          CF_DIST_ID=$(terraform output -raw cloudfront_distribution_id)
+          S3_BUCKET=$(terraform output -raw spa_s3_bucket_name)
+          S3_PREFIX=$(terraform output -raw spa_s3_key_prefix)
+
+          echo "api_url=${API_URL}" >> "$GITHUB_OUTPUT"
+          echo "cf_domain=${CF_DOMAIN}" >> "$GITHUB_OUTPUT"
+          echo "cf_dist_id=${CF_DIST_ID}" >> "$GITHUB_OUTPUT"
+          echo "s3_bucket=${S3_BUCKET}" >> "$GITHUB_OUTPUT"
+          echo "s3_prefix=${S3_PREFIX}" >> "$GITHUB_OUTPUT"
+
+      # ── 8. Write secrets to Secrets Manager ──────────────────────────────────
+      - name: Write preview secrets
+        env:
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+        run: |
+          SECRET_PREFIX="hay/preview-pr-${PR_NUMBER}"
+
+          aws secretsmanager put-secret-value \
+            --secret-id "${SECRET_PREFIX}/turso-auth-token" \
+            --secret-string "${TURSO_AUTH_TOKEN}" \
+            --region "${AWS_REGION}"
+
+          aws secretsmanager put-secret-value \
+            --secret-id "${SECRET_PREFIX}/better-auth-secret" \
+            --secret-string "${BETTER_AUTH_SECRET}" \
+            --region "${AWS_REGION}"
+
+      # ── 9. Run database migrations ────────────────────────────────────────────
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
+        with:
+          bun-version: latest
+
+      - name: Restore Bun cache
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run migrations
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_PREVIEW_DB_URL_PREFIX }}-pr-${{ env.PR_NUMBER }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: bun run --cwd apps/server migrate
+
+      # ── 10. Build & upload web SPA ────────────────────────────────────────────
+      - name: Build web SPA
+        env:
+          VITE_API_URL: ${{ steps.tf-outputs.outputs.api_url }}
+        run: bun run --cwd apps/web build
+
+      - name: Upload SPA to S3
+        env:
+          S3_BUCKET: ${{ steps.tf-outputs.outputs.s3_bucket }}
+          S3_PREFIX: ${{ steps.tf-outputs.outputs.s3_prefix }}
+        run: |
+          aws s3 sync apps/web/dist/client/ \
+            "s3://${S3_BUCKET}/${S3_PREFIX}" \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --region "${AWS_REGION}"
+
+          # HTML entry point must not be cached
+          aws s3 cp apps/web/dist/client/index.html \
+            "s3://${S3_BUCKET}/${S3_PREFIX}index.html" \
+            --cache-control "no-cache,no-store,must-revalidate" \
+            --region "${AWS_REGION}"
+
+      - name: Invalidate CloudFront cache
+        env:
+          CF_DIST_ID: ${{ steps.tf-outputs.outputs.cf_dist_id }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${CF_DIST_ID}" \
+            --paths "/*" \
+            --region "${AWS_REGION}"
+
+      # ── 11. Post deploy comment ───────────────────────────────────────────────
+      - name: Post deploy comment
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        env:
+          CF_DOMAIN: ${{ steps.tf-outputs.outputs.cf_domain }}
+          API_URL: ${{ steps.tf-outputs.outputs.api_url }}
+          PLAN_SUMMARY: ${{ steps.plan.outputs.plan_summary }}
+        with:
+          script: |
+            const cfDomain    = process.env.CF_DOMAIN;
+            const apiUrl      = process.env.API_URL;
+            const planSummary = process.env.PLAN_SUMMARY;
+            const prNumber    = Number(process.env.PR_NUMBER);
+            const sha         = process.env.PR_SHA.slice(0, 7);
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: [
+                '### ✅ Preview deployed',
+                '',
+                `| | |`,
+                `|---|---|`,
+                `| **Web** | https://${cfDomain} |`,
+                `| **API** | ${apiUrl} |`,
+                `| **Commit** | \`${sha}\` |`,
+                '',
+                '<details>',
+                '<summary>Terraform plan (sanitized)</summary>',
+                '',
+                '```',
+                planSummary,
+                '```',
+                '</details>',
+              ].join('\n'),
+            });
+
+  # ============================================================================
+  # JOB: destroy — privileged, tears down preview infra
+  # Triggered by:
+  #   a) workflow_dispatch with action=destroy (preflight already ran)
+  #   b) pull_request closed/merged with `preview` label present
+  #   c) pull_request `preview` label removed
+  # ============================================================================
+  destroy:
+    name: Destroy preview
+    if: >
+      (
+        github.event_name == 'workflow_dispatch' &&
+        inputs.action == 'destroy' &&
+        needs.preflight.result == 'success'
+      ) ||
+      (
+        github.event_name == 'pull_request' &&
+        github.event.action == 'closed' &&
+        contains(github.event.pull_request.labels.*.name, 'preview')
+      ) ||
+      (
+        github.event_name == 'pull_request' &&
+        github.event.action == 'unlabeled' &&
+        github.event.label.name == 'preview'
+      )
+    needs:
+      - preflight
+    runs-on: ubuntu-latest
+    environment: preview  # ← same gate as deploy
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    env:
+      # For dispatch: use preflight output. For PR events: use event payload.
+      PR_NUMBER: >-
+        ${{
+          github.event_name == 'workflow_dispatch'
+            && needs.preflight.outputs.pr_number
+            || github.event.pull_request.number
+        }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      # ── Preflight for PR-event-triggered destroy ──────────────────────────────
+      # For pull_request events the preflight job did not run (it's dispatch-only).
+      # We re-verify same-repo here before requesting credentials.
+      - name: Verify same-repo (PR event)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (pr.head.repo.full_name !== context.repo.owner + '/' + context.repo.repo) {
+              core.setFailed(
+                `SECURITY: PR is from a fork (${pr.head.repo.full_name}). ` +
+                `Fork PRs are never granted AWS credentials.`
+              );
+            }
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.PREVIEW_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269ef065 # v3.1.2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra/preview
+        env:
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${TF_STATE_BUCKET}" \
+            -backend-config="key=preview/pr-${PR_NUMBER}/terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}" \
+            -input=false
+
+      - name: Terraform destroy
+        working-directory: infra/preview
+        run: |
+          terraform destroy \
+            -var="pr_number=${PR_NUMBER}" \
+            -var="api_image_uri=unused" \
+            -auto-approve \
+            -input=false
+
+      - name: Post destroy comment
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: '### 🗑️ Preview destroyed\n\nAll preview infrastructure for PR #' + prNumber + ' has been torn down.',
+            });
