@@ -1,0 +1,23 @@
+# ---------------------------------------------------------------------------
+# Staging environment — example variable values
+# ---------------------------------------------------------------------------
+# Copy to staging.tfvars and fill in real values before applying.
+# Never commit staging.tfvars — it may contain sensitive data.
+
+# Route 53 hosted zone name for the staging environment.
+# The zone must already exist in the AWS account.
+staging_zone_name = "staging.hay.example.com"
+
+# ECS task IAM role name (created by the ECS module, task 4.11).
+# Default matches the name the ECS module will create.
+ecs_task_role_name = "hay-staging-ecs-task"
+
+# Full ECR image URI for the API container.
+# Set via TF_VAR_api_image_uri in CI; use a placeholder for plan-only runs.
+api_image_uri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/hay-server:latest"
+
+# CloudFront domain name — leave empty on initial bootstrap apply.
+staging_cloudfront_domain_name = ""
+
+# ACM certificate ARN — leave null on initial bootstrap apply.
+# staging_acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/..."
