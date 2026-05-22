@@ -1,4 +1,33 @@
 # ---------------------------------------------------------------------------
+# Network outputs (staging)
+# ---------------------------------------------------------------------------
+
+output "vpc_id" {
+  description = "Staging VPC ID."
+  value       = module.network.vpc_id
+}
+
+output "public_subnet_ids" {
+  description = "Staging public subnet IDs."
+  value       = module.network.public_subnet_ids
+}
+
+output "private_subnet_ids" {
+  description = "Staging private subnet IDs."
+  value       = module.network.private_subnet_ids
+}
+
+output "ecs_security_group_id" {
+  description = "Staging ECS security group ID."
+  value       = module.network.ecs_security_group_id
+}
+
+output "redis_security_group_id" {
+  description = "Staging Redis security group ID."
+  value       = module.network.redis_security_group_id
+}
+
+# ---------------------------------------------------------------------------
 # Secrets outputs (staging)
 # ---------------------------------------------------------------------------
 
