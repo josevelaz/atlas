@@ -14,13 +14,27 @@ This record documents the required policy before any Terraform workflow implemen
 
 ## Decision
 
-### 1. Raw plan output is never published
+### 1. Raw plan stdout is suppressed or restricted
+
+CI `terraform plan -out=tfplan` commands must not stream raw plan details into broadly visible workflow logs. Plan commands must either suppress stdout/stderr or redirect raw output to a restricted temporary file that is not published to reviewer-facing logs, comments, or summaries.
+
+Acceptable command shapes include:
+
+```sh
+terraform plan -out=tfplan > /dev/null 2>&1
+# or, only when the raw log file remains restricted and is not uploaded/published:
+terraform plan -out=tfplan > "$RUNNER_TEMP/terraform-plan.raw.log" 2>&1
+```
+
+If plan fails, CI may print a generic failure message and should direct maintainers to rerun locally or inspect restricted runner-only diagnostics. It must not dump raw plan output into public or PR-visible logs.
+
+### 2. Raw plan output is never published
 
 Raw `terraform show` output must never be published to any pull request comment, GitHub Actions job summary, workflow log appendix, or other reviewer-facing CI surface.
 
 This applies to both human-readable output and any direct rendering of full JSON plan content. Raw plans may contain provider-computed values, configuration values, environment-derived values, output values, and secret-adjacent metadata that are not safe for broad PR visibility.
 
-### 2. PR comments and job summaries use sanitized allowlisted summaries only
+### 3. PR comments and job summaries use sanitized allowlisted summaries only
 
 Pull request comments and job summaries may include only sanitized, allowlisted Terraform summaries.
 
@@ -39,9 +53,9 @@ Forbidden fields include:
 - Provider configuration values.
 - Any secret, credential, token, password, OAuth material, Redis auth token, Turso token, Better Auth secret, or derived sensitive value.
 
-### 3. Sanitization uses a strict jq allowlist
+### 4. Reviewer output comes only from the approved jq allowlist path
 
-CI must generate reviewer-facing summaries from `terraform show -json` through a strict `jq` allowlist filter.
+CI must generate all reviewer-facing Terraform output from the approved `terraform show -json tfplan | jq <allowlist>` path. No other Terraform plan/show output may be used for PR comments, job summaries, log appendices, or copied review notes.
 
 The filter may extract only:
 
@@ -82,9 +96,15 @@ terraform show -json tfplan \
 
 Any future filter change that adds fields must be reviewed as a security-sensitive change. The default posture is deny-by-default: if a field is not explicitly allowlisted here, it must not be included in PR comments or job summaries.
 
-### 4. Plan artifacts are short-lived and restricted
+### 5. Plan artifacts are private-repository-only, short-lived, and restricted
 
-Terraform binary plan files and JSON plan artifacts may be uploaded only when needed for maintainer review or follow-up automation.
+Terraform binary plan files and full JSON plan artifacts may be uploaded only when all of the following are true:
+
+- The repository is confirmed private.
+- The artifact is needed for maintainer review or follow-up automation.
+- The artifact controls below are applied.
+
+If the repository is public or privacy cannot be confirmed in CI, do not upload raw binary or full JSON plan artifacts. Store only sanitized allowlisted summaries.
 
 Required artifact controls:
 
@@ -95,7 +115,7 @@ Required artifact controls:
 
 Fork-originated pull requests must not receive credentials capable of producing privileged Terraform plans, and must not be able to read binary or JSON plan artifacts from privileged workflows.
 
-### 5. Sensitive Terraform outputs are explicitly marked sensitive
+### 6. Sensitive Terraform outputs are explicitly marked sensitive
 
 Any Terraform output that could include or derive from sensitive material must be declared with `sensitive = true`.
 
@@ -114,14 +134,16 @@ Marking outputs as sensitive is required defense-in-depth. It does not relax the
 ## Explicit security invariants
 
 - Raw `terraform show` output is never published to PR comments or job summaries.
-- Reviewer-facing CI output is generated only from a sanitized allowlist.
+- CI `terraform plan -out=tfplan` stdout/stderr is suppressed or redirected to restricted runner-only files, not streamed into broadly visible workflow logs.
+- Reviewer-facing CI output is generated only from `terraform show -json tfplan | jq <allowlist>` sanitized output.
 - The allowlist extracts only resource types, resource action arrays, and derived summary counts.
 - Resource `before` and `after` values are never emitted to PR comments or job summaries.
-- Binary and JSON Terraform plan artifacts are retained exactly 1 day.
+- Binary and JSON Terraform plan artifacts are uploaded only when the repository is confirmed private; otherwise only sanitized summaries are retained.
+- Uploaded binary and JSON Terraform plan artifacts are retained exactly 1 day.
 - Artifact access remains restricted through GitHub Actions artifact controls.
 - Fork PRs cannot access privileged plan artifacts.
 - Sensitive Terraform outputs are marked `sensitive = true`.
 
 ## Consequences
 
-This policy preserves useful Terraform review context while avoiding broad publication of plan internals. Maintainers can see high-level add, change, and destroy intent in PR surfaces, but detailed binary or JSON plan artifacts remain short-lived, access-restricted, and unavailable to forks.
+This policy preserves useful Terraform review context while avoiding broad publication of plan internals. Maintainers can see high-level add, change, and destroy intent in PR surfaces, while raw plan stdout is suppressed or restricted. Detailed binary or JSON plan artifacts are available only for confirmed-private repositories, remain short-lived and access-restricted, and are unavailable to forks.

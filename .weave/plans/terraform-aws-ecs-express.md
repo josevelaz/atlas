@@ -45,7 +45,7 @@
 - Turso provider may manage groups/databases. Turso tokens are created outside Terraform and written to Secrets Manager by the protected secret-seeding workflow.
 - CORS and Better Auth origins must be exact deterministic allowlists including scheme, host, and optional port. No wildcard origins with credentials. Preview origins are PR-specific. Tauri custom protocols are explicit exceptions, not broad localhost allowances.
 - Cookies are scoped to the API host, Secure/HTTPS only, and require explicit CSRF/session-fixation validation.
-- Terraform plan output in PR comments must be sanitized allowlisted summaries only, generated from explicit allowlisted fields/redaction tooling. Never paste raw `terraform show` output into comments. Binary/JSON plan artifacts are retained exactly 1 day with restricted GitHub Actions artifact access. Sensitive outputs must be marked `sensitive`.
+- Terraform plan output in PR comments/job summaries must be sanitized allowlisted summaries only, generated from `terraform show -json tfplan | jq <allowlist>` tooling. CI `terraform plan -out=tfplan` commands must suppress stdout/stderr or redirect raw output to restricted runner-only files so raw plan details do not leak into workflow logs. Binary/JSON plan artifacts may be uploaded only when the repository is confirmed private; otherwise keep sanitized summaries only. Any uploaded plan artifacts are retained exactly 1 day with restricted GitHub Actions artifact access. Sensitive outputs must be marked `sensitive`.
 - Static web buckets are private with public access blocked and mandatory CloudFront Origin Access Control. Deploy roles can write only scoped environment/prefix paths.
 - Tauri CSP must use exact per-environment `connect-src`: production desktop builds may reach only production API/required endpoints; staging builds may reach only staging API/required endpoints. Do not use broad `https:`.
 - Redis/Valkey must use TLS where supported, IAM authentication, security group restrictions, and per-env/PR key prefixes. ECS task roles authenticate directly to ElastiCache/Valkey through IAM. No Redis/ElastiCache auth token material may be generated, stored in Terraform state, seeded to Secrets Manager, or managed anywhere else. Implement one Redis wrapper/prefix discipline covering direct Redis, jobify, and verrou.
@@ -91,7 +91,7 @@ Create an execution-ready implementation path for Terraform-based AWS deployment
 - Do not use macOS-incompatible `timeout` in validation commands.
 - Do not create or manage Redis/ElastiCache auth token values. Redis/Valkey uses IAM authentication with ECS task roles; no Redis token material belongs in Terraform state, Secrets Manager, workflow logs, or operator runbooks.
 - Do not use `pull_request_target` to check out or execute untrusted PR code in privileged preview workflows.
-- Do not publish raw Terraform plans or `terraform show` output in PR comments.
+- Do not publish raw Terraform plans, raw `terraform plan` stdout/stderr, or raw `terraform show` output in PR comments, job summaries, or broadly visible workflow logs.
 
 ## Proposed file layout
 ```text
@@ -165,7 +165,7 @@ apps/desktop/src-tauri/
 - Use `zizmor` as the required non-silent GitHub Actions workflow validation/hardening gate. `actionlint` is optional/future because it is unavailable locally.
 - For Terraform stacks, run `terraform -chdir=<stack> init -backend=false` before `terraform -chdir=<stack> validate` in each validation block.
 - For local server smoke tests, use shell PID/trap cleanup instead of macOS `timeout`.
-- Terraform `plan` commands used as gates must fail on errors and must not publish raw plan output to comments/logs beyond restricted artifacts.
+- Terraform `plan` commands used as gates must fail on errors and must suppress stdout/stderr or redirect raw output to restricted runner-only files. Reviewer-facing output must come only from `terraform show -json tfplan | jq <allowlist>` sanitized summaries.
 
 ## Phases and atomic tasks
 
@@ -250,8 +250,8 @@ apps/desktop/src-tauri/
 - [x] 0.10 Record Terraform plan/comment/artifact policy
   **Owner**: infra/security owner.
   **Inputs**: GitHub Actions artifact retention/access behavior, Terraform JSON plan shape, redaction/allowlist tooling design.
-  **What**: Define plan handling before any workflow implementation. PR comments and job summaries may include only sanitized allowlisted summaries generated from explicit fields/redaction tooling. Never publish raw `terraform show` output. Binary/JSON plan artifacts are retained exactly 1 day with restricted GitHub Actions artifact access.
-  **Acceptance**: Workflow tasks have a concrete redaction/allowlist mechanism and retention setting; raw plans are restricted artifacts only.
+  **What**: Define plan handling before any workflow implementation. PR comments and job summaries may include only sanitized allowlisted summaries generated from `terraform show -json tfplan | jq <allowlist>` tooling. CI `terraform plan -out=tfplan` commands must suppress stdout/stderr or redirect raw output to restricted runner-only files. Never publish raw `terraform plan` or `terraform show` output. Binary/JSON plan artifacts are uploaded only when the repository is confirmed private and are retained exactly 1 day with restricted GitHub Actions artifact access; otherwise only sanitized summaries are retained.
+  **Acceptance**: Workflow tasks have a concrete redaction/allowlist mechanism, stdout suppression/redirection requirement, private-repository artifact condition, and retention setting; raw plans are restricted artifacts only when private-repo artifact upload is allowed.
 
 - [x] 0.11 Record KMS/IAM secret isolation model
   **Owner**: infra/security owner.
@@ -451,7 +451,7 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/bootstrap fmt -check -recursive
   terraform -chdir=infra/bootstrap init -backend=false
   terraform -chdir=infra/bootstrap validate
-  terraform -chdir=infra/bootstrap plan -out=tfplan
+  terraform -chdir=infra/bootstrap plan -out=tfplan > /dev/null 2>&1
   ```
   **Acceptance**: Bootstrap plan creates only remote-state/locking resources and outputs backend settings.
 
@@ -463,7 +463,7 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/bootstrap fmt -check -recursive
   terraform -chdir=infra/bootstrap init -backend=false
   terraform -chdir=infra/bootstrap validate
-  terraform -chdir=infra/bootstrap plan -out=tfplan
+  terraform -chdir=infra/bootstrap plan -out=tfplan > /dev/null 2>&1
   ```
   **Acceptance**: Roles are separate; production trust is environment/ref constrained; preview roles cannot read prod/staging secrets or state; outputs expose role ARNs for GitHub secrets/variables; CMK-level encryption-context controls are intentionally deferred and documented.
 
@@ -495,7 +495,7 @@ apps/desktop/src-tauri/
   ```sh
   terraform -chdir=infra/env init -backend=false
   terraform -chdir=infra/env validate
-  terraform -chdir=infra/env plan -var-file=envs/staging.tfvars.example -out=tfplan
+  terraform -chdir=infra/env plan -var-file=envs/staging.tfvars.example -out=tfplan > /dev/null 2>&1
   ```
   **Acceptance**: Production and staging have Redis/Valkey with IAM authentication configured; preview stack does not create preview Redis and instead consumes nonprod/staging Redis host/port with distinct `REDIS_KEY_PREFIX`; ECS task roles can authenticate directly through IAM; Redis auth token material is absent from Terraform, Secrets Manager, plans, state, outputs, and workflow logs.
 
@@ -575,8 +575,8 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/env fmt -check -recursive
   terraform -chdir=infra/env init -backend=false
   terraform -chdir=infra/env validate
-  terraform -chdir=infra/env plan -var-file=envs/staging.tfvars.example -out=tfplan
-  terraform -chdir=infra/env plan -var-file=envs/production.tfvars.example -out=tfplan
+  terraform -chdir=infra/env plan -var-file=envs/staging.tfvars.example -out=tfplan > /dev/null 2>&1
+  terraform -chdir=infra/env plan -var-file=envs/production.tfvars.example -out=tfplan > /dev/null 2>&1
   ```
   **Acceptance**: Same stack can target staging or production using different backend keys and vars; zone names are supplied by `prod_zone_name` and `staging_zone_name`, not hardcoded.
 
@@ -588,7 +588,7 @@ apps/desktop/src-tauri/
   terraform -chdir=infra/preview fmt -check -recursive
   terraform -chdir=infra/preview init -backend=false
   terraform -chdir=infra/preview validate
-  terraform -chdir=infra/preview plan -var='pr_number=123' -out=tfplan
+  terraform -chdir=infra/preview plan -var='pr_number=123' -out=tfplan > /dev/null 2>&1
   ```
   **Acceptance**: Preview state key pattern is `preview/pr-123`; preview resources include PR number in names/tags/prefixes and are destroyable independently.
 
@@ -671,13 +671,13 @@ apps/desktop/src-tauri/
   **Acceptance**: Stale preview infrastructure has an automated cleanup path with safe logging and no production access.
 
 - [ ] 6.7 Add Terraform plan artifacts/comments
-  **What**: Surface sanitized Terraform plan summaries in Actions summaries or PR comments without leaking secrets. Summaries must be generated only from explicit allowlisted fields/redaction tooling and must never include raw `terraform show` output. Keep binary/JSON plan artifacts only as restricted GitHub Actions artifacts retained exactly 1 day. Separate preview/staging/production plan scopes and mark Terraform sensitive outputs as sensitive.
+  **What**: Surface sanitized Terraform plan summaries in Actions summaries or PR comments without leaking secrets. `terraform plan -out=tfplan` must suppress stdout/stderr or redirect raw output to restricted runner-only files. Summaries must be generated only from `terraform show -json tfplan | jq <allowlist>` tooling and must never include raw `terraform plan` or raw `terraform show` output. Upload binary/JSON plan artifacts only when the repository is confirmed private; otherwise retain sanitized summaries only. Any uploaded raw artifacts must be restricted GitHub Actions artifacts retained exactly 1 day. Separate preview/staging/production plan scopes and mark Terraform sensitive outputs as sensitive.
   **Files likely touched**: `.github/workflows/*.yml`.
   **Validation**:
   ```sh
   zizmor .github/workflows/*.yml
   ```
-  **Acceptance**: Reviewers can inspect sanitized allowlisted infra summaries before apply; raw plan output is never pasted into comments; binary/JSON plan artifacts have `retention-days: 1` and restricted artifact access.
+  **Acceptance**: Reviewers can inspect sanitized allowlisted infra summaries before apply; raw plan stdout/stderr is not emitted to broadly visible workflow logs; raw plan output is never pasted into comments or summaries; binary/JSON plan artifacts are uploaded only for confirmed-private repositories and, when uploaded, have `retention-days: 1` and restricted artifact access.
 
 - [ ] 6.8 Add protected manual secret seeding workflow
   **What**: Add a manual GitHub Actions workflow that uses AWS OIDC and GitHub Environment approval to write Turso, Better Auth, OAuth, and other secret values into AWS Secrets Manager. Terraform must consume only names/ARNs. Redis/ElastiCache uses IAM auth, so there is no Redis token seeding step.
@@ -821,7 +821,7 @@ apps/desktop/src-tauri/
 
 1. GitHub Actions runs install/lint/typecheck/build gates.
 2. GitHub Actions builds the server Docker image, pushes it to ECR with the commit SHA, captures the immutable image digest, and records the previously deployed digest for rollback.
-3. GitHub Actions runs Terraform plan/apply for the target environment using separate backend keys and the image digest/tag variable. PR comments/job summaries expose only sanitized allowlisted plan summaries; binary/JSON plan artifacts are restricted and retained exactly 1 day. Terraform owns ECS service updates; workflows do not manually mutate ECS resources.
+3. GitHub Actions runs Terraform plan/apply for the target environment using separate backend keys and the image digest/tag variable. Plan commands suppress stdout/stderr or redirect raw output to restricted runner-only files. PR comments/job summaries expose only sanitized allowlisted plan summaries from `terraform show -json tfplan | jq <allowlist>`; binary/JSON plan artifacts are uploaded only for confirmed-private repositories, restricted, and retained exactly 1 day. Terraform owns ECS service updates; workflows do not manually mutate ECS resources.
 4. GitHub Actions runs Drizzle migrations after infra prerequisites exist but before ECS service/web artifact updates. If migrations fail, deployment stops before the new ECS image or web artifact is deployed. There is no automatic migration rollback.
 5. If migrations succeed, Terraform updates the ECS Express service to the immutable image digest. If app deploy fails after migrations, operators manually roll back/forward using recorded prior image digest and migration notes.
 6. Terraform outputs S3 bucket/prefix, CloudFront distribution ID, API URL, and web URL. CI builds the static web app with the target API URL, uploads artifacts only to scoped Terraform-provided bucket/prefix, and invalidates CloudFront.
@@ -860,7 +860,7 @@ apps/desktop/src-tauri/
 - **Turso token lifecycle ambiguity**: Keep token creation/rotation outside Terraform and explicitly document CI/operator steps.
 - **Preview data exposure**: Seed previews only from an audited sanitized template; never seed emails, names, OAuth IDs, provider account IDs, access/refresh tokens, user content, auth sessions, or production/staging-derived message data.
 - **Preview workflow privilege escalation**: Keep unprivileged `pull_request` checks separate from privileged maintainer-approved preview deploys. Never give fork PRs AWS credentials and never use `pull_request_target` to check out or execute untrusted code.
-- **Plan/comment leakage**: Use allowlisted redacted summaries only in comments and summaries; keep binary/JSON plan artifacts restricted with exactly 1-day retention.
+- **Plan/comment/log leakage**: Suppress or restrict raw `terraform plan` stdout/stderr, use allowlisted redacted summaries only in comments and summaries, and upload binary/JSON plan artifacts only for confirmed-private repositories with restricted exactly 1-day retention.
 - **Shared nonprod Redis collisions**: Enforce `REDIS_KEY_PREFIX` for staging and every preview across ioredis/jobify/verrou.
 - **S3 prefix isolation mistakes**: Encode prefixes in Terraform outputs and workflow inputs; avoid hand-typed upload paths in multiple places.
 - **CORS/auth regressions**: Test browser web and Tauri origins; require security review for credentialed CORS and `SameSite=None; Secure`.
@@ -889,7 +889,7 @@ apps/desktop/src-tauri/
 - [ ] `apps/web` builds a static SPA with environment-specific API URL and uploads to S3 + CloudFront.
 - [ ] GitHub Actions include CI gates, staging deploy, production deploy with approval, preview lifecycle, and scheduled preview cleanup; preview deploy follows the two-workflow model with unprivileged `pull_request` checks and maintainer-approved privileged deploys only after workflow preflight confirms same-repo PR, exact `preview` label, and trusted write/maintainer actor before `configure-aws-credentials`.
 - [ ] Fork PRs never receive AWS credentials and privileged preview workflows never use `pull_request_target` to check out or execute untrusted code.
-- [ ] Terraform PR comments/job summaries contain sanitized allowlisted summaries only; raw `terraform show` is never published; binary/JSON plan artifacts are restricted and retained exactly 1 day.
+- [ ] Terraform PR comments/job summaries contain sanitized allowlisted summaries only from `terraform show -json tfplan | jq <allowlist>`; raw `terraform plan` stdout/stderr and raw `terraform show` are never published to comments, summaries, or broadly visible logs; binary/JSON plan artifacts are uploaded only for confirmed-private repositories and, when uploaded, are restricted and retained exactly 1 day.
 - [ ] Docker images are pushed to ECR with immutable SHA/digest references.
 - [ ] Terraform owns ECS updates using immutable image digest/tag variables supplied by GitHub Actions.
 - [ ] Drizzle migrations run as explicit deployment steps before ECS service/web update and fail closed with recorded rollback notes.
@@ -903,9 +903,6 @@ apps/desktop/src-tauri/
 - [ ] `npx agent-browser` validation is run after frontend changes against a running local or staging web app with recorded result/evidence; `--help` alone is not accepted.
 - [ ] Security review is completed before merge; Warp/Weft BLOCK remains hard gate until re-reviewed.
 
-## Remaining blockers before implementation
-1. **Warp/Weft re-review**: Existing Warp and Weft BLOCK findings remain a hard gate until this amended plan and Phase 0 outputs are re-reviewed.
-2. **Exact Route 53 zone names**: Production and staging environment zone names must be provided as implementation-time inputs through required `prod_zone_name` and `staging_zone_name` variables before Terraform variables/backends are finalized.
-3. **Dirty generated file**: `apps/web/src/routeTree.gen.ts` is already modified and must be handled separately before implementation commits begin.
-4. **S3 SDK/runtime details**: Confirm the current app S3 implementation and whether AWS SDK default credential provider is already available or must be added.
-5. **Preview safety evidence**: Define and test the same-repo, maintainer-approved preview deploy path before any AWS credentials are exposed to preview workflows.
+## Implementation inputs and follow-ups
+1. **Exact Route 53 zone names**: Production and staging environment zone names must be provided as implementation-time inputs through required `prod_zone_name` and `staging_zone_name` variables before Terraform variables/backends are finalized.
+2. **S3 SDK/runtime details**: Confirm the current app S3 implementation and whether AWS SDK default credential provider is already available or must be added.

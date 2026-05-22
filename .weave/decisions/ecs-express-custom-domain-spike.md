@@ -6,9 +6,11 @@ Task: 0.5/108 — ECS Express API Custom Domain Spike
 
 ## Decision
 
-**Recommendation: c. Switch API to raw ECS/ALB Terraform for full domain control.**
+**Defer API custom domains. Use ECS Express generated `.on.aws` URL initially. Switch to raw ECS/ALB only if/when API custom domains become required.**
 
-The plan **must switch the API service to raw ECS/ALB Terraform** if `api.staging.example.com` (or another HTTPS custom API domain) is required now and must be safely/fully Terraform-managed.
+The Phase 0 outcome is to keep ECS Express as the initial API deployment path and expose the generated service endpoint from Terraform outputs. Initial staging, production, and preview clients use that generated `.on.aws` URL rather than `api.<zone>`.
+
+The plan must switch the API service to raw ECS/ALB Terraform only if `api.staging.example.com`, `api.<prod-zone>`, or another HTTPS custom API domain becomes required and must be safely/fully Terraform-managed.
 
 ECS Express can expose a generated service endpoint, and Terraform exposes that endpoint through `ingress_paths[*].endpoint`, but neither the ECS Express API nor Terraform's `aws_ecs_express_gateway_service` resource exposes the underlying ALB ARN, ALB hosted zone ID, listener ARN, target group ARN, or certificate configuration needed for first-class Route53/ACM/ALB custom-domain management.
 
@@ -119,17 +121,21 @@ This violates the intended ownership boundary of the Express abstraction.
 
 ### 5. Recommendation among options a-d
 
-Selected: **c. Switch API to raw ECS/ALB Terraform for full domain control.**
+Selected for Phase 0: **d. Defer API custom domain** and use the ECS Express generated `.on.aws` endpoint initially.
 
-Rejected options:
+Future path if API custom domains become required: **c. Switch API to raw ECS/ALB Terraform for full domain control.**
+
+Option outcomes:
 
 - **a. Keep ECS Express + Route53 alias to generated endpoint** — rejected because the resource does not expose ALB hosted zone ID/listener/cert details needed for a safe alias + HTTPS setup.
 - **b. Keep ECS Express + CNAME to generated endpoint** — rejected for the API custom-domain requirement because DNS CNAME alone does not attach a valid TLS certificate or listener configuration for `api.staging.example.com`.
-- **d. Defer API custom domain** — viable only if the product accepts using the generated ECS Express endpoint temporarily. It does not satisfy the stated custom-domain goal.
+- **d. Defer API custom domain** — accepted for the initial deployment because the product can use the generated ECS Express endpoint temporarily.
 
 ## Implementation implication
 
-Proceed with raw ECS/ALB Terraform for the API service if custom domain is in scope:
+Proceed with ECS Express for the initial API service and expose the generated `.on.aws` endpoint as the API URL Terraform output. Do not create `api.<zone>` DNS records, ACM certificates, CNAMEs, Route53 aliases, or out-of-band listener/certificate changes for the initial deployment.
+
+If API custom domains become required later, switch to raw ECS/ALB Terraform for the API service:
 
 - `aws_ecs_service` / task definition / target group
 - `aws_lb`, `aws_lb_listener`, `aws_lb_listener_rule` as needed
@@ -137,7 +143,7 @@ Proceed with raw ECS/ALB Terraform for the API service if custom domain is in sc
 - `aws_route53_record` alias to ALB using `aws_lb.dns_name` and `aws_lb.zone_id`
 - Explicit security groups, autoscaling, and health checks
 
-If delivery speed matters more than custom domain, ECS Express can still be used temporarily with its generated endpoint, but the API custom domain should be marked deferred and not partially implemented by modifying Express-managed ALB resources.
+The raw ECS/ALB path is the documented future path for API custom domains, not the current Phase 0 decision.
 
 ## Evidence / Sources
 
