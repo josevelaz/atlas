@@ -98,6 +98,9 @@ export const config = {
 	DATABASE_URL,
 	DATABASE_AUTH_TOKEN: IS_LOCAL_DATABASE ? undefined : DATABASE_AUTH_TOKEN,
 	REDIS_HOST: env.get("REDIS_HOST").default("localhost").asString(),
+	REDIS_PORT: env.get("REDIS_PORT").default(6379).asPortNumber(),
+	REDIS_KEY_PREFIX: env.get("REDIS_KEY_PREFIX").default("").asString(),
+	REDIS_TLS: env.get("REDIS_TLS").default("false").asBool(),
 	POSTHOG_API_KEY: env
 		.get("POSTHOG_API_KEY")
 		.default("it's a secret")
