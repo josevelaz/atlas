@@ -17,3 +17,9 @@ variable "ecs_task_role_name" {
   description = "Name of the ECS task IAM role for this preview environment."
   type        = string
 }
+
+variable "turso_group_name" {
+  description = "Name of the existing Turso group to create preview databases in. The group must already exist — create it once with: turso group create hay-preview --location iad"
+  type        = string
+  default     = "hay-preview"
+}

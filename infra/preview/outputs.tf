@@ -31,3 +31,17 @@ output "spa_s3_key_prefix" {
   description = "Preview SPA S3 key prefix (e.g. 'previews/pr-42/')."
   value       = module.static_spa.s3_key_prefix
 }
+
+# ---------------------------------------------------------------------------
+# Turso outputs (preview)
+# ---------------------------------------------------------------------------
+
+output "turso_database_name" {
+  description = "Preview Turso database name (hay-preview-pr-<number>)."
+  value       = module.turso.database_name
+}
+
+output "turso_database_url" {
+  description = "Preview Turso libSQL connection URL. Seed this into Secrets Manager (hay/preview-pr-<number>/TURSO_DATABASE_URL) — do NOT use directly in application config."
+  value       = module.turso.database_url
+}

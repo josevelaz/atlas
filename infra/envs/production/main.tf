@@ -117,3 +117,19 @@ module "static_spa" {
     ManagedBy   = "terraform"
   }
 }
+
+# ---------------------------------------------------------------------------
+# Turso database — production
+#
+# The group (var.turso_group_name) must already exist in the Turso organisation
+# before applying this stack. Create it once with:
+#   turso group create hay-prod --location iad
+#
+# Auth token is NOT managed here — see infra/README.md § Turso token rotation.
+# ---------------------------------------------------------------------------
+module "turso" {
+  source = "../../modules/turso"
+
+  database_name = "hay-prod"
+  group_name    = var.turso_group_name
+}

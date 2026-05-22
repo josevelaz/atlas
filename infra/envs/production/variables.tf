@@ -29,3 +29,9 @@ variable "prod_acm_certificate_arn" {
   type    = string
   default = null
 }
+
+variable "turso_group_name" {
+  description = "Name of the existing Turso group to create the production database in (e.g. 'hay-prod'). The group must already exist — create it with: turso group create hay-prod --location iad"
+  type        = string
+  default     = "hay-prod"
+}

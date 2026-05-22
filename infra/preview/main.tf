@@ -56,3 +56,22 @@ resource "aws_cloudwatch_log_group" "api" {
     ManagedBy   = "terraform"
   }
 }
+
+# ---------------------------------------------------------------------------
+# Turso database — preview (per-PR, ephemeral)
+#
+# Named hay-preview-pr-<number>. Destroyed when the PR is torn down via
+# `terraform destroy` on this stack.
+#
+# The shared preview group (var.turso_group_name, default: "hay-preview") must
+# already exist. Create it once with:
+#   turso group create hay-preview --location iad
+#
+# Auth token is NOT managed here — see infra/README.md § Turso token rotation.
+# ---------------------------------------------------------------------------
+module "turso" {
+  source = "../modules/turso"
+
+  database_name = "hay-preview-pr-${var.pr_number}"
+  group_name    = var.turso_group_name
+}

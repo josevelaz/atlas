@@ -91,6 +91,98 @@ In local dev the API runs on `http://localhost:3000`. `Secure` cookies are silen
 
 ---
 
+## Turso database management
+
+### Groups (one-time setup)
+
+Turso databases live inside groups. Groups must be created **before** running `terraform apply` on any stack that uses the turso module. Create them once:
+
+```sh
+# Staging group
+turso group create hay-staging --location iad
+
+# Production group
+turso group create hay-prod --location iad
+
+# Shared preview group (all PR preview databases share this group)
+turso group create hay-preview --location iad
+```
+
+The group name is passed to each stack via `var.turso_group_name` (defaults: `hay-staging`, `hay-prod`, `hay-preview`).
+
+### Databases (managed by Terraform)
+
+| Stack | Database name | Group |
+|---|---|---|
+| `infra/envs/staging/` | `hay-staging` | `hay-staging` |
+| `infra/envs/production/` | `hay-prod` | `hay-prod` |
+| `infra/preview/` (per PR) | `hay-preview-pr-<number>` | `hay-preview` |
+
+Preview databases are created on PR open and destroyed on PR close via `terraform destroy`.
+
+### Turso token rotation workflow
+
+> **Tokens are never stored in Terraform state, variables, or outputs.**
+
+Turso auth tokens are created and rotated out-of-band. After creating or rotating a token, seed it into AWS Secrets Manager manually or via the protected GitHub Actions seed workflow.
+
+**Create a token (initial setup or rotation):**
+
+```sh
+# Staging
+turso db tokens create hay-staging --expiration none
+
+# Production
+turso db tokens create hay-prod --expiration none
+
+# Preview PR (replace 42 with the PR number)
+turso db tokens create hay-preview-pr-42 --expiration none
+```
+
+**Seed the token into Secrets Manager:**
+
+```sh
+# Staging
+aws secretsmanager put-secret-value \
+  --secret-id hay/staging/TURSO_AUTH_TOKEN \
+  --secret-string "<token>"
+
+# Production
+aws secretsmanager put-secret-value \
+  --secret-id hay/production/TURSO_AUTH_TOKEN \
+  --secret-string "<token>"
+
+# Preview PR 42
+aws secretsmanager put-secret-value \
+  --secret-id hay/preview-pr-42/TURSO_AUTH_TOKEN \
+  --secret-string "<token>"
+```
+
+**Seed the database URL** (available as a Terraform output after `terraform apply`):
+
+```sh
+# Get the URL from Terraform output
+terraform -chdir=infra/envs/staging output turso_database_url
+
+# Seed it
+aws secretsmanager put-secret-value \
+  --secret-id hay/staging/TURSO_DATABASE_URL \
+  --secret-string "libsql://<hostname>"
+```
+
+**Rotation cadence:**
+
+- Rotate tokens on suspected compromise immediately.
+- Rotate production tokens at least every 90 days as a hygiene practice.
+- Preview tokens can use `--expiration 7d` instead of `none` to auto-expire with the PR lifecycle.
+
+**Never:**
+- Pass tokens as Terraform variables
+- Include tokens in `terraform.tfvars` or `.env` files committed to the repo
+- Log tokens in CI output
+
+---
+
 ## Secret seeding expectations
 
 Secret values are never stored in Terraform configuration, Terraform variables, or Terraform state intentionally.

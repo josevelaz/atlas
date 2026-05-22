@@ -52,3 +52,17 @@ output "route53_zone_id" {
   description = "Production Route 53 hosted zone ID."
   value       = module.dns_acm.zone_id
 }
+
+# ---------------------------------------------------------------------------
+# Turso outputs (production)
+# ---------------------------------------------------------------------------
+
+output "turso_database_name" {
+  description = "Production Turso database name."
+  value       = module.turso.database_name
+}
+
+output "turso_database_url" {
+  description = "Production Turso libSQL connection URL. Seed this into Secrets Manager (hay/production/TURSO_DATABASE_URL) — do NOT use directly in application config."
+  value       = module.turso.database_url
+}
