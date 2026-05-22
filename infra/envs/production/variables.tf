@@ -15,8 +15,8 @@ variable "prod_cloudfront_domain_name" {
     then re-apply so the dns_acm Route 53 ALIAS record points to CloudFront.
     Leave empty string on the initial bootstrap apply.
   EOT
-  type    = string
-  default = ""
+  type        = string
+  default     = ""
 }
 
 variable "prod_acm_certificate_arn" {
@@ -26,8 +26,8 @@ variable "prod_acm_certificate_arn" {
     then re-apply so static_spa attaches the cert + alias to CloudFront.
     Leave null on the initial bootstrap apply.
   EOT
-  type    = string
-  default = null
+  type        = string
+  default     = null
 }
 
 variable "turso_group_name" {

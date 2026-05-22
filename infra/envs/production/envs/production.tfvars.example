@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# Production environment — example variable values
+# ---------------------------------------------------------------------------
+# Copy to production.tfvars and fill in real values before applying.
+# Never commit production.tfvars — it may contain sensitive data.
+
+# Route 53 hosted zone name for the production environment.
+# The zone must already exist in the AWS account.
+prod_zone_name = "hay.example.com"
+
+# Full ECR image URI for the API container.
+# Set via TF_VAR_api_image_uri in CI; use a placeholder for plan-only runs.
+api_image_uri = "123456789012.dkr.ecr.us-east-1.amazonaws.com/hay-server:latest"
+
+# CloudFront domain name — leave empty on initial bootstrap apply.
+# Populate from the cloudfront_domain_name output after the first apply,
+# then re-apply so dns_acm can create the Route 53 ALIAS record.
+prod_cloudfront_domain_name = ""
+
+# ACM certificate ARN — leave null on initial bootstrap apply.
+# Populate from the acm_certificate_arn output after dns_acm is applied,
+# then re-apply so static_spa attaches the cert + alias to CloudFront.
+# prod_acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/..."
+
+# Turso group name — must already exist before applying.
+# Create with: turso group create hay-prod --location iad
+turso_group_name = "hay-prod"

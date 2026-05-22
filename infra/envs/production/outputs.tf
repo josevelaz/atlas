@@ -54,6 +54,25 @@ output "route53_zone_id" {
 }
 
 # ---------------------------------------------------------------------------
+# Static SPA outputs (production)
+# ---------------------------------------------------------------------------
+
+output "cloudfront_distribution_id" {
+  description = "Production CloudFront distribution ID — pass to `aws cloudfront create-invalidation` after each deploy."
+  value       = module.static_spa.cloudfront_distribution_id
+}
+
+output "cloudfront_domain_name" {
+  description = "Production CloudFront distribution domain name."
+  value       = module.static_spa.cloudfront_domain_name
+}
+
+output "spa_s3_bucket_name" {
+  description = "Production SPA S3 bucket name."
+  value       = module.static_spa.s3_bucket_name
+}
+
+# ---------------------------------------------------------------------------
 # Turso outputs (production)
 # ---------------------------------------------------------------------------
 

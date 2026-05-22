@@ -21,3 +21,7 @@ staging_cloudfront_domain_name = ""
 
 # ACM certificate ARN — leave null on initial bootstrap apply.
 # staging_acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/..."
+
+# Turso group name — must already exist before applying.
+# Create with: turso group create hay-staging --location iad
+turso_group_name = "hay-staging"
