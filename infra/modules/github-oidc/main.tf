@@ -6,8 +6,8 @@
 # All three roles share the same OIDC provider and audience
 # (sts.amazonaws.com).  The sub claim is the primary trust boundary:
 #
-#   preview-deploy   → repo:ORG/REPO:pull_request
-#                      (any PR from the same repo)
+#   preview-deploy   → repo:ORG/REPO:environment:preview
+#                      (workflow_dispatch jobs that declare environment: preview)
 #   staging-deploy   → repo:ORG/REPO:environment:staging
 #                      + ref:refs/heads/main  (both conditions required)
 #   production-deploy→ repo:ORG/REPO:environment:production
@@ -54,12 +54,14 @@ data "aws_iam_policy_document" "preview_trust" {
       values   = [local.audience]
     }
 
-    # Scope to pull-request events from this repo only.
-    # The sub for a PR is: repo:ORG/REPO:pull_request
+    # Scope to jobs that declare `environment: preview` in this repo.
+    # The sub for an environment-gated job is: repo:ORG/REPO:environment:preview
+    # Preview workflows use workflow_dispatch + environment: preview (not raw
+    # pull_request events), so the sub claim encodes the environment name.
     condition {
-      test     = "StringLike"
+      test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["${local.repo_prefix}:pull_request"]
+      values   = ["${local.repo_prefix}:environment:preview"]
     }
   }
 }
@@ -193,10 +195,10 @@ resource "aws_iam_role_policy" "preview_permissions" {
           "s3:GetBucketLocation",
         ]
         Resource = [
-          "arn:aws:s3:::*-preview",
-          "arn:aws:s3:::*-preview/*",
-          "arn:aws:s3:::*preview*",
-          "arn:aws:s3:::*preview*/*",
+          "arn:aws:s3:::hay-web-nonprod",
+          "arn:aws:s3:::hay-web-nonprod/*",
+          "arn:aws:s3:::hay-preview-*",
+          "arn:aws:s3:::hay-preview-*/*",
         ]
       },
       # --- Allow: CloudFront invalidations for preview distributions ---

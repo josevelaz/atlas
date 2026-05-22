@@ -1,6 +1,12 @@
 # Production deployment workflow
 #
-# Trigger: manual `workflow_dispatch` from the `main` branch only.
+# Trigger: manual `workflow_dispatch` (any branch).
+#
+# ⚠️  Branch enforcement: GitHub Actions silently ignores `branches:` under
+# `workflow_dispatch`. To restrict this workflow to `main` only, configure the
+# "production" environment in GitHub → Settings → Environments → production →
+# Deployment branches → "Selected branches" → add `main`.
+# Do NOT rely on a `branches:` filter here — it is a no-op for workflow_dispatch.
 #
 # ┌─────────────────────────────────────────────────────────────────────────┐
 # │  APPROVAL GATE — GitHub Environment: "production"                       │
@@ -39,8 +45,6 @@ name: Deploy — Production
 
 on:
   workflow_dispatch:
-    branches:
-      - main
 
 # Workflow-level: read-only. Jobs that need OIDC declare id-token: write themselves.
 permissions:

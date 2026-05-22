@@ -242,8 +242,31 @@ jobs:
             core.setOutput('pr_ref', pr.head.ref);
 
   # ============================================================================
+  # JOB: build-push-preview — build & push server image for preview
+  # Reusable workflows must be called at the job level (not inside steps:).
+  # This job runs under environment: preview so the OIDC sub claim matches
+  # repo:ORG/REPO:environment:preview as required by the IAM trust policy.
+  # ============================================================================
+  build-push-preview:
+    name: Build & push image (preview)
+    if: >
+      github.event_name == 'workflow_dispatch' &&
+      inputs.action == 'deploy' &&
+      needs.preflight.result == 'success'
+    needs: preflight
+    uses: ./.github/workflows/build-push.yml
+    environment: preview
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
+      ecr_repository_url: ${{ vars.ECR_REPOSITORY_URL || secrets.ECR_REPOSITORY_URL }}
+      role_arn: ${{ secrets.PREVIEW_DEPLOY_ROLE_ARN }}
+
+  # ============================================================================
   # JOB: deploy — privileged, runs under environment: preview
-  # Fires only after preflight passes.
+  # Fires only after preflight and build-push-preview pass.
   # ============================================================================
   deploy:
     name: Deploy preview (PR #${{ needs.preflight.outputs.pr_number }})
@@ -251,7 +274,7 @@ jobs:
       github.event_name == 'workflow_dispatch' &&
       inputs.action == 'deploy' &&
       needs.preflight.result == 'success'
-    needs: preflight
+    needs: [preflight, build-push-preview]
     runs-on: ubuntu-latest
     environment: preview  # ← required reviewers gate lives here
 
@@ -281,16 +304,7 @@ jobs:
           role-to-assume: ${{ secrets.PREVIEW_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # ── 3. Build & push server image ─────────────────────────────────────────
-      - name: Build & push server image
-        id: image
-        uses: ./.github/workflows/build-push.yml
-        with:
-          aws_region: ${{ env.AWS_REGION }}
-          ecr_repository_url: ${{ secrets.ECR_REPOSITORY_URL }}
-          role_arn: ${{ secrets.PREVIEW_DEPLOY_ROLE_ARN }}
-
-      # ── 4. Terraform init ─────────────────────────────────────────────────────
+      # ── 3. Terraform init ─────────────────────────────────────────────────────
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269ef065 # v3.1.2
         with:
@@ -308,13 +322,13 @@ jobs:
             -backend-config="region=${AWS_REGION}" \
             -input=false
 
-      # ── 5. Terraform plan (raw output suppressed) ────────────────────────────
+      # ── 4. Terraform plan (raw output suppressed) ────────────────────────────
       - name: Terraform plan
         id: plan
         working-directory: infra/preview
         env:
           TF_VAR_pr_number: ${{ env.PR_NUMBER }}
-          IMAGE_URI: ${{ steps.image.outputs.image_uri }}
+          IMAGE_URI: ${{ needs.build-push-preview.outputs.image_uri }}
         run: |
           # Raw plan output is suppressed — only the binary plan file is kept.
           set +e
