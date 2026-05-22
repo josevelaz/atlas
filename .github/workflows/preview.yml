@@ -391,32 +391,82 @@ jobs:
           CF_DIST_ID=$(terraform output -raw cloudfront_distribution_id)
           S3_BUCKET=$(terraform output -raw spa_s3_bucket_name)
           S3_PREFIX=$(terraform output -raw spa_s3_key_prefix)
+          TURSO_DB_URL=$(terraform output -raw turso_database_url)
 
           echo "api_url=${API_URL}" >> "$GITHUB_OUTPUT"
           echo "cf_domain=${CF_DOMAIN}" >> "$GITHUB_OUTPUT"
           echo "cf_dist_id=${CF_DIST_ID}" >> "$GITHUB_OUTPUT"
           echo "s3_bucket=${S3_BUCKET}" >> "$GITHUB_OUTPUT"
           echo "s3_prefix=${S3_PREFIX}" >> "$GITHUB_OUTPUT"
+          # Mask the DB URL before writing to output — it contains the hostname
+          echo "::add-mask::${TURSO_DB_URL}"
+          echo "turso_db_url=${TURSO_DB_URL}" >> "$GITHUB_OUTPUT"
 
-      # ── 8. Write secrets to Secrets Manager ──────────────────────────────────
-      - name: Write preview secrets
+      # ── 8. Create per-PR Turso token and write all secrets to Secrets Manager ─
+      #
+      # Token lifecycle:
+      #   - A per-PR token is created via `turso db tokens create` using the
+      #     org-level TURSO_API_TOKEN. This scopes the token to the PR database.
+      #   - The token and DB URL are written into Secrets Manager under
+      #     hay/preview-pr-{N}/ so the ECS task can read them at runtime.
+      #   - The token is masked immediately after creation to prevent log leakage.
+      #   - TURSO_API_TOKEN is the org-level management token (repo secret) used
+      #     only to create per-PR tokens — it is never written to Secrets Manager.
+      - name: Create per-PR Turso token and write preview secrets
         env:
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          TURSO_API_TOKEN: ${{ secrets.TURSO_API_TOKEN }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          TURSO_DB_URL: ${{ steps.tf-outputs.outputs.turso_db_url }}
         run: |
+          set -euo pipefail
           SECRET_PREFIX="hay/preview-pr-${PR_NUMBER}"
+          DB_NAME="hay-preview-pr-${PR_NUMBER}"
 
+          # Create a per-PR Turso auth token scoped to this database.
+          # --expiration 7d auto-expires the token after one week — longer than
+          # any PR preview lifecycle. Adjust if your PR review cycle is longer.
+          TURSO_PR_TOKEN=$(
+            curl -s -f \
+              -X POST \
+              -H "Authorization: Bearer ${TURSO_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d '{"expiration":"7d"}' \
+              "https://api.turso.tech/v1/organizations/hay/databases/${DB_NAME}/auth/tokens" \
+              | jq -r '.jwt'
+          )
+
+          # Mask immediately — must happen before any shell expansion that could log it
+          echo "::add-mask::${TURSO_PR_TOKEN}"
+
+          # Write TURSO_AUTH_TOKEN (per-PR token, not the org-level token)
           aws secretsmanager put-secret-value \
-            --secret-id "${SECRET_PREFIX}/turso-auth-token" \
-            --secret-string "${TURSO_AUTH_TOKEN}" \
+            --secret-id "${SECRET_PREFIX}/TURSO_AUTH_TOKEN" \
+            --secret-string "${TURSO_PR_TOKEN}" \
             --region "${AWS_REGION}"
 
+          # Write TURSO_DATABASE_URL (from Terraform output)
           aws secretsmanager put-secret-value \
-            --secret-id "${SECRET_PREFIX}/better-auth-secret" \
+            --secret-id "${SECRET_PREFIX}/TURSO_DATABASE_URL" \
+            --secret-string "${TURSO_DB_URL}" \
+            --region "${AWS_REGION}"
+
+          # Write BETTER_AUTH_SECRET
+          aws secretsmanager put-secret-value \
+            --secret-id "${SECRET_PREFIX}/BETTER_AUTH_SECRET" \
             --secret-string "${BETTER_AUTH_SECRET}" \
             --region "${AWS_REGION}"
 
+          # Export the per-PR token for the migration step below.
+          # Mask is already set — safe to write to GITHUB_ENV.
+          echo "TURSO_PR_TOKEN=${TURSO_PR_TOKEN}" >> "$GITHUB_ENV"
+
       # ── 9. Run database migrations ────────────────────────────────────────────
+      #
+      # Runs AFTER Terraform apply (DB exists) and AFTER secrets are written.
+      # Uses the per-PR token created in step 8 and the DB URL from TF outputs.
+      # No sanitized template seed is applied here — the DB starts empty and
+      # migrations bring it to the current schema. See infra/README.md §
+      # "Preview DB lifecycle" for the optional sanitized template seed workflow.
       - name: Setup Bun
         uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2.0.2
         with:
@@ -435,8 +485,8 @@ jobs:
 
       - name: Run migrations
         env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_PREVIEW_DB_URL_PREFIX }}-pr-${{ env.PR_NUMBER }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          TURSO_DATABASE_URL: ${{ steps.tf-outputs.outputs.turso_db_url }}
+          TURSO_AUTH_TOKEN: ${{ env.TURSO_PR_TOKEN }}
         run: bun run --cwd apps/server migrate
 
       # ── 10. Build & upload web SPA ────────────────────────────────────────────

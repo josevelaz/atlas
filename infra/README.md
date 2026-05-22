@@ -160,6 +160,118 @@ echo "VAR_NAME=$VALUE" >> "$GITHUB_ENV"
 
 ---
 
+## Preview DB lifecycle
+
+Each pull request preview gets an isolated Turso database. This section documents the full lifecycle: create → token → seed → migrate → destroy.
+
+### 1. Create (Terraform)
+
+`terraform apply` on `infra/preview/` creates `turso_database.this` via the `turso` module:
+
+```hcl
+# infra/preview/main.tf
+module "turso" {
+  source        = "../modules/turso"
+  database_name = "hay-preview-pr-${var.pr_number}"
+  group_name    = var.turso_group_name   # default: "hay-preview"
+}
+```
+
+The database is named `hay-preview-pr-{N}` and lives in the shared `hay-preview` group. The Terraform output `turso_database_url` exposes the `libsql://` connection URL.
+
+### 2. Per-PR token (out-of-band, CI step 8)
+
+Auth tokens are **never** managed by Terraform. After `terraform apply`, the deploy workflow creates a per-PR token via the Turso REST API using the org-level `TURSO_API_TOKEN` (a repo secret):
+
+```sh
+# Equivalent shell command (CI does this via curl)
+turso db tokens create hay-preview-pr-{N} --expiration 7d
+```
+
+The token is immediately masked (`::add-mask::`) and written to Secrets Manager:
+
+```sh
+aws secretsmanager put-secret-value \
+  --secret-id "hay/preview-pr-{N}/TURSO_AUTH_TOKEN" \
+  --secret-string "<per-pr-token>"
+
+aws secretsmanager put-secret-value \
+  --secret-id "hay/preview-pr-{N}/TURSO_DATABASE_URL" \
+  --secret-string "libsql://<hostname>"
+```
+
+The `--expiration 7d` auto-expires the token after one week. Adjust if your PR review cycle is longer.
+
+**Token scoping:**
+- `TURSO_API_TOKEN` (repo secret) — org-level management token, used only to create per-PR tokens. Never written to Secrets Manager.
+- `TURSO_AUTH_TOKEN` in `hay/preview-pr-{N}/` — per-PR token, scoped to `hay-preview-pr-{N}` only. Read by the ECS task at runtime.
+
+### 3. Seed from sanitized template (optional, maintainer-only)
+
+> ⚠️ **This step is optional.** By default, preview databases start empty and migrations bring them to the current schema. The sanitized template seed is only needed when reviewers need realistic-looking data to test against.
+
+A **sanitized template** is a pre-seeded Turso DB snapshot that contains representative data with **no PII or sensitive values**.
+
+#### Template data requirements (MANDATORY)
+
+The following data is **FORBIDDEN** in the sanitized template:
+
+| Category | Forbidden data |
+|---|---|
+| Users | Real emails, display names, profile photos |
+| OAuth | Provider account IDs, access tokens, refresh tokens |
+| Auth | Session tokens, CSRF tokens, verification codes |
+| Content | Production or staging-derived message data, user-generated content |
+| Secrets | Any value that appears in production or staging Secrets Manager |
+
+The template must contain only synthetic, obviously-fake data (e.g. `alice@example.com`, `bob@example.com`).
+
+#### Template refresh workflow (maintainer-only, protected)
+
+The template is refreshed via a `workflow_dispatch`-only GitHub Actions workflow (`.github/workflows/refresh-preview-template.yml`). This workflow:
+
+1. Requires manual trigger — never runs automatically.
+2. Runs under `environment: preview` (required reviewers must approve).
+3. Operator must provide audit evidence that the template contains no PII before approval is granted.
+4. Writes the sanitized snapshot to a known Turso database (`hay-preview-template`) in the `hay-preview` group.
+
+**Previews may only seed from the template after a maintainer has approved the most recent template refresh run.** If the template has not been refreshed since the last schema migration, seed from empty (migrations only) until the template is updated.
+
+#### Applying the template seed (when used)
+
+```sh
+# Restore from template into the PR database (Turso shell or REST API)
+# This is performed by the seed step in the deploy workflow when opted in.
+turso db shell hay-preview-pr-{N} < /path/to/sanitized-seed.sql
+```
+
+The seed step runs **after** `terraform apply` and **before** `bun run --cwd apps/server migrate`.
+
+### 4. Migrate
+
+Migrations run after the DB exists and secrets are written:
+
+```sh
+TURSO_DATABASE_URL="libsql://<hostname>" \
+TURSO_AUTH_TOKEN="<per-pr-token>" \
+bun run --cwd apps/server migrate
+```
+
+This calls `drizzle-kit migrate` using `apps/server/drizzle.config.ts`. The DB URL comes from the Terraform output (`turso_database_url`); the token comes from the per-PR token created in step 2.
+
+**Order invariant:** `terraform apply` → `token create + secrets write` → `(optional seed)` → `migrate` → `ECS deploy`
+
+### 5. Destroy
+
+On PR close or label removal, the cleanup path runs:
+
+1. **`terraform destroy`** — removes `turso_database.this` via the Turso provider. This is the primary deletion path.
+2. **Belt-and-suspenders REST call** — `preview-cleanup.yml` also calls `DELETE /v1/organizations/hay/databases/hay-preview-pr-{N}` in case the Terraform provider fails or state was already deleted.
+3. **Secrets Manager force-delete** — all `hay/preview-pr-{N}/*` secrets are force-deleted (no 7-day recovery window) so the names can be reused if the PR is reopened.
+4. **S3 state key removal** — `preview/pr-{N}/terraform.tfstate` is deleted so the cleanup discover step won't pick it up again.
+
+---
+
 ## Turso database management
 
 ### Groups (one-time setup)
