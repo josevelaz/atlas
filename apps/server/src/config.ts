@@ -70,6 +70,10 @@ const NODE_ENV = env
 	.default("development")
 	.asEnum(["production", "test", "development"]);
 
+// HAY_ENV distinguishes deployed environments (staging, production, preview-pr-<N>).
+// NODE_ENV is always "production" in ECS; HAY_ENV carries the environment-specific value.
+const HAY_ENV = env.get("HAY_ENV").default("development").asString();
+
 const BETTER_AUTH_SECRET = env.get("BETTER_AUTH_SECRET").required().asString();
 
 const BETTER_AUTH_URL = env
@@ -150,6 +154,7 @@ if (NODE_ENV === "production") {
 
 export const config = {
 	NODE_ENV,
+	HAY_ENV,
 
 	PORT: env.get("PORT").default(3000).asPortNumber(),
 	API_URL: env

@@ -48,44 +48,15 @@ jobs:
   # ---------------------------------------------------------------------------
   build-push:
     name: Build & Push Image
-    runs-on: ubuntu-latest
     needs: ci
-    environment: staging
+    uses: ./.github/workflows/build-push.yml
     permissions:
-      id-token: write
       contents: read
-    outputs:
-      image_uri: ${{ steps.push.outputs.image_uri }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          persist-credentials: false
-
-      - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
-        with:
-          role-to-assume: ${{ secrets.STAGING_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to ECR
-        id: ecr-login
-        run: |
-          aws ecr get-login-password --region "$AWS_REGION" \
-            | docker login --username AWS --password-stdin "${{ secrets.ECR_REPOSITORY_URL }}"
-
-      - name: Build & push image
-        id: push
-        env:
-          ECR_URL: ${{ secrets.ECR_REPOSITORY_URL }}
-          GIT_SHA: ${{ github.sha }}
-        run: |
-          IMAGE_TAG="${ECR_URL}:${GIT_SHA}"
-          docker build -t "$IMAGE_TAG" -f apps/server/Dockerfile apps/server
-          docker push "$IMAGE_TAG"
-          # Capture immutable digest
-          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_TAG")
-          echo "image_uri=${DIGEST}" >> "$GITHUB_OUTPUT"
+      id-token: write
+    with:
+      aws_region: us-east-1
+      ecr_repository_url: ${{ vars.ECR_REPOSITORY_URL || secrets.ECR_REPOSITORY_URL }}
+      role_arn: ${{ secrets.STAGING_DEPLOY_ROLE_ARN }}
 
   # ---------------------------------------------------------------------------
   # 3. Terraform plan
@@ -184,7 +155,6 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload tfplan artifact
-        if: ${{ github.event.repository.private == true }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: tfplan-staging-${{ github.run_id }}

@@ -295,7 +295,12 @@ resource "aws_ecs_express_gateway_service" "api" {
 
     environment {
       name  = "NODE_ENV"
-      value = var.is_preview ? "preview" : var.env
+      value = "production"
+    }
+
+    environment {
+      name  = "HAY_ENV"
+      value = var.env
     }
 
     # Secrets injected from Secrets Manager at task startup

@@ -29,9 +29,9 @@ Run infrastructure in this order:
 
 Remote Terraform state keys should follow this layout:
 
-- Staging: `infra/staging/terraform.tfstate`
-- Production: `infra/production/terraform.tfstate`
-- PR previews: `infra/previews/pr-<number>/terraform.tfstate`
+- Staging: `env/staging/terraform.tfstate`
+- Production: `env/production/terraform.tfstate`
+- PR previews: `preview/pr-<number>/terraform.tfstate`
 
 ## Environment stacks
 
@@ -47,7 +47,7 @@ Run staging changes before production where practical. Production should only be
 The preview stack lives in `infra/preview/` and is intended for pull request previews. Each PR must use its own state key in the form:
 
 ```text
-infra/previews/pr-<number>/terraform.tfstate
+preview/pr-<number>/terraform.tfstate
 ```
 
 Preview resources should be treated as ephemeral and cleaned up when the PR closes.
