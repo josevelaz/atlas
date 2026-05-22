@@ -189,11 +189,50 @@ Secret values are never stored in Terraform configuration, Terraform variables, 
 
 Terraform is responsible for creating secret names and ARNs only. After Terraform creates those secret containers, seed the actual secret values by one of these protected paths:
 
-- The protected GitHub Actions seed workflow.
+- The protected GitHub Actions seed workflow (`.github/workflows/seed-secrets.yml`).
 - Manual seeding through the AWS Console.
 - Manual seeding through the AWS CLI.
 
 Do not commit secret values, pass them through Terraform, or include them in plan output.
+
+### Protected seed workflow
+
+`.github/workflows/seed-secrets.yml` is a `workflow_dispatch`-only workflow that writes secret values into AWS Secrets Manager. It never runs automatically.
+
+**How it works:**
+
+1. Operator triggers the workflow manually from the GitHub Actions UI.
+2. Selects `staging` or `production` as the target environment.
+3. GitHub Environment gate fires — required reviewers must approve before the job runs.
+4. The job assumes the environment's OIDC role (`STAGING_DEPLOY_ROLE_ARN` or `PRODUCTION_DEPLOY_ROLE_ARN`).
+5. Secret values are read from GitHub Actions secrets (never from workflow inputs).
+6. All values are masked with `::add-mask::` before any shell expansion.
+7. Each secret is written with `aws secretsmanager put-secret-value`.
+
+**Secrets written (per environment):**
+
+| Secret name | GitHub Actions secret |
+|---|---|
+| `hay/{env}/BETTER_AUTH_SECRET` | `SEED_BETTER_AUTH_SECRET` |
+| `hay/{env}/TURSO_AUTH_TOKEN` | `SEED_TURSO_AUTH_TOKEN` |
+| `hay/{env}/TURSO_DATABASE_URL` | `SEED_TURSO_DATABASE_URL` |
+| `hay/{env}/CORS_ALLOWED_ORIGINS` | `SEED_CORS_ALLOWED_ORIGINS` |
+| `hay/{env}/BETTER_AUTH_URL` | `SEED_BETTER_AUTH_URL` |
+
+**Redis/ElastiCache:** No token seeding is required. The ECS task role has IAM permissions to connect directly — no password or auth token is used.
+
+**One-time setup:**
+
+1. In GitHub → Settings → Environments, create `staging` and `production` environments with required reviewers.
+2. Add the five `SEED_*` secrets to the repo (Settings → Secrets and variables → Actions).
+3. Add `STAGING_DEPLOY_ROLE_ARN` and `PRODUCTION_DEPLOY_ROLE_ARN` as Actions variables (not secrets — they are not sensitive).
+
+**Security properties:**
+
+- Secret values never appear in workflow inputs, logs, or the GitHub UI run summary.
+- `::add-mask::` is applied before any AWS CLI call.
+- The OIDC role is scoped per environment — staging credentials cannot write production secrets.
+- The GitHub Environment gate provides a human approval checkpoint before any write occurs.
 
 ---
 
