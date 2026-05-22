@@ -102,3 +102,37 @@ Terraform is responsible for creating secret names and ARNs only. After Terrafor
 - Manual seeding through the AWS CLI.
 
 Do not commit secret values, pass them through Terraform, or include them in plan output.
+
+---
+
+## Tauri CSP `connect-src` — deployment requirement
+
+`apps/desktop/src-tauri/tauri.conf.json` contains placeholder values in the `connect-src` directive that **must be replaced with actual ECS Express API URLs before shipping a production or staging desktop build**:
+
+| Placeholder | Replace with |
+|---|---|
+| `https://REPLACE_WITH_PROD_API.ecs.us-east-1.on.aws` | Production ECS Express service URL (from `terraform output api_url` in `infra/envs/production/`) |
+| `https://REPLACE_WITH_STAGING_API.ecs.us-east-1.on.aws` | Staging ECS Express service URL (from `terraform output api_url` in `infra/envs/staging/`) |
+
+The current CSP `connect-src` allows:
+
+- `'self'` — same-origin requests (Tauri custom protocol)
+- `http://localhost:3000` — local dev API server
+- Production ECS Express URL (placeholder — replace before shipping)
+- Staging ECS Express URL (placeholder — replace before shipping)
+
+**Rules:**
+- Production desktop builds must only list the production API URL in `connect-src` — remove the staging placeholder.
+- Staging desktop builds must only list the staging API URL in `connect-src` — remove the production placeholder.
+- Do **not** use broad wildcards (`*` or `https:`) in `connect-src`.
+- The ECS Express URLs are outputs of the Terraform environment stacks. Retrieve them after `terraform apply` with:
+
+```sh
+# Production
+cd infra/envs/production && terraform output api_url
+
+# Staging
+cd infra/envs/staging && terraform output api_url
+```
+
+Update `tauri.conf.json` with the real URLs as part of the desktop release pipeline before bundling.

@@ -19,7 +19,7 @@
 			}
 		],
 		"security": {
-			"csp": "default-src 'self'; img-src 'self' data:",
+			"csp": "default-src 'self'; img-src 'self' data: blob:; connect-src 'self' http://localhost:3000 https://REPLACE_WITH_PROD_API.ecs.us-east-1.on.aws https://REPLACE_WITH_STAGING_API.ecs.us-east-1.on.aws;",
 			"capabilities": ["default"]
 		}
 	},
