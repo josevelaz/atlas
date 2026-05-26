@@ -32,7 +32,7 @@
 
 ## Tasks
 
-### [ ] 1.0 Bootstrap Tooling: Biome snake_case Rule + Solid UI Init
+### [x] 1.0 Bootstrap Tooling: Biome snake_case Rule + Solid UI Init
 
 #### 1.0 Proof Artifact(s)
 
