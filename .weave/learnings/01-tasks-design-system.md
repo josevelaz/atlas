@@ -35,6 +35,11 @@
 - **Resolution**: Marked task 3.0 blocked after one retry because the current artifacts do not satisfy the plan exactly enough to mark the parent task complete, even though the component code and lint/typecheck evidence are present.
 - **Suggestion**: Clarify whether task 3.0 may use a temporary committed harness or whether task 5.0 should be pulled earlier so screenshot proof for Button/Avatar/Badge can be captured on the exact `/dev/design-system` route without crossing task boundaries.
 
+## Task 3: Base Components: Button, Avatar, Badge
+- **Discrepancy**: Exact task-3 proofs depended on a committed hyphenated showcase route and live hydration, which were not available during the first two proof passes.
+- **Resolution**: After the shared blocker fix introduced `/dev/design-system` and working hydration, re-captured all task-3 screenshots from the committed route and adjusted the avatar demo names to cover all six hash-derived palette colors.
+- **Suggestion**: Schedule shared runtime/route fixes before proof-heavy component tasks, and choose showcase data that exercises every required visual bucket from the start.
+
 ## Task 4: Base Components: Toggle + Icon
 - **Discrepancy**: The plan requires proof from `/dev/design-system` and a click-driven checked-state screenshot, but the retry still depended on a temporary `/dev/design_system` harness and static checked-state evidence because of an app-wide hydration failure.
 - **Resolution**: Marked task 4.0 blocked after one retry because the component implementation is present but the available proof does not meet the plan literally enough to mark the parent task complete.

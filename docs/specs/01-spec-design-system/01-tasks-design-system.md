@@ -137,7 +137,7 @@
 
 ---
 
-### [ ] 3.0 Base Components: Button, Avatar, Badge
+### [x] 3.0 Base Components: Button, Avatar, Badge
 
 > Proof artifacts re-captured from committed route `/dev/design-system` after blocker fix `38a721e`. All screenshots now use the correct route path and the pressed-state screenshot shows a genuine visual difference. Ready for Tapestry verification.
 
