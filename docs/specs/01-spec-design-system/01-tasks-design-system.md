@@ -133,7 +133,7 @@
 - [x] 2.7 Start the dev server (`bun run dev:web` from repo root or `bun run dev` from `apps/web/`). Open `http://localhost:3001` in a browser. Open DevTools → Elements → inspect `:root` and confirm `--color-main` is present. Open DevTools → Network → filter by "fonts" and confirm a request to `fonts.googleapis.com` appears.
 - [x] 2.8 Populate `DESIGN.md` at the repo root with the full token documentation. Include sections: Color Tokens (light + dark table), Typography (font families, weights, scale), Border & Shadow (all tokens with values), Motion (duration + easing tokens), and a Usage Notes section explaining the Tailwind v4 `@theme` approach.
 - [x] 2.9 Run `bun run lint` and `bun run typecheck` from `apps/web/`. Fix any errors before proceeding.
-- [ ] 2.10 Commit: `feat(tokens): wire OKLCH design tokens into Tailwind v4 and populate DESIGN.md`
+- [x] 2.10 Commit: `feat(tokens): wire OKLCH design tokens into Tailwind v4 and populate DESIGN.md`
 
 ---
 

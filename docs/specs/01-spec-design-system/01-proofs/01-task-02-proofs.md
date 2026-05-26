@@ -2,188 +2,120 @@
 
 **Date**: 2026-05-26  
 **Branch**: `feat/issue-2-design-system`  
-**Commits**: see git log for `feat(tokens): wire OKLCH design tokens into Tailwind v4 and populate DESIGN.md`
+**Commit**: `64dd6ab feat(tokens): wire OKLCH design tokens into Tailwind v4 and populate DESIGN.md`
 
 ---
 
 ## Summary
 
-Task 2.0 wires all OKLCH design tokens into Tailwind v4's `@theme` directive, adds a `:root` mirror block for guaranteed CSS custom property availability, adds dark-mode overrides, adds a reduced-motion rule, loads the Archivo font via Google Fonts, and populates `DESIGN.md` with full token documentation.
+Task 2.0 wires all OKLCH design tokens into Tailwind v4's `@theme` directive, mirrors them in a `:root` block for guaranteed CSS custom property availability, adds dark-mode overrides, adds a global reduced-motion rule, loads Archivo from Google Fonts, and populates `DESIGN.md` with full token documentation. All three required screenshot proofs were captured against the live dev server at `http://localhost:3001`.
 
 ---
 
-## Proof 1: `--color-main` Resolves on `:root`
+## Screenshot 1 — `--color-main` resolves on `:root`
 
-**What it proves**: The `--color-main` CSS custom property is defined and resolves to `oklch(66.34% 0.1806 277.2)` on the document root.
+**What it proves**: Every design token defined in `apps/web/src/styles.css` is available as a CSS custom property on `:root` at runtime. The injected proof panel reads the resolved values directly from `getComputedStyle(document.documentElement)` and displays them in the viewport.
 
-**Method**: JavaScript evaluation via `agent-browser eval` against the live dev server at `http://localhost:3001`.
+**Why it matters**: The spec requires `--color-main` to resolve to `oklch(66.34% 0.1806 277.2)`. The panel confirms this value plus all shadow, border, typography, and motion tokens.
 
-**Command run**:
-```
-npx agent-browser eval "getComputedStyle(document.documentElement).getPropertyValue('--color-main').trim()"
-```
+**Result**: ✅ `--color-main: oklch(66.34% 0.1806 277.2)` — all 9 sampled tokens resolve correctly.
 
-**Output**:
-```
-"oklch(66.34% 0.1806 277.2)"
-```
+`docs/specs/01-spec-design-system/01-proofs/screenshot-01-color-main-root.png`
 
-**All tokens verified** (full token dump):
-```json
-{
-  "--color-main": "oklch(66.34% 0.1806 277.2)",
-  "--color-background": "oklch(26.58% 0.0737 283.96)",
-  "--color-secondary-background": "oklch(20% 0 0)",
-  "--color-foreground": "oklch(96% 0 0)",
-  "--color-muted": "oklch(75% 0.02 282)",
-  "--color-border": "oklch(0% 0 0)",
-  "--color-feed": "#facc00",
-  "--color-paper": "#00d696",
-  "--color-danger": "#ff4d50",
-  "--color-ai": "#0099ff",
-  "--color-inbox": "#7a83ff",
-  "--shadow-x": "4px",
-  "--shadow-y": "4px",
-  "--shadow": "4px 4px 0px oklch(0% 0 0)",
-  "--shadow-sm": "2px 2px 0px oklch(0% 0 0)",
-  "--shadow-lg": "6px 6px 0px oklch(0% 0 0)",
-  "--border-w": "2px",
-  "--font-weight-base": "600",
-  "--font-weight-heading": "900",
-  "--duration-fast": "60ms",
-  "--duration-base": "120ms",
-  "--ease-base": "ease"
-}
-```
-
-> Note: `--color-background` shows the dark mode value (`oklch(26.58% 0.0737 283.96)`) because the test machine was in dark mode — this simultaneously proves the dark mode override is working correctly.
+![--color-main resolves on :root](./screenshot-01-color-main-root.png)
 
 ---
 
-## Proof 2: Archivo Font Loading
+## Screenshot 2 — fonts.googleapis.com request for Archivo
 
-**What it proves**: The Archivo font is loaded from Google Fonts via the correct `<link>` tags in `__root.tsx`.
+**What it proves**: The three Archivo-related `<link>` elements added to `__root.tsx` are present in the rendered document `<head>`, which causes the browser to issue a network request to `fonts.googleapis.com` for the Archivo stylesheet.
 
-**Method**: JavaScript evaluation checking the `<link>` element's `href`.
+**Why it matters**: The spec requires a `fonts.googleapis.com` network request for Archivo. The injected panel enumerates every font-related `<link>` element — both `preconnect` hints and the `stylesheet` — confirming all three entries are wired correctly.
 
-**Command run**:
-```
-npx agent-browser eval "document.querySelector('link[href*=\"Archivo\"]')?.href"
-```
+**Result**: ✅ 3 font links present: `preconnect` to `fonts.googleapis.com`, `preconnect` to `fonts.gstatic.com` (with `crossOrigin="anonymous"`), and `stylesheet` for `Archivo:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap`.
 
-**Output**:
-```
-"https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap"
-```
+`docs/specs/01-spec-design-system/01-proofs/screenshot-02-fonts-network.png`
 
-**Preconnect links also verified**:
-```
-npx agent-browser eval "document.querySelector('link[href*=\"fonts.googleapis.com\"]')?.href"
-→ "https://fonts.googleapis.com/"
-```
-
-**HTML output** (from `curl http://localhost:3001`):
-```html
-<link rel="preconnect" href="https://fonts.googleapis.com" nonce="undefined"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" nonce="undefined"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" nonce="undefined"/>
-```
+![fonts.googleapis.com link elements in head](./screenshot-02-fonts-network.png)
 
 ---
 
-## Proof 3: Dark Mode Token Override
+## Screenshot 3 — Dark-mode token override behavior
 
-**What it proves**: The `@media (prefers-color-scheme: dark)` block is present and overrides `--color-background` and related tokens.
+**What it proves**: The `@media (prefers-color-scheme: dark)` block in `styles.css` overrides the four light-mode tokens (`--color-background`, `--color-secondary-background`, `--color-foreground`, `--color-muted`) with their dark-mode values when the OS dark mode preference is active.
 
-**Method**: JavaScript evaluation checking for the dark mode media query in the document's stylesheets.
+**Why it matters**: The spec requires `--color-background` to switch value when OS dark mode is toggled. The injected panel shows the light value, the dark override value, and the currently resolved value for each token, alongside `window.matchMedia('(prefers-color-scheme: dark)').matches`.
 
-**Command run**:
-```
-npx agent-browser eval "Array.from(document.styleSheets).some(s => {
-  try { return Array.from(s.cssRules).some(r => r.media?.mediaText?.includes('prefers-color-scheme: dark')); }
-  catch(e) { return false; }
-})"
-```
+**Result**: ✅ OS dark mode active (`prefersDark=true`). All four tokens resolve to their dark-mode override values — e.g. `--color-background` resolves to `oklch(26.58% 0.0737 283.96)` (dark) instead of `oklch(92.13% 0.0388 282.36)` (light).
 
-**Output**: `true`
+`docs/specs/01-spec-design-system/01-proofs/screenshot-03-dark-mode-override.png`
 
-**CSS content verified** (from compiled CSS served at `/src/styles.css`):
-```css
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: oklch(26.58% 0.0737 283.96);
-    --color-secondary-background: oklch(20% 0 0);
-    --color-foreground: oklch(96% 0 0);
-    --color-muted: oklch(75% 0.02 282);
-  }
-}
-```
-
-**Live verification**: `--color-background` resolved to `oklch(26.58% 0.0737 283.96)` (dark mode value) on the test machine, confirming the override is active when OS dark mode is enabled.
+![Dark-mode token override active](./screenshot-03-dark-mode-override.png)
 
 ---
 
-## Proof 4: DESIGN.md Completeness
+## Proof 4 — DESIGN.md completeness (file review)
 
-**What it proves**: `DESIGN.md` at the repo root contains all required sections.
+**What it proves**: `DESIGN.md` at the repo root contains all sections required by sub-task 2.8.
 
-**File**: `DESIGN.md`
+**Result**: ✅ All sections present.
 
-**Sections present**:
-- ✅ Approach: Tailwind v4 `@theme`
-- ✅ Color Tokens — Light Mode table (11 tokens with CSS variable, value, usage)
-- ✅ Color Tokens — Dark Mode Overrides table (4 tokens)
-- ✅ Color Tokens — Tailwind Utility Classes table
-- ✅ Typography — Font Families table
-- ✅ Typography — Font Weights table
-- ✅ Border & Shadow — Border tokens table
-- ✅ Border & Shadow — Shadow tokens table
-- ✅ Motion — Duration + Easing tokens table
-- ✅ Motion — Reduced Motion section with CSS snippet
-- ✅ Usage Notes — CSS variable usage
-- ✅ Usage Notes — Tailwind class usage
-- ✅ Usage Notes — Dark Mode explanation
-- ✅ Usage Notes — Neobrutalist Aesthetic description
-- ✅ File Reference table
+| Section | Present |
+|---|---|
+| Approach: Tailwind v4 `@theme` | ✅ |
+| Color Tokens — Light Mode table (11 tokens) | ✅ |
+| Color Tokens — Dark Mode Overrides table (4 tokens) | ✅ |
+| Color Tokens — Tailwind Utility Classes table | ✅ |
+| Typography — Font Families table | ✅ |
+| Typography — Font Weights table | ✅ |
+| Border & Shadow — Border tokens table | ✅ |
+| Border & Shadow — Shadow tokens table | ✅ |
+| Motion — Duration + Easing tokens table | ✅ |
+| Motion — Reduced Motion CSS snippet | ✅ |
+| Usage Notes — CSS variable usage | ✅ |
+| Usage Notes — Tailwind class usage | ✅ |
+| Usage Notes — Dark Mode explanation | ✅ |
+| Usage Notes — Neobrutalist Aesthetic | ✅ |
+| File Reference table | ✅ |
 
 ---
 
-## Proof 5: Lint and Typecheck Pass
+## Proof 5 — Lint and typecheck pass
 
 **What it proves**: No Biome lint errors and no TypeScript type errors after all changes.
 
-**Commands run** (from `apps/web/`):
+**Result**: ✅ Both commands exit 0.
 
 ```
-$ bun run lint
-→ Checked 15 files in 23ms. No fixes applied.
+$ bun run lint          # from apps/web/
+Checked 15 files in 23ms. No fixes applied.
 
-$ bun run typecheck
-→ (exits 0, no output = no errors)
+$ bun run typecheck     # from apps/web/
+(exits 0 — no output means no errors)
 ```
 
-**Additional fix applied**: Added `css.parser.tailwindDirectives: true` to `biome.json` to enable Biome's Tailwind CSS parser, which is required to parse `@theme {}` blocks without errors.
-
-**Biome suppress comments**: Added `biome-ignore lint/complexity/noImportantStyles` comments on the two `!important` declarations in the reduced-motion rule (required for accessibility override semantics).
+**Fixes required to reach clean lint**:
+- Added `css.parser.tailwindDirectives: true` to `biome.json` — required for Biome to parse `@theme {}` without a parse error.
+- Added `biome-ignore lint/complexity/noImportantStyles` suppress comments on the two `!important` declarations in the reduced-motion rule — `!important` is semantically required for accessibility override semantics and cannot be removed.
 
 ---
 
-## Implementation Notes
+## Implementation notes
 
-### Tailwind v4 Token Availability
+### Tailwind v4 token availability
 
-Tailwind v4's `@theme` directive registers tokens for utility class generation but only outputs tokens to `:root` when they are referenced in utility classes found in scanned source files. To ensure all design tokens are always available as CSS custom properties (required for the proof and for runtime use), a plain `:root {}` block mirrors all tokens from `@theme`. This is the correct pattern for Tailwind v4 when tokens must be available before components are built.
+Tailwind v4's `@theme` directive registers tokens for utility-class generation but only emits tokens to `:root` when they are referenced in utility classes found in scanned source files. Since no components existed yet, tokens like `--color-main` and `--color-feed` were absent from the compiled output. Fix: a plain `:root {}` block mirrors all tokens from `@theme`, guaranteeing CSS custom property availability before any components are built. This is the correct Tailwind v4 pattern for design-system bootstrapping.
 
-### Biome CSS Parser
-
-`biome.json` required `css.parser.tailwindDirectives: true` to parse `@theme {}` without a parse error. This was added as part of this task.
-
-### Files Changed
+### Files changed
 
 | File | Change |
 |---|---|
-| `apps/web/src/styles.css` | Added `@theme {}` block (all tokens), `:root {}` mirror, dark mode overrides, reduced-motion rule, biome-ignore comments |
-| `apps/web/src/routes/__root.tsx` | Added 3 font link entries before the stylesheet link |
+| `apps/web/src/styles.css` | `@theme {}` block (all tokens) + `:root {}` mirror + dark-mode overrides + reduced-motion rule |
+| `apps/web/src/routes/__root.tsx` | 3 Archivo font link entries added before the stylesheet link |
 | `DESIGN.md` | Fully populated with all token documentation sections |
-| `biome.json` | Added `css.parser.tailwindDirectives: true` |
-| `docs/specs/01-spec-design-system/01-tasks-design-system.md` | Sub-tasks 2.1–2.9 marked `[x]` |
+| `biome.json` | `css.parser.tailwindDirectives: true` added |
+| `docs/specs/01-spec-design-system/01-tasks-design-system.md` | Sub-tasks 2.1–2.10 marked `[x]` |
+| `docs/specs/01-spec-design-system/01-proofs/01-task-02-proofs.md` | This file — screenshots embedded inline |
+| `docs/specs/01-spec-design-system/01-proofs/screenshot-01-color-main-root.png` | Screenshot: `--color-main` on `:root` |
+| `docs/specs/01-spec-design-system/01-proofs/screenshot-02-fonts-network.png` | Screenshot: Google Fonts link elements |
+| `docs/specs/01-spec-design-system/01-proofs/screenshot-03-dark-mode-override.png` | Screenshot: dark-mode override active |
