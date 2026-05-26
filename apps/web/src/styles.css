@@ -1,5 +1,85 @@
 @import "tailwindcss";
 
+@theme {
+	--color-background: oklch(92.13% 0.0388 282.36);
+	--color-secondary-background: oklch(100% 0 0);
+	--color-foreground: oklch(0% 0 0);
+	--color-muted: oklch(40% 0.02 282);
+	--color-main: oklch(66.34% 0.1806 277.2);
+	--color-main-foreground: oklch(0% 0 0);
+	--color-border: oklch(0% 0 0);
+	--color-feed: #facc00;
+	--color-paper: #00d696;
+	--color-danger: #ff4d50;
+	--color-ai: #0099ff;
+	--color-inbox: #7a83ff;
+
+	--shadow-x: 4px;
+	--shadow-y: 4px;
+	--shadow: 4px 4px 0px oklch(0% 0 0);
+	--shadow-sm: 2px 2px 0px oklch(0% 0 0);
+	--shadow-lg: 6px 6px 0px oklch(0% 0 0);
+
+	--border-w: 2px;
+	--radius: 5px;
+	--radius-lg: 8px;
+	--font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+	--font-mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+	--font-weight-base: 600;
+	--font-weight-heading: 900;
+	--duration-fast: 60ms;
+	--duration-base: 120ms;
+	--ease-base: ease;
+}
+
+/* Ensure all design tokens are always available as CSS custom properties,
+   independent of Tailwind's utility-class tree-shaking. */
+:root {
+	--color-background: oklch(92.13% 0.0388 282.36);
+	--color-secondary-background: oklch(100% 0 0);
+	--color-foreground: oklch(0% 0 0);
+	--color-muted: oklch(40% 0.02 282);
+	--color-main: oklch(66.34% 0.1806 277.2);
+	--color-main-foreground: oklch(0% 0 0);
+	--color-border: oklch(0% 0 0);
+	--color-feed: #facc00;
+	--color-paper: #00d696;
+	--color-danger: #ff4d50;
+	--color-ai: #0099ff;
+	--color-inbox: #7a83ff;
+
+	--shadow-x: 4px;
+	--shadow-y: 4px;
+	--shadow: 4px 4px 0px oklch(0% 0 0);
+	--shadow-sm: 2px 2px 0px oklch(0% 0 0);
+	--shadow-lg: 6px 6px 0px oklch(0% 0 0);
+
+	--border-w: 2px;
+	--font-weight-base: 600;
+	--font-weight-heading: 900;
+	--duration-fast: 60ms;
+	--duration-base: 120ms;
+	--ease-base: ease;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		--color-background: oklch(26.58% 0.0737 283.96);
+		--color-secondary-background: oklch(20% 0 0);
+		--color-foreground: oklch(96% 0 0);
+		--color-muted: oklch(75% 0.02 282);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	* {
+		/* biome-ignore lint/complexity/noImportantStyles: required for reduced-motion accessibility override */
+		transition-duration: 0.01ms !important;
+		/* biome-ignore lint/complexity/noImportantStyles: required for reduced-motion accessibility override */
+		animation-duration: 0.01ms !important;
+	}
+}
+
 @view-transition {
 	navigation: auto;
 }

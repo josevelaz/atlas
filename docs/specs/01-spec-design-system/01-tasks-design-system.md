@@ -63,7 +63,7 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Open `apps/web/src/styles.css`. After the `@import "tailwindcss"` line, add an `@theme {}` block. Inside it, define all color tokens as CSS custom properties:
+- [x] 2.1 Open `apps/web/src/styles.css`. After the `@import "tailwindcss"` line, add an `@theme {}` block. Inside it, define all color tokens as CSS custom properties:
   ```css
   @theme {
     --color-background: oklch(92.13% 0.0388 282.36);
@@ -80,7 +80,7 @@
     --color-inbox: #7A83FF;
   }
   ```
-- [ ] 2.2 Still in `@theme {}`, add shadow tokens:
+- [x] 2.2 Still in `@theme {}`, add shadow tokens:
   ```css
     --shadow-x: 4px;
     --shadow-y: 4px;
@@ -88,7 +88,7 @@
     --shadow-sm: 2px 2px 0px oklch(0% 0 0);
     --shadow-lg: 6px 6px 0px oklch(0% 0 0);
   ```
-- [ ] 2.3 Still in `@theme {}`, add border, radius, typography, and motion tokens:
+- [x] 2.3 Still in `@theme {}`, add border, radius, typography, and motion tokens:
   ```css
     --border-w: 2px;
     --radius: 5px;
@@ -101,7 +101,7 @@
     --duration-base: 120ms;
     --ease-base: ease;
   ```
-- [ ] 2.4 After the `@theme {}` block, add dark mode token overrides using a media query:
+- [x] 2.4 After the `@theme {}` block, add dark mode token overrides using a media query:
   ```css
   @media (prefers-color-scheme: dark) {
     :root {
@@ -112,7 +112,7 @@
     }
   }
   ```
-- [ ] 2.5 After the dark mode block, add the global reduced-motion rule:
+- [x] 2.5 After the dark mode block, add the global reduced-motion rule:
   ```css
   @media (prefers-reduced-motion: reduce) {
     * {
@@ -121,7 +121,7 @@
     }
   }
   ```
-- [ ] 2.6 Open `apps/web/src/routes/__root.tsx`. In the `head()` function's `links` array, add three new entries before the existing stylesheet link:
+- [x] 2.6 Open `apps/web/src/routes/__root.tsx`. In the `head()` function's `links` array, add three new entries before the existing stylesheet link:
   ```ts
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
@@ -130,9 +130,9 @@
     href: "https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap",
   },
   ```
-- [ ] 2.7 Start the dev server (`bun run dev:web` from repo root or `bun run dev` from `apps/web/`). Open `http://localhost:3001` in a browser. Open DevTools → Elements → inspect `:root` and confirm `--color-main` is present. Open DevTools → Network → filter by "fonts" and confirm a request to `fonts.googleapis.com` appears.
-- [ ] 2.8 Populate `DESIGN.md` at the repo root with the full token documentation. Include sections: Color Tokens (light + dark table), Typography (font families, weights, scale), Border & Shadow (all tokens with values), Motion (duration + easing tokens), and a Usage Notes section explaining the Tailwind v4 `@theme` approach.
-- [ ] 2.9 Run `bun run lint` and `bun run typecheck` from `apps/web/`. Fix any errors before proceeding.
+- [x] 2.7 Start the dev server (`bun run dev:web` from repo root or `bun run dev` from `apps/web/`). Open `http://localhost:3001` in a browser. Open DevTools → Elements → inspect `:root` and confirm `--color-main` is present. Open DevTools → Network → filter by "fonts" and confirm a request to `fonts.googleapis.com` appears.
+- [x] 2.8 Populate `DESIGN.md` at the repo root with the full token documentation. Include sections: Color Tokens (light + dark table), Typography (font families, weights, scale), Border & Shadow (all tokens with values), Motion (duration + easing tokens), and a Usage Notes section explaining the Tailwind v4 `@theme` approach.
+- [x] 2.9 Run `bun run lint` and `bun run typecheck` from `apps/web/`. Fix any errors before proceeding.
 - [ ] 2.10 Commit: `feat(tokens): wire OKLCH design tokens into Tailwind v4 and populate DESIGN.md`
 
 ---
