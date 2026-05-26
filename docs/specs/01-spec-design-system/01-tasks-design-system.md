@@ -149,8 +149,8 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Scaffold Button via Solid UI: run `bunx solidui-cli@latest add button` from `apps/web/`. This copies a `button.tsx` (or similar) into `src/components/ui/`. Rename the file to `button.tsx` (snake_case) if it isn't already.
-- [ ] 3.2 Rewrite `apps/web/src/components/ui/button.tsx` to use Hay tokens. The component must:
+- [x] 3.1 Scaffold Button via Solid UI: run `bunx solidui-cli@latest add button` from `apps/web/`. This copies a `button.tsx` (or similar) into `src/components/ui/`. Rename the file to `button.tsx` (snake_case) if it isn't already.
+- [x] 3.2 Rewrite `apps/web/src/components/ui/button.tsx` to use Hay tokens. The component must:
   - Accept a `variant` prop: `"primary"` | `"ghost"` | `"default"` (default: `"default"`)
   - Accept a `size` prop: `"default"` | `"sm"` (default: `"default"`)
   - Accept `disabled` boolean prop
@@ -162,7 +162,7 @@
   - `disabled` = `opacity-50 cursor-not-allowed`
   - All borders use `border-[length:var(--border-w)] border-border`
   - Border radius: `rounded-[var(--radius)]`
-- [ ] 3.3 Create `apps/web/src/components/ui/avatar.tsx` from scratch (Solid UI has no avatar component). The component must:
+- [x] 3.3 Create `apps/web/src/components/ui/avatar.tsx` from scratch (Solid UI has no avatar component). The component must:
   - Accept `name: string`, `size?: "sm" | "default" | "lg"` props
   - Display the first two characters of `name` as uppercase initials
   - Derive background color by hashing `name`: sum all char codes, modulo 6, then map index to `["var(--color-main)", "var(--color-feed)", "var(--color-paper)", "var(--color-ai)", "var(--color-inbox)", "var(--color-danger)"]`
@@ -170,8 +170,8 @@
   - Apply `border-[length:var(--border-w)] border-border rounded-[var(--radius)]`
   - Apply `style="transform: rotate(-1deg)"` as a neobrutalist detail
   - Use `font-weight: var(--font-weight-base)` for initials text
-- [ ] 3.4 Scaffold Badge via Solid UI: run `bunx solidui-cli@latest add badge` from `apps/web/`. Rename to `badge.tsx` if needed.
-- [ ] 3.5 Rewrite `apps/web/src/components/ui/badge.tsx` to use Hay tokens. The component must:
+- [x] 3.4 Scaffold Badge via Solid UI: run `bunx solidui-cli@latest add badge` from `apps/web/`. Rename to `badge.tsx` if needed.
+- [x] 3.5 Rewrite `apps/web/src/components/ui/badge.tsx` to use Hay tokens. The component must:
   - Accept `variant?: "default" | "main" | "feed" | "paper" | "ai" | "danger" | "inbox" | "muted"` (default: `"default"`)
   - Accept `square?: boolean` — when true, use `rounded-[var(--radius)]` instead of `rounded-full`
   - Accept `priority?: "P1" | "P2" | "P3"` — when set, override variant: P1 → `danger`, P2 → `feed`, P3 → `default`; render the priority label as children
@@ -179,8 +179,8 @@
   - Apply `border-[length:var(--border-w)] border-border` and 22px min-height
   - Apply `style="transform: rotate(-1.2deg)"` with `hover:scale-105` transition
   - Variant background map: `main` → `bg-main`, `feed` → `bg-feed`, `paper` → `bg-paper`, `ai` → `bg-ai`, `danger` → `bg-danger`, `inbox` → `bg-inbox`, `muted` → `bg-muted`, `default` → `bg-secondary-background`
-- [ ] 3.6 Run `bun run lint` and `bun run typecheck` from `apps/web/`. Fix any errors.
-- [ ] 3.7 Commit: `feat(ui): add Button, Avatar, and Badge components`
+- [x] 3.6 Run `bun run lint` and `bun run typecheck` from `apps/web/`. Fix any errors.
+- [x] 3.7 Commit: `feat(ui): add Button, Avatar, and Badge components`
 
 ---
 
