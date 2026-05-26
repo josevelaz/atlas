@@ -152,10 +152,10 @@ function DesignSystemPage() {
 				<div class="flex flex-wrap items-end gap-3">
 					<Avatar name="Alice" size="sm" />
 					<Avatar name="Bob" />
-					<Avatar name="Carol" />
+					<Avatar name="Grace" />
 					<Avatar name="Dave" size="lg" />
-					<Avatar name="Eve" />
-					<Avatar name="Frank" />
+					<Avatar name="Heidi" />
+					<Avatar name="Sam" />
 				</div>
 			</section>
 
