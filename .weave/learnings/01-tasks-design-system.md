@@ -29,3 +29,8 @@
 - **Discrepancy**: Running the dev server surfaced an existing mismatch between the snake_case route filename `tanstack_libraries.tsx` and its hyphenated `createFileRoute("/dev/tanstack-libraries")`, which dirtied `routeTree.gen.ts` during verification.
 - **Resolution**: Corrected the route path to `/dev/tanstack_libraries` and committed the regenerated route tree so the worktree stayed clean after frontend validation.
 - **Suggestion**: After filename-normalization tasks, immediately run the route generator once and reconcile any file-path-to-route-path drift before later tasks depend on a clean worktree.
+
+## Task 3: Base Components: Button, Avatar, Badge
+- **Discrepancy**: The plan requires screenshot proof from `/dev/design-system` for task 3.0 while task 5.0 owns the committed showcase route, and the retry still produced evidence from a temporary `/dev/design_system` harness plus a non-visual pressed-state proof.
+- **Resolution**: Marked task 3.0 blocked after one retry because the current artifacts do not satisfy the plan exactly enough to mark the parent task complete, even though the component code and lint/typecheck evidence are present.
+- **Suggestion**: Clarify whether task 3.0 may use a temporary committed harness or whether task 5.0 should be pulled earlier so screenshot proof for Button/Avatar/Badge can be captured on the exact `/dev/design-system` route without crossing task boundaries.

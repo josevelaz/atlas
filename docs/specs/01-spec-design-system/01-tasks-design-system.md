@@ -139,6 +139,8 @@
 
 ### [ ] 3.0 Base Components: Button, Avatar, Badge
 
+> BLOCKED after retry: component code is in place, but proof verification still fails because the current artifacts do not show a true pressed-state screenshot and use `/dev/design_system` evidence instead of the plan's required `/dev/design-system` path.
+
 #### 3.0 Proof Artifact(s)
 
 - Screenshot: `/dev/design-system` showing Button in `primary`, `ghost`, `default`, `sm`, and `disabled` states demonstrates variant coverage
@@ -195,8 +197,8 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Scaffold Toggle via Solid UI: run `bunx solidui-cli@latest add toggle` from `apps/web/`. Rename to `toggle.tsx` if needed.
-- [ ] 4.2 Rewrite `apps/web/src/components/ui/toggle.tsx` to use Hay tokens. The component must:
+- [x] 4.1 Scaffold Toggle via Solid UI: run `bunx solidui-cli@latest add toggle` from `apps/web/`. Rename to `toggle.tsx` if needed.
+- [x] 4.2 Rewrite `apps/web/src/components/ui/toggle.tsx` to use Hay tokens. The component must:
   - Accept `checked: boolean` and `onChange: (checked: boolean) => void` props (controlled)
   - Accept optional `label?: string` prop rendered as visible text beside the toggle
   - Render a visually hidden `<input type="checkbox">` for accessibility (use `sr-only` class)
@@ -205,12 +207,12 @@
   - Animate the thumb using `<Motion>` from `solid-motionone` with `animate={{ x: checked ? "24px" : "2px" }}` and `transition={{ duration: 0.12, easing: "ease" }}`
   - Read `window.matchMedia("(prefers-reduced-motion: reduce)").matches` on mount using `onMount`; if true, set animation `duration` to `0`
   - Wire `onClick` on the track to call `onChange(!checked)`
-- [ ] 4.3 Create `apps/web/src/components/ui/icon.tsx` from scratch. The component must:
+- [x] 4.3 Create `apps/web/src/components/ui/icon.tsx` from scratch. The component must:
   - Import `type { Component } from "solid-js"` and `type { LucideProps } from "lucide-solid"`
   - Accept props: `icon: Component<LucideProps>`, `size?: number` (default `16`), `strokeWidth?: number` (default `2`), and spread remaining `LucideProps` via rest props
   - Render the icon component as `<props.icon size={props.size} strokeWidth={props.strokeWidth} {...rest} />`
   - Export as named export `Icon`
-- [ ] 4.4 Create `apps/web/src/components/ui/index.ts` as a barrel export file:
+- [x] 4.4 Create `apps/web/src/components/ui/index.ts` as a barrel export file:
   ```ts
   export { Button } from "./button";
   export { Avatar } from "./avatar";
@@ -218,8 +220,8 @@
   export { Toggle } from "./toggle";
   export { Icon } from "./icon";
   ```
-- [ ] 4.5 Run `bun run lint` and `bun run typecheck` from `apps/web/`. Fix any errors.
-- [ ] 4.6 Commit: `feat(ui): add Toggle and Icon components with barrel export`
+- [x] 4.5 Run `bun run lint` and `bun run typecheck` from `apps/web/`. Fix any errors.
+- [x] 4.6 Commit: `feat(ui): add Toggle and Icon components with barrel export`
 
 ---
 
