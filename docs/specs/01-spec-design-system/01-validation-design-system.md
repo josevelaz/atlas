@@ -1,7 +1,7 @@
 # 01-validation-design-system.md
 
 **Spec**: `docs/specs/01-spec-design-system/01-spec-design-system.md`
-**Branch**: `feat/issue-2-design-system` @ `700dbff`
+**Branch**: `feat/issue-2-design-system`
 **Validated**: 2026-05-26
 **Validator**: Shuttle (Weave leaf worker)
 
@@ -285,4 +285,4 @@ No unmapped core changes. All modified files are accounted for by spec tasks.
 
 ---
 
-*Validation performed by Shuttle (Weave leaf worker) on 2026-05-26. Branch `feat/issue-2-design-system` at commit `700dbff`. No build commands were run during this validation pass to preserve worktree cleanliness.*
+*Validation performed by Shuttle (Weave leaf worker) on 2026-05-26. Branch `feat/issue-2-design-system` (implementation HEAD `d1a7ca5`; validation commits follow). No build commands were run during this validation pass to preserve worktree cleanliness.*
