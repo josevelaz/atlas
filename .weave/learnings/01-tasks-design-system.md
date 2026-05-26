@@ -45,6 +45,11 @@
 - **Resolution**: Marked task 4.0 blocked after one retry because the component implementation is present but the available proof does not meet the plan literally enough to mark the parent task complete.
 - **Suggestion**: Either allow proof capture on the eventual committed task-5 showcase route after it exists, or explicitly permit nearest-exact evidence when a pre-existing hydration bug prevents trusted interactive screenshots.
 
+## Task 4: Base Components: Toggle + Icon
+- **Discrepancy**: Exact task-4 proofs depended on the shared hydration fix and the committed `/dev/design-system` route, so the original static checked-state evidence became obsolete once the blocker was resolved.
+- **Resolution**: Re-captured the toggle unchecked/checked and icon screenshots from the committed route after the hydration fix, deleted the stale hydration-bug evidence artifact, and verified the checked-state screenshot was produced by a real click-driven interaction.
+- **Suggestion**: When proof artifacts depend on shared runtime behavior, revisit and prune stale workaround evidence after the underlying blocker is fixed so the proof set stays minimal and exact.
+
 ## Task 5: Dev Route: `/dev/design-system` Showcase Page
 - **Discrepancy**: The plan specified a hyphenated `/dev/design-system` route, but the repo enforces snake_case filenames and TanStack Router derives the actual path from `design_system.tsx`, yielding `/dev/design_system`.
 - **Resolution**: Implemented and proved the committed showcase route at `/dev/design_system`, documented the framework constraint in both the task file and proof artifacts, and verified the generated route tree/build align with the underscore path.

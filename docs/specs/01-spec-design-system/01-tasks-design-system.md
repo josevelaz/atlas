@@ -186,7 +186,7 @@
 
 ---
 
-### [ ] 4.0 Base Components: Toggle + Icon
+### [x] 4.0 Base Components: Toggle + Icon
 
 > Proof artifacts re-captured from committed route `/dev/design-system` after blocker fix `38a721e`. Toggle checked-state screenshot is a genuine click-driven transition (not static prop). Hydration bug evidence removed as resolved. Ready for Tapestry verification.
 
