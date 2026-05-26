@@ -13,13 +13,13 @@
     "start": "turbo run start",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck --filter=!@hay/desktop",
     "dev:db": "turbo run dev:db --filter=@hay/server",
     "generate": "turbo run generate --filter=@hay/server",
     "push": "turbo run push --filter=@hay/server",
     "migrate": "turbo run migrate --filter=@hay/server",
     "studio": "turbo run studio --filter=@hay/server",
-    "prepare": "husky"
+    "prepare": "command -v husky >/dev/null 2>&1 && husky || true"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.5",

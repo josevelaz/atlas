@@ -3,13 +3,13 @@ import { createQuery } from "@tanstack/solid-query";
 import { Motion, Presence } from "solid-motionone";
 import { createSignal, Show } from "solid-js";
 import { useSelector } from "@tanstack/solid-store";
-import { FormDemo } from "../../lib/tanstack/form-demo";
-import { HotkeysDemo } from "../../lib/tanstack/hotkeys-demo";
-import { VirtualDemo } from "../../lib/tanstack/virtual-demo";
+import { FormDemo } from "../../lib/tanstack/form_demo";
+import { HotkeysDemo } from "../../lib/tanstack/hotkeys_demo";
+import { VirtualDemo } from "../../lib/tanstack/virtual_demo";
 import { demoCounterStore } from "../../lib/tanstack/store";
 import { createDemoDebouncer } from "../../lib/tanstack/pacer";
 
-export const Route = createFileRoute("/dev/tanstack-libraries")({
+export const Route = createFileRoute("/dev/tanstack_libraries")({
 	component: TanStackLibrariesDemo,
 });
 

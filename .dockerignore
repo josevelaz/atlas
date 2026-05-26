@@ -28,8 +28,10 @@ apps/*/dist
 **/.turbo
 
 # Apps not needed in the server image
-apps/web
-apps/desktop
+apps/web/*
+!apps/web/package.json
+apps/desktop/*
+!apps/desktop/package.json
 apps/desktop/src-tauri/target
 
 # Misc

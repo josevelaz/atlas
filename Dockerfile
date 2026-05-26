@@ -11,12 +11,16 @@ FROM base AS install
 RUN mkdir -p /temp/dev
 COPY package.json bun.lock tsconfig.base.json turbo.json /temp/dev/
 COPY apps/server/package.json /temp/dev/apps/server/package.json
+COPY apps/web/package.json /temp/dev/apps/web/package.json
+COPY apps/desktop/package.json /temp/dev/apps/desktop/package.json
 RUN cd /temp/dev && bun install --frozen-lockfile
 
 # prod deps only
 RUN mkdir -p /temp/prod
 COPY package.json bun.lock tsconfig.base.json turbo.json /temp/prod/
 COPY apps/server/package.json /temp/prod/apps/server/package.json
+COPY apps/web/package.json /temp/prod/apps/web/package.json
+COPY apps/desktop/package.json /temp/prod/apps/desktop/package.json
 RUN cd /temp/prod && bun install --frozen-lockfile --production
 
 # ── prerelease (typecheck) stage ─────────────────────────────────────────────
