@@ -52,7 +52,7 @@
 
 ---
 
-### [ ] 2.0 Design Tokens: Wire OKLCH Tokens into Tailwind v4 + Populate DESIGN.md
+### [x] 2.0 Design Tokens: Wire OKLCH Tokens into Tailwind v4 + Populate DESIGN.md
 
 #### 2.0 Proof Artifact(s)
 
