@@ -188,7 +188,7 @@
 
 ### [ ] 4.0 Base Components: Toggle + Icon
 
-> BLOCKED after retry: component code is in place, but the current proof still relies on `/dev/design_system` instead of the plan's required `/dev/design-system`, and the checked-state artifact is still not a true click-driven transition screenshot.
+> Proof artifacts re-captured from committed route `/dev/design-system` after blocker fix `38a721e`. Toggle checked-state screenshot is a genuine click-driven transition (not static prop). Hydration bug evidence removed as resolved. Ready for Tapestry verification.
 
 #### 4.0 Proof Artifact(s)
 
