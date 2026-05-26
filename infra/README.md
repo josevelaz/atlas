@@ -486,3 +486,73 @@ This produces both `dist/client/` (static SPA, deploy this) and `dist/server/` (
 - Set the CloudFront error page for 403/404 to `/index.html` with HTTP 200 so client-side routing works.
 - All assets under `assets/` are content-hashed and can be cached indefinitely (`Cache-Control: max-age=31536000, immutable`).
 - `index.html` itself should use a short cache TTL or `no-cache` so new deployments are picked up promptly.
+
+## Known follow-ups
+
+These items are tracked and must be addressed before or shortly after the first production deployment.
+
+### 8.6 — Remote deploy smoke test (deferred)
+
+After the first staging `terraform apply`, confirm the live endpoints:
+
+```sh
+API_URL="$(terraform -chdir=infra/envs/staging output -raw api_url)"
+curl -fsS "$API_URL/health"
+curl -I https://app.<staging-zone>/
+```
+
+**Acceptance**: Staging API health is reachable over HTTPS via the ECS Express `.on.aws` URL, and the static web shell is reachable at `https://app.<staging-zone>/`.
+
+---
+
+### Tauri CSP — replace placeholder API URLs before production desktop build
+
+`apps/desktop/src-tauri/tauri.conf.json` currently contains placeholder values in `connect-src`:
+
+```
+https://REPLACE_WITH_PROD_API.ecs.us-east-1.on.aws
+https://REPLACE_WITH_STAGING_API.ecs.us-east-1.on.aws
+```
+
+After the first `terraform apply`, retrieve the real URLs:
+
+```sh
+terraform -chdir=infra/envs/staging output -raw api_url
+terraform -chdir=infra/envs/production output -raw api_url
+```
+
+Replace both placeholders in `tauri.conf.json` before building any production or staging desktop bundle. Production builds should omit the staging URL and vice versa.
+
+---
+
+### `deploy-production.yml` — build-push and terraform-plan jobs missing `environment: production`
+
+The `build-push` and `terraform-plan` jobs in `.github/workflows/deploy-production.yml` do not declare `environment: production`. This means their OIDC sub claim will not match the production IAM trust policy (`repo:ORG/REPO:environment:production`), so `sts:AssumeRoleWithWebIdentity` will fail for those jobs.
+
+**Current behaviour**: Fails closed — no credentials are issued, no unintended access occurs.
+
+**Fix**: Add `environment: production` to both jobs (matching the pattern used in `preview.yml` after the Warp review fix). Verify the production IAM trust policy sub condition matches before enabling.
+
+---
+
+### CMK encryption-context controls (deferred)
+
+All Secrets Manager secrets currently use AWS-managed KMS keys (`aws/secretsmanager`). Customer-managed KMS keys (CMKs) with encryption-context conditions were intentionally deferred.
+
+Address when any of the following apply:
+- Cross-account access to secrets is required
+- Formal key rotation policy is needed
+- Compliance requires explicit key ownership
+
+See `infra/modules/secrets/main.tf` for the deferred CMK note.
+
+---
+
+### API custom domains (deferred)
+
+`api.<zone>` Route 53 records and ACM certificates were intentionally deferred. API clients currently use the ECS Express generated `.on.aws` URL from `terraform output api_url`.
+
+To enable custom API domains in future:
+1. Add `api.<zone>` ACM cert and Route 53 record to `infra/modules/dns-acm/`
+2. Wire a CloudFront distribution or API Gateway in front of the ECS Express service
+3. Update `VITE_API_BASE_URL` in web builds and Tauri CSP `connect-src`
