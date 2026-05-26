@@ -7,7 +7,7 @@ import { autoload } from "elysia-autoload";
 
 import { auth } from "./auth.ts";
 import { config } from "./config.ts";
-import { authSessionPlugin, requireAuth } from "./plugins/auth-session.ts";
+import { authSessionPlugin, requireAuth } from "./plugins/auth_session.ts";
 
 const CORS_METHODS = "GET, POST, PUT, DELETE, OPTIONS";
 const CORS_HEADERS = "Content-Type, Authorization";

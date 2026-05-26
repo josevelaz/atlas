@@ -10,7 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DevTanstackLibrariesRouteImport } from './routes/dev/tanstack-libraries'
+import { Route as DevTanstackLibrariesRouteImport } from './routes/dev/tanstack_libraries'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
