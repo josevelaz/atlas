@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DevTanstack_librariesRouteImport } from './routes/dev/tanstack_libraries'
-import { Route as DevDesign_systemRouteImport } from './routes/dev/design_system'
+import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,39 +23,39 @@ const DevTanstack_librariesRoute = DevTanstack_librariesRouteImport.update({
   path: '/dev/tanstack_libraries',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DevDesign_systemRoute = DevDesign_systemRouteImport.update({
-  id: '/dev/design_system',
-  path: '/dev/design_system',
+const DevDesignSystemRoute = DevDesignSystemRouteImport.update({
+  id: '/dev/design-system',
+  path: '/dev/design-system',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dev/design_system': typeof DevDesign_systemRoute
+  '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dev/design_system': typeof DevDesign_systemRoute
+  '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dev/design_system': typeof DevDesign_systemRoute
+  '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dev/design_system' | '/dev/tanstack_libraries'
+  fullPaths: '/' | '/dev/design-system' | '/dev/tanstack_libraries'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dev/design_system' | '/dev/tanstack_libraries'
-  id: '__root__' | '/' | '/dev/design_system' | '/dev/tanstack_libraries'
+  to: '/' | '/dev/design-system' | '/dev/tanstack_libraries'
+  id: '__root__' | '/' | '/dev/design-system' | '/dev/tanstack_libraries'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DevDesign_systemRoute: typeof DevDesign_systemRoute
+  DevDesignSystemRoute: typeof DevDesignSystemRoute
   DevTanstack_librariesRoute: typeof DevTanstack_librariesRoute
 }
 
@@ -75,11 +75,11 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof DevTanstack_librariesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dev/design_system': {
-      id: '/dev/design_system'
-      path: '/dev/design_system'
-      fullPath: '/dev/design_system'
-      preLoaderRoute: typeof DevDesign_systemRouteImport
+    '/dev/design-system': {
+      id: '/dev/design-system'
+      path: '/dev/design-system'
+      fullPath: '/dev/design-system'
+      preLoaderRoute: typeof DevDesignSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -87,7 +87,7 @@ declare module '@tanstack/solid-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DevDesign_systemRoute: DevDesign_systemRoute,
+  DevDesignSystemRoute: DevDesignSystemRoute,
   DevTanstack_librariesRoute: DevTanstack_librariesRoute,
 }
 export const routeTree = rootRouteImport

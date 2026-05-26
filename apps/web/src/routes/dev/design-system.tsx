@@ -3,7 +3,7 @@ import { For, createSignal } from "solid-js";
 import { Avatar, Badge, Button, Icon, Toggle } from "../../components/ui/index";
 import { Bell, Mail, Search, Star, Zap } from "lucide-solid";
 
-export const Route = createFileRoute("/dev/design_system")({
+export const Route = createFileRoute("/dev/design-system")({
 	component: DesignSystemPage,
 });
 
