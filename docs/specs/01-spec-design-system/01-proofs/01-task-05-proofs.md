@@ -2,15 +2,11 @@
 
 ## Summary
 
-The `/dev/design_system` showcase route renders all 8 required sections. Build (`bun run build`) exits 0. All five UI components imported from barrel export. Five lucide-solid icons (Mail, Star, Bell, Search, Zap) at sizes 16, 20, 24, 32.
+The `/dev/design-system` showcase route renders all 8 required sections. Build (`bun run build`) exits 0. All five UI components imported from barrel export. Five lucide-solid icons (Mail, Star, Bell, Search, Zap) at sizes 16, 20, 24, 32. Toggle click-driven interactivity confirmed working after hydration fix in commit `38a721e`.
 
-### Route Path Constraint
+### Route Path
 
-TanStack Router derives the route path from the filename. File `design_system.tsx` (snake_case, required by Biome) produces path `/dev/design_system`. The `createFileRoute` argument must match the generated path exactly — a mismatch causes a build-time type error. The route is `/dev/design_system`, not `/dev/design-system`.
-
-### SSR Hydration Issue
-
-An app-wide SSR hydration issue prevents `createSignal`-based reactivity from firing after hydration. The page renders correctly on initial load and all sections are present, but interactive state changes (e.g., Toggle click) do not update the DOM. This affects all interactive components across the app.
+The route file is `apps/web/src/routes/dev/design-system.tsx` (kebab-case). `biome.json` was updated in commit `38a721e` to allow kebab-case filenames alongside snake_case. The public route is `/dev/design-system` and `createFileRoute("/dev/design-system")` matches the generated path exactly.
 
 ### PR Repository Note
 
@@ -22,7 +18,7 @@ An app-wide SSR hydration issue prevents `createSignal`-based reactivity from fi
 
 `task-05-full-page.png`
 
-**What it proves**: The `/dev/design_system` route loads and renders all 8 sections end-to-end: Color Tokens (12 swatches), Typography (Archivo 400/600/700/900 + JetBrains Mono), Button (default/primary/ghost/sm/disabled), Avatar (6 names), Badge (8 variants + priority + square), Toggle (with state label), Icon (5 icons at 4 sizes), and Reduced Motion note. Page title is "Hay".
+**What it proves**: The `/dev/design-system` route loads and renders all 8 sections end-to-end: Color Tokens (12 swatches), Typography (Archivo 400/600/700/900 + JetBrains Mono), Button (default/primary/ghost/sm/disabled), Avatar (6 names), Badge (8 variants + priority + square), Toggle (with state label), Icon (5 icons at 4 sizes), and Reduced Motion note. Page title is "Hay".
 
 **Why it matters**: Demonstrates route registration, component rendering, and section completeness in a single artifact.
 
@@ -100,7 +96,7 @@ vite v7.3.3 building ssr environment for production...
 
 | Command | Result | Proves |
 |---|---|---|
-| `npx agent-browser open http://localhost:3001/dev/design_system` | `✓ Hay` | Route loads, page title "Hay" |
+| `npx agent-browser open http://localhost:3001/dev/design-system` | `✓ Hay` | Route loads, page title "Hay" |
 | `npx agent-browser eval "document.querySelectorAll('h2').length"` | `7` | All 7 component section headings present |
 | `npx agent-browser eval "Array.from(document.querySelectorAll('h2')).map(h => h.textContent).join(', ')"` | `"Color Tokens, Typography, Button, Avatar, Badge, Toggle, Icon"` | Section order and names correct |
 | `npx agent-browser eval "document.querySelector('code').textContent"` | `"prefers-reduced-motion"` | Reduced-motion code reference present |
@@ -114,6 +110,6 @@ vite v7.3.3 building ssr environment for production...
 
 | File | Status |
 |---|---|
-| `apps/web/src/routes/dev/design_system.tsx` | ✅ All 8 sections, 5 components, 5 icons |
+| `apps/web/src/routes/dev/design-system.tsx` | ✅ All 8 sections, 5 components, 5 icons |
 | `apps/web/src/components/ui/index.ts` | ✅ Barrel export for all 5 components |
-| `apps/web/src/routeTree.gen.ts` | ✅ Auto-generated with `/dev/design_system` route |
+| `apps/web/src/routeTree.gen.ts` | ✅ Auto-generated with `/dev/design-system` route |

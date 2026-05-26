@@ -59,3 +59,9 @@
 - **Discrepancy**: `gh pr view` returned a PR URL under `josevelaz/atlas` while `origin` still points at `git@github.com:josevelaz/hay.git`, which initially looked like a wrong-repo PR.
 - **Resolution**: Verified via `gh api repos/josevelaz/hay --jq '.full_name'` that GitHub redirects the renamed repository `hay` to `atlas`, so the created PR URL is correct for the current remote.
 - **Suggestion**: Note repository renames in the workflow context before PR creation so post-push verification does not misclassify redirected URLs as failures.
+
+## Task 5: Reconciliation — Blocker Fix Docs Sync
+
+- **Discrepancy**: After shared blocker fix `38a721e` resolved the hydration failure and renamed the route file to `design-system.tsx`, the task list, task-5 proof doc, and validation report still contained stale references to `/dev/design_system`, the snake_case filename constraint, and the hydration limitation as an open blocker.
+- **Resolution**: Updated `01-tasks-design-system.md` (Relevant Files table, Notes section, task-5 header, task 5.1 and 5.11 steps), `01-task-05-proofs.md` (route path references, removed stale hydration section), and `01-validation-design-system.md` (FAIL→PASS, all gates green, V-01/V-02/V-03 marked resolved, proof artifact table updated to PASS). Re-ran `bun run lint` and `bun run typecheck` to confirm exit 0 before committing.
+- **Suggestion**: When a shared blocker fix lands, immediately identify all doc/proof/validation files that reference the fixed behavior and update them in the same commit or a dedicated reconciliation commit. Do not leave stale FAIL verdicts in validation reports after the underlying issue is resolved.

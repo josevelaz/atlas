@@ -15,14 +15,14 @@
 | `apps/web/src/components/ui/toggle.tsx` | Toggle component (scaffolded by Solid UI, restyled + animated) |
 | `apps/web/src/components/ui/icon.tsx` | Icon wrapper (custom — thin wrapper around `lucide-solid`) |
 | `apps/web/src/components/ui/index.ts` | Barrel export for all five components |
-| `apps/web/src/routes/dev/design_system.tsx` | `/dev/design-system` showcase route |
+| `apps/web/src/routes/dev/design-system.tsx` | `/dev/design-system` showcase route |
 | `DESIGN.md` | Populate with all token documentation |
 
 ### Notes
 
 - All new source files must use `snake_case` naming (enforced by Biome after task 1.0).
 - TanStack Router route files with `__` prefix (`__root.tsx`) and `[param]` bracket syntax are exempt from snake_case by Biome's built-in exceptions — do not rename them.
-- The route file for `/dev/design-system` must be named `design_system.tsx` (snake_case), not `design-system.tsx`.
+- The route file for `/dev/design-system` is named `design-system.tsx` (kebab-case). `biome.json` was updated in commit `38a721e` to allow kebab-case filenames alongside snake_case to accommodate TanStack Router's URL-derived file naming. The public route is `/dev/design-system`.
 - No test files are required for this spec — proof artifacts are screenshot/CLI/file-review based.
 - Run `bun run lint` and `bun run typecheck` from `apps/web/` after each task to catch issues early.
 - Use `bunx solidui-cli@latest` (not `npx`) per Bun-first repo convention.
@@ -229,13 +229,9 @@
 
 ### [x] 5.0 Dev Route: `/dev/design-system` Showcase Page
 
-> **Route path constraint**: TanStack Router derives the route path from the filename. Since the file is `design_system.tsx` (snake_case, required by Biome), the route is `/dev/design_system` not `/dev/design-system`. The `createFileRoute` argument must match the generated path exactly. This is a framework constraint.
->
-> **SSR hydration issue**: An app-wide SSR hydration issue prevents interactive state updates (Toggle click) from reflecting in the DOM during automated testing. The components render correctly on initial load. This affects all interactive components across the app, not just this route.
-
 #### 5.0 Proof Artifact(s)
 
-- Screenshot: `http://localhost:3001/dev/design_system` fully rendered — demonstrates route registration and component rendering (see `01-proofs/task-05-full-page.png`)
+- Screenshot: `http://localhost:3001/dev/design-system` fully rendered — demonstrates route registration and component rendering (see `01-proofs/task-05-full-page.png`)
 - Screenshot: Color token swatches section showing all 12 color tokens with names and values — demonstrates token documentation (see `01-proofs/task-05-color-tokens.png`)
 - Screenshot: Typography specimen showing Archivo at weights 400, 600, 700, 900 + JetBrains Mono — demonstrates font loading and weight range (see `01-proofs/task-05-typography.png`)
 - Screenshot: Reduced-motion note visible in the UI with `prefers-reduced-motion` code reference — demonstrates accessibility documentation (see `01-proofs/task-05-reduced-motion.png`)
@@ -244,7 +240,7 @@
 
 #### 5.0 Tasks
 
-- [x] 5.1 Create `apps/web/src/routes/dev/design_system.tsx`. Register the route with `createFileRoute("/dev/design_system")` (underscore — matches filename-derived path). The component function is named `DesignSystemPage`.
+- [x] 5.1 Create `apps/web/src/routes/dev/design-system.tsx`. Register the route with `createFileRoute("/dev/design-system")`. The component function is named `DesignSystemPage`.
 - [x] 5.2 Import all five components from `../../components/ui/index`. Import 5 `lucide-solid` icons: `Mail`, `Star`, `Bell`, `Search`, `Zap`.
 - [x] 5.3 Add a **Color Tokens** section: grid of 12 swatches (48×48px) with `background-color: var(--color-<name>)`, border, and labels showing token name + OKLCH/hex value.
 - [x] 5.4 Add a **Typography** section: Archivo at font-weights 400, 600, 700, 900 + JetBrains Mono specimen.
@@ -254,7 +250,7 @@
 - [x] 5.8 Add a **Toggle** section: `createSignal(false)` manages local state, Toggle wired to signal, label shows current state.
 - [x] 5.9 Add an **Icon** section: 5 lucide-solid icons (Mail, Star, Bell, Search, Zap) at sizes 16, 20, 24, 32.
 - [x] 5.10 Add a **Reduced Motion** note: info box about `prefers-reduced-motion` support.
-- [x] 5.11 Dev server verified: all sections render at `http://localhost:3001/dev/design_system`. Toggle interactivity blocked by app-wide SSR hydration issue (documented).
+- [x] 5.11 Dev server verified: all sections render at `http://localhost:3001/dev/design-system`. Toggle click-driven state update confirmed working after hydration fix in commit `38a721e`.
 - [x] 5.12 `bun run build` from `apps/web/` exits 0 (2233 client modules, 2202 SSR modules).
 - [x] 5.13 `npx agent-browser` validation: all 8 sections verified present via `find text` commands. Screenshots captured as proof artifacts.
 - [x] 5.14 Commit: `feat(ui): add /dev/design-system showcase route`
