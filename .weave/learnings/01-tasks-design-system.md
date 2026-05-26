@@ -34,3 +34,8 @@
 - **Discrepancy**: The plan requires screenshot proof from `/dev/design-system` for task 3.0 while task 5.0 owns the committed showcase route, and the retry still produced evidence from a temporary `/dev/design_system` harness plus a non-visual pressed-state proof.
 - **Resolution**: Marked task 3.0 blocked after one retry because the current artifacts do not satisfy the plan exactly enough to mark the parent task complete, even though the component code and lint/typecheck evidence are present.
 - **Suggestion**: Clarify whether task 3.0 may use a temporary committed harness or whether task 5.0 should be pulled earlier so screenshot proof for Button/Avatar/Badge can be captured on the exact `/dev/design-system` route without crossing task boundaries.
+
+## Task 4: Base Components: Toggle + Icon
+- **Discrepancy**: The plan requires proof from `/dev/design-system` and a click-driven checked-state screenshot, but the retry still depended on a temporary `/dev/design_system` harness and static checked-state evidence because of an app-wide hydration failure.
+- **Resolution**: Marked task 4.0 blocked after one retry because the component implementation is present but the available proof does not meet the plan literally enough to mark the parent task complete.
+- **Suggestion**: Either allow proof capture on the eventual committed task-5 showcase route after it exists, or explicitly permit nearest-exact evidence when a pre-existing hydration bug prevents trusted interactive screenshots.
