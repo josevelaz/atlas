@@ -285,4 +285,4 @@ No unmapped core changes. All modified files are accounted for by spec tasks.
 
 ---
 
-*Validation performed by Shuttle (Weave leaf worker) on 2026-05-26. Branch `feat/issue-2-design-system` (implementation HEAD `d1a7ca5`; validation commits follow). No build commands were run during this validation pass to preserve worktree cleanliness.*
+*Validation performed by Shuttle (Weave leaf worker) on 2026-05-26. Branch `feat/issue-2-design-system`. No build commands were run during this validation pass to preserve worktree cleanliness.*
