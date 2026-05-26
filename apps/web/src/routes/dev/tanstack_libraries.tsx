@@ -9,7 +9,7 @@ import { VirtualDemo } from "../../lib/tanstack/virtual_demo";
 import { demoCounterStore } from "../../lib/tanstack/store";
 import { createDemoDebouncer } from "../../lib/tanstack/pacer";
 
-export const Route = createFileRoute("/dev/tanstack-libraries")({
+export const Route = createFileRoute("/dev/tanstack_libraries")({
 	component: TanStackLibrariesDemo,
 });
 
