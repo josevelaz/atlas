@@ -39,3 +39,13 @@
 - **Discrepancy**: The plan requires proof from `/dev/design-system` and a click-driven checked-state screenshot, but the retry still depended on a temporary `/dev/design_system` harness and static checked-state evidence because of an app-wide hydration failure.
 - **Resolution**: Marked task 4.0 blocked after one retry because the component implementation is present but the available proof does not meet the plan literally enough to mark the parent task complete.
 - **Suggestion**: Either allow proof capture on the eventual committed task-5 showcase route after it exists, or explicitly permit nearest-exact evidence when a pre-existing hydration bug prevents trusted interactive screenshots.
+
+## Task 5: Dev Route: `/dev/design-system` Showcase Page
+- **Discrepancy**: The plan specified a hyphenated `/dev/design-system` route, but the repo enforces snake_case filenames and TanStack Router derives the actual path from `design_system.tsx`, yielding `/dev/design_system`.
+- **Resolution**: Implemented and proved the committed showcase route at `/dev/design_system`, documented the framework constraint in both the task file and proof artifacts, and verified the generated route tree/build align with the underscore path.
+- **Suggestion**: Update the plan to call out that snake_case route filenames in this router setup produce underscore paths, or explicitly approve an exception when a hyphenated public path is required.
+
+## Task 5: Dev Route: `/dev/design-system` Showcase Page
+- **Discrepancy**: `gh pr view` returned a PR URL under `josevelaz/atlas` while `origin` still points at `git@github.com:josevelaz/hay.git`, which initially looked like a wrong-repo PR.
+- **Resolution**: Verified via `gh api repos/josevelaz/hay --jq '.full_name'` that GitHub redirects the renamed repository `hay` to `atlas`, so the created PR URL is correct for the current remote.
+- **Suggestion**: Note repository renames in the workflow context before PR creation so post-push verification does not misclassify redirected URLs as failures.
