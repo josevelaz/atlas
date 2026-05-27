@@ -37,7 +37,7 @@ if (!IS_LOCAL_DATABASE && !DATABASE_AUTH_TOKEN) {
 }
 
 export default {
-	schema: "./src/db/schema.ts",
+	schema: "./src/db/schema/index.ts",
 	out: "./drizzle",
 	dialect: "turso",
 	casing: "snake_case",
