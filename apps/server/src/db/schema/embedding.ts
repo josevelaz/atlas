@@ -79,6 +79,9 @@ export const threadEmbedding = sqliteTable(
 			.references(() => thread.id, { onDelete: "cascade" }),
 
 		// Source revision — the revision this embedding was computed from.
+		// Application writes MUST ensure the referenced revision belongs to the
+		// same thread_id. We currently keep the thread_id denormalized for query
+		// ergonomics and enforce provenance in write-path validation.
 		threadRevisionId: text("thread_revision_id")
 			.notNull()
 			.references(() => threadRevision.id, { onDelete: "cascade" }),

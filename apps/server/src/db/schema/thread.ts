@@ -442,9 +442,9 @@ export const messageParticipantRelations = relations(
 // ── Account/thread consistency note ─────────────────────────────────────────
 //
 //   message.connected_account_id MUST equal thread.connected_account_id for
-//   the parent thread.  SQLite does not support multi-column FK constraints
-//   that would enforce this at the DB level.  Application code MUST validate
-//   this invariant before inserting a message row.
+//   the parent thread.  We currently keep this as an application-level
+//   invariant and validate it in the write path, rather than adding a
+//   composite FK to thread(id, connected_account_id).
 // ---------------------------------------------------------------------------
 
 export const messageRelations = relations(message, ({ one, many }) => ({

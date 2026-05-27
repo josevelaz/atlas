@@ -74,6 +74,12 @@ export const actionItem = sqliteTable(
 
 		// Source revision — the revision this item was extracted from.
 		// SET NULL on delete so the item is retained if the revision is removed.
+		//
+		// Provenance invariant: when source_revision_id is present, application
+		// writes MUST ensure the referenced revision belongs to this row's
+		// thread_id. We intentionally preserve SET NULL delete semantics here,
+		// so this invariant cannot be modeled as a single composite FK without
+		// also nulling thread_id on revision deletes.
 		sourceRevisionId: text("source_revision_id").references(
 			() => threadRevision.id,
 			{ onDelete: "set null" },
