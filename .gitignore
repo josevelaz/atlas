@@ -1,8 +1,6 @@
 # Dependencies
 node_modules/
 
-docs/specs/
-
 # Build output
 dist/
 build/
@@ -60,5 +58,3 @@ apps/web/.tanstack/tmp/
 .weave/runtime/
 .weave/state.json
 
-# Spec documents — local reference only, not for version control
-docs/specs/

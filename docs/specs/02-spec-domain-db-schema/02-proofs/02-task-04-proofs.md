@@ -316,7 +316,7 @@ FOREIGN KEY (`object_asset_id`) REFERENCES `object_asset`(`id`)
 
 ## `bun run generate` Verification
 
-```
+```text
 $ cd apps/server && bun run generate
 drizzle-kit generate
 No config path provided, using default 'drizzle.config.ts'

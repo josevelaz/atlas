@@ -147,7 +147,7 @@ CREATE INDEX `imj_user_status_idx` ON `integration_mutation_journal` (`user_id`,
 
 ### 3.1 `bun run generate` (from `apps/server/`)
 
-```
+```text
 $ drizzle-kit generate
 No config path provided, using default 'drizzle.config.ts'
 Reading config file '/Users/jose/projects/hay/apps/server/drizzle.config.ts'
@@ -183,7 +183,7 @@ EXIT: 0
 
 ### 3.2 `bun run migrate` (from `apps/server/`, fresh DB at `/tmp/test-atlas2.db`)
 
-```
+```text
 $ drizzle-kit migrate
 No config path provided, using default 'drizzle.config.ts'
 Reading config file '/Users/jose/projects/hay/apps/server/drizzle.config.ts'
@@ -194,7 +194,7 @@ EXIT: 0
 
 ### 3.3 `bun run lint` (from `apps/server/`)
 
-```
+```text
 $ biome lint ./src
 Checked 29 files in 6ms. No fixes applied.
 
@@ -203,7 +203,7 @@ EXIT: 0
 
 ### 3.4 `bun run typecheck` (from `apps/server/`)
 
-```
+```text
 $ tsc --noEmit
 
 EXIT: 0
