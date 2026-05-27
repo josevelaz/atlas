@@ -23,3 +23,9 @@ export * from "./destination_integration.ts";
 
 // ── Domain: Sync State & Sync Job (Task 2) ─────────────────────────────────
 export * from "./sync.ts";
+
+// ── Domain: Thread, Message & Participants (Task 3) ────────────────────────
+export * from "./thread.ts";
+
+// ── Domain: Sender Routing Rule (Task 3) ───────────────────────────────────
+export * from "./sender_routing_rule.ts";
