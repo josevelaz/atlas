@@ -1,0 +1,4 @@
+[test]
+# Preload script runs before any test module is evaluated.
+# Sets BETTER_AUTH_SECRET so config.ts (which requires it) can load in tests.
+preload = ["./src/services/sync/test-setup.ts"]
