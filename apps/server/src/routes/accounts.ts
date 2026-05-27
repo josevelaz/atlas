@@ -152,3 +152,5 @@ export const accountsRoutes = new Elysia({ prefix: "/api/accounts" })
 			params: t.Object({ id: t.String() }),
 		},
 	);
+
+export default accountsRoutes;

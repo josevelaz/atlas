@@ -45,7 +45,7 @@ import type { SyncProcessPayload, SyncProcessResult } from "./types.ts";
 // Constants
 // ---------------------------------------------------------------------------
 
-const QUEUE_NAME = "sync:process";
+const QUEUE_NAME = "sync-process";
 
 // ---------------------------------------------------------------------------
 // Adapter registry (FakeSyncAdapter for all providers in this issue)

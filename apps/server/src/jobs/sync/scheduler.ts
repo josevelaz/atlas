@@ -64,7 +64,7 @@ import type { Db } from "../../services/sync/state.ts";
  * The BullMQ queue that the scheduler fires into.
  * Must match the queue name used by the sync:trigger job definition.
  */
-const SYNC_TRIGGER_QUEUE_NAME = "sync:trigger";
+const SYNC_TRIGGER_QUEUE_NAME = "sync-trigger";
 
 /**
  * Stable scheduler ID used for idempotent upsert.

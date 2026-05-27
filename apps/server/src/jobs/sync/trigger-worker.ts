@@ -32,6 +32,7 @@ import { redis } from "../../services/redis.ts";
 import { withSyncLock } from "../../services/sync/orchestrator.ts";
 import { createSyncJob } from "../../services/sync/runs.ts";
 import { resolveRunType } from "../../services/sync/state.ts";
+import { runReconciliation } from "./scheduler.ts";
 import type {
 	SyncProcessPayload,
 	SyncTriggerPayload,
@@ -39,11 +40,20 @@ import type {
 } from "./types.ts";
 
 // ---------------------------------------------------------------------------
+// Scheduler tick sentinel type
+// ---------------------------------------------------------------------------
+
+/** Payload shape emitted by the reconciliation scheduler on each tick. */
+interface SchedulerTickPayload {
+	_schedulerTick: true;
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const QUEUE_NAME = "sync:trigger";
-const PROCESS_QUEUE_NAME = "sync:process";
+const QUEUE_NAME = "sync-trigger";
+const PROCESS_QUEUE_NAME = "sync-process";
 
 // ---------------------------------------------------------------------------
 // Job definition
@@ -57,12 +67,31 @@ const PROCESS_QUEUE_NAME = "sync:process";
  * enqueue via `syncTriggerJob.add(...)` or directly via `job.queue`.
  */
 export const syncTriggerJob = defineJob(QUEUE_NAME)
-	.input<SyncTriggerPayload>()
+	.input<SyncTriggerPayload | SchedulerTickPayload>()
 	.options({
 		concurrency: config.SYNC_WORKER_CONCURRENCY,
 	})
 	.action(async (job): Promise<SyncTriggerResult> => {
-		const { connectedAccountId, triggerSource } = job.data;
+		// ── Scheduler tick branch ─────────────────────────────────────────────
+		// The reconciliation scheduler fires jobs with `{ _schedulerTick: true }`.
+		// These are not per-account triggers — they fan out to all active accounts
+		// via runReconciliation().  Return a sentinel result so BullMQ marks the
+		// job complete without creating any sync_job rows.
+		if ("_schedulerTick" in job.data && job.data._schedulerTick === true) {
+			console.log(
+				`[sync:trigger] job=${job.id} scheduler tick — running reconciliation`,
+			);
+			await runReconciliation();
+			// Return a no-op result; reconciliation enqueues its own trigger jobs.
+			return {
+				enqueued: false,
+				resolvedRunType: "incremental",
+				processJobId: null,
+			};
+		}
+
+		const { connectedAccountId, triggerSource } =
+			job.data as SyncTriggerPayload;
 
 		console.log(
 			`[sync:trigger] job=${job.id} connectedAccountId=${connectedAccountId} triggerSource=${triggerSource} attempt=${job.attemptsMade + 1}/${config.SYNC_MAX_ATTEMPTS}`,

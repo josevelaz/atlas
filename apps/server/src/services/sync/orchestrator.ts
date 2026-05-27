@@ -55,7 +55,7 @@ export type Db = LibSQLDatabase<typeof schema>;
  * BullMQ queue name for the sync trigger queue.
  * Must match the queue name used by the sync:trigger job definition.
  */
-const SYNC_TRIGGER_QUEUE_NAME = "sync:trigger";
+const SYNC_TRIGGER_QUEUE_NAME = "sync-trigger";
 
 /**
  * Lock key prefix for per-account sync execution locks.
