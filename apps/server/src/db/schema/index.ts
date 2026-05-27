@@ -29,3 +29,18 @@ export * from "./thread.ts";
 
 // ── Domain: Sender Routing Rule (Task 3) ───────────────────────────────────
 export * from "./sender_routing_rule.ts";
+
+// ── Domain: Thread Revision (Task 4) ───────────────────────────────────────
+export * from "./revision.ts";
+
+// ── Domain: AI Artifacts — Summary & Priority (Task 4) ─────────────────────
+export * from "./ai_artifact.ts";
+
+// ── Domain: Action Item (Task 4) ───────────────────────────────────────────
+export * from "./action_item.ts";
+
+// ── Domain: Object Asset, Raw Payload Ref & Attachment (Task 4) ────────────
+export * from "./object_asset.ts";
+
+// ── Domain: Thread Embedding (Task 4) ──────────────────────────────────────
+export * from "./embedding.ts";
