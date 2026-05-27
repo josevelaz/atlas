@@ -23,7 +23,7 @@
 
 ## Tasks
 
-### [~] 1.0 Establish the server DB schema module layout and migration entrypoints
+### [x] 1.0 Establish the server DB schema module layout and migration entrypoints
 
 #### 1.0 Proof Artifact(s)
 
