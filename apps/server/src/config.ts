@@ -172,7 +172,7 @@ const SYNC_WORKER_CONCURRENCY = env
 
 /**
  * Maximum number of delivery attempts for a sync job before it is moved to
- * the dead-letter queue. Applies to both initial and partial sync jobs.
+ * the dead-letter queue. Applies to all sync job types (initial, incremental).
  */
 const SYNC_MAX_ATTEMPTS = env
 	.get("SYNC_MAX_ATTEMPTS")
