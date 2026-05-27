@@ -55,7 +55,7 @@
 - [x] 2.4 Add relations and indexes that support mailbox lookup, exact-email routing ownership, user-scoped contact resolution, and separate current sync state versus append-only sync-job history.
 - [x] 2.5 Generate migration SQL and add a focused validation artifact that proves the foundational ownership and lifecycle constraints are representable cleanly.
 
-### [ ] 3.0 Add the thread, message, screening, and participant model
+### [x] 3.0 Add the thread, message, screening, and participant model
 
 #### 3.0 Proof Artifact(s)
 
@@ -65,11 +65,11 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Add schema files for `thread`, `message`, normalized participant tables, and `sender_routing_rule`, scoped to a single `connected_account`.
-- [ ] 3.2 Encode screening-versus-category invariants, including nullable category before acceptance, required category after acceptance, accepted-only archive/handling behavior, and trash support on Screener threads.
-- [ ] 3.3 Store the initiating sender explicitly on `thread` and preserve hidden rejected-thread behavior, including retained prior category for lossless restore.
-- [ ] 3.4 Add uniqueness constraints and indexes for provider thread IDs, provider message IDs, screening lookups, routing-rule lookup by exact sender email, and common thread/message joins.
-- [ ] 3.5 Generate migration SQL and add a focused validation artifact that proves the thread/category/screening invariants hold in the planned schema.
+- [x] 3.1 Add schema files for `thread`, `message`, normalized participant tables, and `sender_routing_rule`, scoped to a single `connected_account`.
+- [x] 3.2 Encode screening-versus-category invariants, including nullable category before acceptance, required category after acceptance, accepted-only archive/handling behavior, and trash support on Screener threads.
+- [x] 3.3 Store the initiating sender explicitly on `thread` and preserve hidden rejected-thread behavior, including retained prior category for lossless restore.
+- [x] 3.4 Add uniqueness constraints and indexes for provider thread IDs, provider message IDs, screening lookups, routing-rule lookup by exact sender email, and common thread/message joins.
+- [x] 3.5 Generate migration SQL and add a focused validation artifact that proves the thread/category/screening invariants hold in the planned schema.
 
 ### [ ] 4.0 Add revision-aware AI, action-item, search, attachment, and asset tables
 
