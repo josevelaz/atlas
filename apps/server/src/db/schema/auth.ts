@@ -100,6 +100,9 @@ export const verification = sqliteTable(
 export const userRelations = relations(user, ({ many }) => ({
 	sessions: many(session),
 	accounts: many(account),
+	// Domain back-references (added in Task 2)
+	// These are imported lazily to avoid circular-import issues; the actual
+	// relation objects live in the domain schema files.
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

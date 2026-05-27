@@ -37,9 +37,9 @@
 - [x] 1.2 Define the target schema module layout in `apps/server/src/db/`, including a barrel export strategy that keeps Drizzle and runtime imports pointed at one source-of-truth entrypoint.
 - [x] 1.3 Split the existing auth table definitions and relations out of `schema.ts` into dedicated schema files without changing current table names or auth behavior.
 - [x] 1.4 Update `apps/server/src/db/index.ts` and `apps/server/drizzle.config.ts` so both runtime DB access and Drizzle Kit read the split schema layout correctly.
-- [~] 1.5 Verify the refactor baseline with `bun run generate`, `bun run migrate`, `bun run lint`, and `bun run typecheck` so later domain-table work starts from a stable structure.
+- [x] 1.5 Verify the refactor baseline with `bun run generate`, `bun run migrate`, `bun run lint`, and `bun run typecheck` so later domain-table work starts from a stable structure.
 
-### [ ] 2.0 Add account, identity, integration, and sync foundation tables
+### [x] 2.0 Add account, identity, integration, and sync foundation tables
 
 #### 2.0 Proof Artifact(s)
 
@@ -49,11 +49,11 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Add schema files for `connected_account`, `contact`, `email_identity`, `destination_integration`, `sync_state`, and `sync_job`, keeping ownership rooted in the existing `user` table.
-- [ ] 2.2 Encode the agreed lifecycle and uniqueness rules for mailbox identity, reconnect/reactivation, exact-email identity uniqueness per user, and destination integration dedupe.
-- [ ] 2.3 Model encrypted token storage and encryption metadata on `connected_account` without collapsing the boundary between Better Auth `account` and Atlas mailbox integrations.
-- [ ] 2.4 Add relations and indexes that support mailbox lookup, exact-email routing ownership, user-scoped contact resolution, and separate current sync state versus append-only sync-job history.
-- [ ] 2.5 Generate migration SQL and add a focused validation artifact that proves the foundational ownership and lifecycle constraints are representable cleanly.
+- [x] 2.1 Add schema files for `connected_account`, `contact`, `email_identity`, `destination_integration`, `sync_state`, and `sync_job`, keeping ownership rooted in the existing `user` table.
+- [x] 2.2 Encode the agreed lifecycle and uniqueness rules for mailbox identity, reconnect/reactivation, exact-email identity uniqueness per user, and destination integration dedupe.
+- [x] 2.3 Model encrypted token storage and encryption metadata on `connected_account` without collapsing the boundary between Better Auth `account` and Atlas mailbox integrations.
+- [x] 2.4 Add relations and indexes that support mailbox lookup, exact-email routing ownership, user-scoped contact resolution, and separate current sync state versus append-only sync-job history.
+- [x] 2.5 Generate migration SQL and add a focused validation artifact that proves the foundational ownership and lifecycle constraints are representable cleanly.
 
 ### [ ] 3.0 Add the thread, message, screening, and participant model
 
