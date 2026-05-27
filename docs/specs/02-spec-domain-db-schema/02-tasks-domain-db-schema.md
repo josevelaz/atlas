@@ -23,7 +23,7 @@
 
 ## Tasks
 
-### [x] 1.0 Establish the server DB schema module layout and migration entrypoints
+### [~] 1.0 Establish the server DB schema module layout and migration entrypoints
 
 #### 1.0 Proof Artifact(s)
 
@@ -37,7 +37,7 @@
 - [x] 1.2 Define the target schema module layout in `apps/server/src/db/`, including a barrel export strategy that keeps Drizzle and runtime imports pointed at one source-of-truth entrypoint.
 - [x] 1.3 Split the existing auth table definitions and relations out of `schema.ts` into dedicated schema files without changing current table names or auth behavior.
 - [x] 1.4 Update `apps/server/src/db/index.ts` and `apps/server/drizzle.config.ts` so both runtime DB access and Drizzle Kit read the split schema layout correctly.
-- [x] 1.5 Verify the refactor baseline with `bun run generate`, `bun run migrate`, `bun run lint`, and `bun run typecheck` so later domain-table work starts from a stable structure.
+- [~] 1.5 Verify the refactor baseline with `bun run generate`, `bun run migrate`, `bun run lint`, and `bun run typecheck` so later domain-table work starts from a stable structure.
 
 ### [ ] 2.0 Add account, identity, integration, and sync foundation tables
 
