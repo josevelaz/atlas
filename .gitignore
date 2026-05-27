@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
 
+docs/specs/
+
 # Build output
 dist/
 build/
