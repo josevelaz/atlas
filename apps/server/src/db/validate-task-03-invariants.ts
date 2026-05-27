@@ -42,7 +42,6 @@
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
-import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Bootstrap — use an in-memory SQLite database so the script is self-contained
@@ -51,10 +50,9 @@ import { join } from "node:path";
 const client = createClient({ url: "file::memory:" });
 const db = drizzle(client);
 
-// Bun exposes import.meta.dir as the directory of the current file.
-// Resolve from apps/server/src/db/ → apps/server/drizzle/
-// (2 levels up: src/db → src → apps/server, then into drizzle/)
-const migrationsFolder = join(import.meta.dir, "../..", "drizzle");
+// Use Bun-native URL resolution: import.meta.url points to this file, so
+// "../../drizzle" resolves to apps/server/drizzle/ relative to src/db/.
+const migrationsFolder = new URL("../../drizzle", import.meta.url).pathname;
 
 await migrate(db, { migrationsFolder });
 
@@ -87,11 +85,31 @@ async function expectFailure(label: string, sql: string): Promise<void> {
 			"           Expected DB constraint violation but INSERT succeeded",
 		);
 		failed++;
-	} catch {
-		console.log(
-			`  ✅  PASS  ${label}  (constraint correctly rejected the row)`,
-		);
-		passed++;
+	} catch (err) {
+		// Only count as a pass if the error is a DB constraint violation.
+		// Unexpected errors (e.g. syntax errors, missing tables) must not
+		// silently masquerade as successful constraint rejections.
+		const fullMsg = [
+			(err as Error).message ?? "",
+			((err as { cause?: Error }).cause as Error | undefined)?.message ?? "",
+		].join(" ");
+		const isConstraint =
+			fullMsg.includes("UNIQUE constraint") ||
+			fullMsg.includes("CHECK constraint") ||
+			fullMsg.includes("FOREIGN KEY constraint") ||
+			fullMsg.includes("NOT NULL constraint") ||
+			fullMsg.includes("SQLITE_CONSTRAINT");
+		if (isConstraint) {
+			console.log(
+				`  ✅  PASS  ${label}  (constraint correctly rejected the row)`,
+			);
+			passed++;
+		} else {
+			console.error(
+				`  ❌  FAIL  ${label}: unexpected error (not a constraint): ${fullMsg}`,
+			);
+			failed++;
+		}
 	}
 }
 

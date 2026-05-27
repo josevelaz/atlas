@@ -10,7 +10,6 @@ CREATE TABLE `thread_revision` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `thread_revision_thread_revision_number_unique` ON `thread_revision` (`thread_id`,`revision_number`);--> statement-breakpoint
 CREATE INDEX `thread_revision_thread_id_idx` ON `thread_revision` (`thread_id`);--> statement-breakpoint
-CREATE INDEX `thread_revision_thread_id_number_idx` ON `thread_revision` (`thread_id`,`revision_number`);--> statement-breakpoint
 CREATE TABLE `ai_thread_priority` (
 	`id` text PRIMARY KEY NOT NULL,
 	`thread_id` text NOT NULL,

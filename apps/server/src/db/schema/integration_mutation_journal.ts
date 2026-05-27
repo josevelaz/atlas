@@ -123,6 +123,14 @@ export const integrationMutationJournal = sqliteTable(
 
 		// FK to connected_account — set for mailbox-side writes.
 		// Null for destination-integration writes.
+		//
+		// ⚠️  SET NULL tension with imj_exactly_one_target:
+		//   If a connected_account row is hard-deleted, this FK becomes NULL,
+		//   which would violate the imj_exactly_one_target CHECK (both FKs null).
+		//   Mitigation: connected_account rows MUST be soft-deleted (status =
+		//   'disconnected') rather than hard-deleted while any journal entries
+		//   reference them.  Application code must archive or tombstone journal
+		//   entries before hard-deleting the parent integration row.
 		connectedAccountId: text("connected_account_id").references(
 			() => connectedAccount.id,
 			{ onDelete: "set null" },
@@ -130,6 +138,10 @@ export const integrationMutationJournal = sqliteTable(
 
 		// FK to destination_integration — set for outbound action-item writes.
 		// Null for mailbox-side writes.
+		//
+		// ⚠️  Same SET NULL tension as connectedAccountId above.
+		//   destination_integration rows must not be hard-deleted while journal
+		//   entries reference them.
 		destinationIntegrationId: text("destination_integration_id").references(
 			() => destinationIntegration.id,
 			{ onDelete: "set null" },

@@ -53,6 +53,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
 	blob,
+	check,
 	index,
 	integer,
 	sqliteTable,
@@ -112,6 +113,13 @@ export const threadEmbedding = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
+		// embedding_dimension must be a positive integer (zero-dimension vectors
+		// are meaningless and indicate a bug in the embedding pipeline).
+		check(
+			"thread_embedding_dimension_positive",
+			sql`${table.embeddingDimension} > 0`,
+		),
+
 		// At most one embedding per (thread, revision, model).
 		// This allows multiple models to coexist for the same revision.
 		uniqueIndex("thread_embedding_thread_revision_model_unique").on(

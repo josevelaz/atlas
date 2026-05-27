@@ -38,6 +38,7 @@
  */
 import { relations, sql } from "drizzle-orm";
 import {
+	check,
 	index,
 	integer,
 	sqliteTable,
@@ -79,6 +80,9 @@ export const threadRevision = sqliteTable(
 			.notNull(),
 	},
 	(table) => [
+		// Revision number must be positive (first revision is 1).
+		check("thread_revision_number_positive", sql`${table.revisionNumber} > 0`),
+
 		// Revision number must be unique within a thread.
 		uniqueIndex("thread_revision_thread_revision_number_unique").on(
 			table.threadId,
@@ -86,13 +90,10 @@ export const threadRevision = sqliteTable(
 		),
 
 		// All revisions for a thread (primary listing query).
+		// Note: the unique index on (thread_id, revision_number) already covers
+		// composite lookups by thread + revision_number, so no separate composite
+		// index is needed here.
 		index("thread_revision_thread_id_idx").on(table.threadId),
-
-		// Latest revision lookup (order by revision_number DESC LIMIT 1).
-		index("thread_revision_thread_id_number_idx").on(
-			table.threadId,
-			table.revisionNumber,
-		),
 	],
 );
 

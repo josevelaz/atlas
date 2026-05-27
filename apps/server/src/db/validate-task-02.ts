@@ -58,9 +58,30 @@ async function expectConstraintViolation(
 			`  ✗ ${label}: expected constraint violation but none thrown`,
 		);
 		failed++;
-	} catch {
-		console.log(`  ✓ ${label} (constraint correctly rejected)`);
-		passed++;
+	} catch (err) {
+		// Only count as a pass if the error is a DB constraint violation.
+		// libSQL/Drizzle may wrap the SQLite error; check both the top-level
+		// message and the cause chain for constraint-related keywords.
+		const fullMsg = [
+			(err as Error).message ?? "",
+			((err as { cause?: Error }).cause as Error | undefined)?.message ?? "",
+		].join(" ");
+		const isConstraint =
+			fullMsg.includes("UNIQUE constraint") ||
+			fullMsg.includes("CHECK constraint") ||
+			fullMsg.includes("FOREIGN KEY constraint") ||
+			fullMsg.includes("NOT NULL constraint") ||
+			// libSQL error code for any constraint violation
+			fullMsg.includes("SQLITE_CONSTRAINT");
+		if (isConstraint) {
+			console.log(`  ✓ ${label} (constraint correctly rejected)`);
+			passed++;
+		} else {
+			console.error(
+				`  ✗ ${label}: unexpected error (not a constraint): ${fullMsg}`,
+			);
+			failed++;
+		}
 	}
 }
 

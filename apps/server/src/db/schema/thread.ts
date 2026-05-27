@@ -362,18 +362,6 @@ export const threadRelations = relations(thread, ({ one, many }) => ({
 	messages: many(message),
 }));
 
-export const messageRelations = relations(message, ({ one, many }) => ({
-	connectedAccount: one(connectedAccount, {
-		fields: [message.connectedAccountId],
-		references: [connectedAccount.id],
-	}),
-	thread: one(thread, {
-		fields: [message.threadId],
-		references: [thread.id],
-	}),
-	participants: many(messageParticipant),
-}));
-
 // ---------------------------------------------------------------------------
 // message_participant — normalized participant rows
 // ---------------------------------------------------------------------------
@@ -446,3 +434,27 @@ export const messageParticipantRelations = relations(
 		}),
 	}),
 );
+
+// ---------------------------------------------------------------------------
+// messageRelations — defined after messageParticipant so the `participants`
+// many-relation can reference the already-declared messageParticipant table.
+//
+// ── Account/thread consistency note ─────────────────────────────────────────
+//
+//   message.connected_account_id MUST equal thread.connected_account_id for
+//   the parent thread.  SQLite does not support multi-column FK constraints
+//   that would enforce this at the DB level.  Application code MUST validate
+//   this invariant before inserting a message row.
+// ---------------------------------------------------------------------------
+
+export const messageRelations = relations(message, ({ one, many }) => ({
+	connectedAccount: one(connectedAccount, {
+		fields: [message.connectedAccountId],
+		references: [connectedAccount.id],
+	}),
+	thread: one(thread, {
+		fields: [message.threadId],
+		references: [thread.id],
+	}),
+	participants: many(messageParticipant),
+}));

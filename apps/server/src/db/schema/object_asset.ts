@@ -157,6 +157,15 @@ export const rawPayloadRef = sqliteTable(
 			sql`${table.payloadType} IN ('thread', 'message')`,
 		),
 
+		// Exactly one parent must be set: thread-level payloads have thread_id
+		// non-null and message_id null; message-level payloads have message_id
+		// non-null and thread_id null.  This mirrors the payload_type discriminator
+		// and prevents orphaned or ambiguously-parented payload refs.
+		check(
+			"raw_payload_ref_exactly_one_parent",
+			sql`(${table.threadId} IS NULL) != (${table.messageId} IS NULL)`,
+		),
+
 		// Lookup by thread.
 		index("raw_payload_ref_thread_id_idx").on(table.threadId),
 
@@ -247,6 +256,14 @@ export const attachment = sqliteTable(
 		check(
 			"attachment_uploaded_needs_asset",
 			sql`(${table.ingestionState} != 'uploaded' OR ${table.objectAssetId} IS NOT NULL)`,
+		),
+
+		// Uploaded attachments MUST have an uploaded_at timestamp.
+		// This is the inverse of the above: if ingestion_state = 'uploaded',
+		// uploaded_at must be set to record when the upload completed.
+		check(
+			"attachment_uploaded_needs_timestamp",
+			sql`(${table.ingestionState} != 'uploaded' OR ${table.uploadedAt} IS NOT NULL)`,
 		),
 
 		// ── Indexes ─────────────────────────────────────────────────────────────
