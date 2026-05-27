@@ -2,7 +2,7 @@
 
 ## Introduction/Overview
 
-Establish the visual foundation for the Hay inbox application. This spec defines the token system (colors, typography, spacing, motion), wires those tokens into Tailwind v4, and builds the five primitive UI components that all subsequent screens will consume. Without this foundation, no UI work can proceed consistently.
+Establish the visual foundation for the Hay inbox application. This spec defines the token system (colors, typography, spacing, motion), wires those tokens into Tailwind v4, and builds the five primitive UI components that all subsequent screens will consume. Components are scaffolded via Solid UI (a shadcn-style copy-into-project library built on Kobalte/corvu) and then styled with Hay's neobrutalist design tokens. Without this foundation, no UI work can proceed consistently.
 
 ## Goals
 
@@ -169,14 +169,18 @@ The full interactive prototype at `docs/prototype/hay-inbox-prototype.html` is t
 - **Styling**: Tailwind v4 CSS-first — all token additions go in `apps/web/src/styles.css` under `@theme {}`; no `tailwind.config.js`
 - **Animation**: `solid-motionone` only — import `{ Motion, Presence }` from `"solid-motionone"`; do not use `motion` package
 - **Icons**: `lucide-solid` — import individual icon components, not the React variants
-- **File naming**: PascalCase for component files (`Button.tsx`, `Avatar.tsx`)
-- **Route files**: kebab-case (`design-system.tsx`), use `createFileRoute("/dev/design-system")`
+- **File naming**: All source files use `snake_case` (e.g., `button.tsx`, `avatar.tsx`, `design_system.tsx`). This is enforced by Biome's `useFilenamingConvention` rule with `filenameCases: ["snake_case"]`. TanStack Router special prefixes (`__root.tsx`, `_layout.tsx`) and bracket syntax (`[id].tsx`) are natively supported by the rule and remain valid.
+- **Biome rule**: `linter.rules.style.useFilenamingConvention` set to `"error"` with `filenameCases: ["snake_case"]` in root `biome.json`. Route files under `apps/web/src/routes/` are included — TanStack Router's `__root.tsx` and `[param].tsx` patterns are exempt by Biome's built-in exceptions.
 - **Formatter**: Biome — all files must pass `biome check` without errors
-- **Commits**: Conventional Commits — `feat(ui): add Button component`, `feat(tokens): wire OKLCH tokens into Tailwind v4`
-- **Package manager**: Bun — use `bun add` for any new dependencies (none expected for this spec)
+- **Commits**: Conventional Commits — `feat(ui): add button component`, `feat(tokens): wire OKLCH tokens into Tailwind v4`
+- **Package manager**: Bun — use `bun add` for any new dependencies
+- **Component library**: Solid UI (`bunx solidui-cli@latest`) — scaffold base components via CLI, then customize with Hay tokens. Run `bunx solidui-cli@latest init` once to set up `ui.config.json`, then `bunx solidui-cli@latest add <component>` per component.
 
 ## Technical Considerations
 
+- **Solid UI scaffold workflow**: Run `bunx solidui-cli@latest init` in `apps/web/` to initialize (creates `ui.config.json`, installs Kobalte/corvu deps, sets up `cn` utility). Then `bunx solidui-cli@latest add button badge toggle` etc. to copy component source into `apps/web/src/components/ui/`. After copying, rename files to `snake_case` and replace Solid UI's default Tailwind classes with Hay's token-based classes. Preserve Kobalte/corvu accessibility primitives — only change visual styling.
+- **Solid UI + Tailwind v4 compatibility**: Solid UI's `init` command may configure Tailwind v3-style. Since this project uses Tailwind v4 (CSS-first), do not let `solidui-cli init` overwrite `styles.css` or add a `tailwind.config.js`. Run init, then manually verify `styles.css` still uses `@import "tailwindcss"` and `@theme {}` — not `@tailwind base/components/utilities`.
+- **Biome `useFilenamingConvention`**: Add to root `biome.json` under `linter.rules.style`: `"useFilenamingConvention": { "level": "error", "options": { "filenameCases": ["snake_case"] } }`. Biome natively exempts `__root.tsx`, `[param].tsx`, and `.filename` patterns — no overrides needed for TanStack Router route files.
 - **Tailwind v4 `@theme` block**: All design tokens are declared as CSS custom properties inside `@theme {}` in `styles.css`. Tailwind v4 automatically generates utility classes from `--color-*`, `--font-*`, `--shadow-*` etc. No JavaScript config file is needed.
 - **Google Fonts loading**: Add `<link rel="preconnect" href="https://fonts.googleapis.com">`, `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`, and the Archivo stylesheet link to the `links` array in `__root.tsx`'s `head()` function — this is the TanStack Start pattern for injecting `<head>` content.
 - **solid-motionone `whileTap`**: Use `whileTap={{ x: "var(--shadow-x)", y: "var(--shadow-y)" }}` and `animate={{ boxShadow: ... }}` for button press feedback. Wrap the `<button>` element in `<Motion>`.
@@ -195,7 +199,8 @@ No specific security considerations identified. These are purely presentational 
 2. **Tailwind token utilities work**: `bg-main`, `text-foreground`, `font-sans` etc. apply correct values
 3. **Archivo loads**: Network tab shows font request to `fonts.googleapis.com`
 4. **Reduced motion respected**: With `prefers-reduced-motion: reduce` set in OS, button press and toggle slide animations are disabled
-5. **Biome passes**: `bun run check` (or equivalent) exits 0 with no errors across all new files
+5. **Biome passes**: `bun run check` exits 0 with no errors across all new files, including `useFilenamingConvention` snake_case enforcement
+6. **All new files are snake_case**: No PascalCase or kebab-case source files introduced (route files with `__` prefix and `[param]` brackets are exempt)
 
 ## Open Questions
 
