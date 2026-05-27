@@ -1,7 +1,7 @@
 import { drizzle } from "drizzle-orm/libsql";
 
 import { config } from "../config.ts";
-import * as schema from "./schema.ts";
+import * as schema from "./schema/index.ts";
 
 export const db = drizzle({
 	connection: {

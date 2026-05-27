@@ -57,3 +57,6 @@ apps/web/.tanstack/tmp/
 # Weave runtime/session files — ephemeral, not for version control
 .weave/runtime/
 .weave/state.json
+
+# Spec documents — local reference only, not for version control
+docs/specs/
