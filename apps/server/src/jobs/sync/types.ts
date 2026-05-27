@@ -230,8 +230,8 @@ type _ProcessResultGuard = NoCursorFields<SyncProcessResult>;
 
 // Suppress "declared but never used" warnings for the guard aliases.
 export type {
-	_TriggerGuard,
 	_ProcessGuard,
-	_TriggerResultGuard,
 	_ProcessResultGuard,
+	_TriggerGuard,
+	_TriggerResultGuard,
 };

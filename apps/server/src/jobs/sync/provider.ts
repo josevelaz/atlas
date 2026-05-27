@@ -369,4 +369,5 @@ type NoCursorFields<T> = keyof T & ForbiddenCursorField extends never
 	: never;
 
 type _BatchResultGuard = NoCursorFields<SyncBatchResult>;
+
 export type { _BatchResultGuard };
