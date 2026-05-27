@@ -19,6 +19,7 @@
     "push": "turbo run push --filter=@hay/server",
     "migrate": "turbo run migrate --filter=@hay/server",
     "studio": "turbo run studio --filter=@hay/server",
+    "test": "turbo run test --filter=@hay/server",
     "prepare": "command -v husky >/dev/null 2>&1 && husky || true"
   },
   "devDependencies": {
