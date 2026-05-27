@@ -813,7 +813,7 @@ apps/desktop/src-tauri/
   **Files likely touched**: none, unless review fixes are needed.
   **Acceptance**: Warp approves or all findings are addressed before merge. Existing Warp BLOCK is a hard gate until re-reviewed.
 
-- [ ] 9.3 Quality review
+- [x] 9.3 Quality review
   **What**: Request general implementation review for Terraform module boundaries, workflow reliability, rollback paths, and operator docs.
   **Acceptance**: Weft approves or all findings are addressed before merge. Existing Weft BLOCK is a hard gate until re-reviewed.
 

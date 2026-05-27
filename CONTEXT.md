@@ -10,6 +10,10 @@ A dedicated workflow for handling first-time senders. A sender is identified by 
 
 The primary object the user manages. A thread is a conversation made up of one or more email messages. Categories, handling states, AI priority, summaries, and extracted action items apply to threads by default. AI-generated summaries, priority explanations, and action item suggestions are cached for the current thread version and refreshed when the thread changes.
 
+### Screening State
+
+The thread-level lifecycle that captures a thread's Screener status independently of Category. A thread's Screening State determines whether it is pending review in the Screener, accepted into the normal category model, or hidden because its initiating sender was rejected.
+
 ### Category
 
 A classification for accepted threads. Each thread lives in exactly one category. Categories are app-owned metadata and do not modify the connected account's folders, labels, or categories by default. The three primary categories are:
@@ -21,6 +25,10 @@ A classification for accepted threads. Each thread lives in exactly one category
 ### Sender Routing Rule
 
 A mapping from a screened sender to a default category within a connected account. Established when a sender is Accepted from the Screener using the Accept category dropdown. Future threads initiated by that sender in that connected account are routed to the assigned default category unless overridden.
+
+### Email Identity
+
+An exact email address associated with a sender or recipient. Screening and Sender Routing Rules operate on Email Identities at exact-email granularity within a connected account, not on broader person-level groupings.
 
 ### Per-Thread Override
 
@@ -66,7 +74,19 @@ The primary handling states are:
 
 ### Connected Account
 
-A third-party email account that the user authorizes the product to access. The product is a sync-only email client: it organizes mail from connected accounts rather than issuing or hosting new email addresses. The user can send replies and compose new emails through a connected account, so outgoing mail appears to come from the user's existing email address.
+A third-party email account that the user authorizes the product to access. A Connected Account is specifically an email/mailbox concept, not a generic integration record for every external service. The product is a sync-only email client: it organizes mail from connected accounts rather than issuing or hosting new email addresses. The user can send replies and compose new emails through a connected account, so outgoing mail appears to come from the user's existing email address.
+
+### Contact
+
+A user-scoped person or entity representation that may group multiple Email Identities across the user's connected accounts. Contacts support Atlas's unified-by-default experience, but they do not change the exact-email routing model: screening and Sender Routing Rules still operate on Email Identities within a connected account.
+
+### Destination Integration
+
+A non-email external system that receives synced Atlas action items. A Destination Integration is distinct from a Connected Account: the Connected Account owns the source thread, while the Destination Integration is where a confirmed action item is synced after confirmation.
+
+### Integration Mutation Journal
+
+A unified journal of Atlas write operations to external systems. The Integration Mutation Journal records outbound mutations for reconciliation, retry, idempotency, and error recovery across both Connected Accounts and Destination Integrations.
 
 ### Unified View
 
