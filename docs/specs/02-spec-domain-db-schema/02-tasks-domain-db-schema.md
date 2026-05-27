@@ -71,7 +71,7 @@
 - [x] 3.4 Add uniqueness constraints and indexes for provider thread IDs, provider message IDs, screening lookups, routing-rule lookup by exact sender email, and common thread/message joins.
 - [x] 3.5 Generate migration SQL and add a focused validation artifact that proves the thread/category/screening invariants hold in the planned schema.
 
-### [ ] 4.0 Add revision-aware AI, action-item, search, attachment, and asset tables
+### [x] 4.0 Add revision-aware AI, action-item, search, attachment, and asset tables
 
 #### 4.0 Proof Artifact(s)
 
@@ -81,11 +81,11 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Add schema files for thread content revisions, AI summaries and priorities, action items, and embeddings so derived artifacts are tied to explicit source revisions.
-- [ ] 4.2 Encode action-item lifecycle rules, including nullable destination integration before confirmation, durable confirmed items across later revisions, dismissed-item retention, and `low|medium|high` semantic priority levels.
-- [ ] 4.3 Add schema files for `object_asset`, raw payload references, and attachments so object storage references are shared consistently across payload and blob use cases.
-- [ ] 4.4 Encode attachment ingestion state and partial-success behavior so attachment failures do not invalidate the parent message or thread records.
-- [ ] 4.5 Add libSQL-compatible embedding storage and planned vector-index migration DDL, then generate migration output and a focused validation artifact for revision and attachment lifecycle behavior.
+- [x] 4.1 Add schema files for thread content revisions, AI summaries and priorities, action items, and embeddings so derived artifacts are tied to explicit source revisions.
+- [x] 4.2 Encode action-item lifecycle rules, including nullable destination integration before confirmation, durable confirmed items across later revisions, dismissed-item retention, and `low|medium|high` semantic priority levels.
+- [x] 4.3 Add schema files for `object_asset`, raw payload references, and attachments so object storage references are shared consistently across payload and blob use cases.
+- [x] 4.4 Encode attachment ingestion state and partial-success behavior so attachment failures do not invalidate the parent message or thread records.
+- [x] 4.5 Add libSQL-compatible embedding storage and planned vector-index migration DDL, then generate migration output and a focused validation artifact for revision and attachment lifecycle behavior.
 
 ### [ ] 5.0 Add integration mutation tracking and final schema verification
 
