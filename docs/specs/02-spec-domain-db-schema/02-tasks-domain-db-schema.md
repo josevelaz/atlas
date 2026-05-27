@@ -87,7 +87,7 @@
 - [x] 4.4 Encode attachment ingestion state and partial-success behavior so attachment failures do not invalidate the parent message or thread records.
 - [x] 4.5 Add libSQL-compatible embedding storage and planned vector-index migration DDL, then generate migration output and a focused validation artifact for revision and attachment lifecycle behavior.
 
-### [ ] 5.0 Add integration mutation tracking and final schema verification
+### [x] 5.0 Add integration mutation tracking and final schema verification
 
 #### 5.0 Proof Artifact(s)
 
@@ -97,8 +97,8 @@
 
 #### 5.0 Tasks
 
-- [ ] 5.1 Add a schema file for `integration_mutation_journal` that supports both mailbox and destination-integration outbound writes in one typed journal.
-- [ ] 5.2 Encode idempotency, ownership, and reconciliation relationships so journal entries can be retried safely without leaking provider secrets into proof artifacts.
-- [ ] 5.3 Review all new schema files, relations, and indexes together to ensure they cover every functional requirement in the spec and preserve glossary terms from `CONTEXT.md`.
-- [ ] 5.4 Regenerate and review the final migration set in `apps/server/drizzle/`, confirming foreign keys, uniqueness constraints, and vector/index DDL are present and reproducible.
-- [ ] 5.5 Run the final verification commands (`bun run generate`, `bun run migrate`, `bun run lint`, `bun run typecheck`) and capture the proof artifacts needed for later validation.
+- [x] 5.1 Add a schema file for `integration_mutation_journal` that supports both mailbox and destination-integration outbound writes in one typed journal.
+- [x] 5.2 Encode idempotency, ownership, and reconciliation relationships so journal entries can be retried safely without leaking provider secrets into proof artifacts.
+- [x] 5.3 Review all new schema files, relations, and indexes together to ensure they cover every functional requirement in the spec and preserve glossary terms from `CONTEXT.md`.
+- [x] 5.4 Regenerate and review the final migration set in `apps/server/drizzle/`, confirming foreign keys, uniqueness constraints, and vector/index DDL are present and reproducible.
+- [x] 5.5 Run the final verification commands (`bun run generate`, `bun run migrate`, `bun run lint`, `bun run typecheck`) and capture the proof artifacts needed for later validation.

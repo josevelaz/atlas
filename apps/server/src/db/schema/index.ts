@@ -44,3 +44,6 @@ export * from "./object_asset.ts";
 
 // ── Domain: Thread Embedding (Task 4) ──────────────────────────────────────
 export * from "./embedding.ts";
+
+// ── Domain: Integration Mutation Journal (Task 5) ──────────────────────────
+export * from "./integration_mutation_journal.ts";
