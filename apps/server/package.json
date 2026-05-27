@@ -8,6 +8,7 @@
     "start": "bun src/index.ts",
     "lint": "biome lint ./src",
     "lint:fix": "biome lint --write ./src",
+    "test": "bun test src/services/sync/state.test.ts src/services/sync/runs.test.ts",
     "typecheck": "tsc --noEmit",
     "generate": "drizzle-kit generate",
     "push": "drizzle-kit push",

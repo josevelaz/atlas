@@ -279,3 +279,51 @@ export async function getSyncState(
 	});
 	return (row as SyncStateRow | undefined) ?? null;
 }
+
+// ---------------------------------------------------------------------------
+// Ownership loader
+// ---------------------------------------------------------------------------
+
+/** Shape of a `connected_account` row as returned by ownership helpers. */
+export interface ConnectedAccountRow {
+	id: string;
+	userId: string;
+	providerAccountEmail: string;
+	provider: string;
+	status: "active" | "disconnected" | "reactivating" | "error";
+	displayName: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+}
+
+/**
+ * Load all `connected_account` rows owned by a user.
+ *
+ * Returns only the accounts that belong to the given `userId`.  This is the
+ * canonical entry point for the sync scheduler to discover which accounts
+ * need syncing — it never returns accounts owned by other users.
+ *
+ * @param userId - The Better Auth user ID.
+ * @param statusFilter - Optional status filter (defaults to all statuses).
+ * @returns Array of connected account rows, ordered by `createdAt` ascending.
+ */
+export async function loadOwnedConnectedAccounts(
+	userId: string,
+	statusFilter?: Array<"active" | "disconnected" | "reactivating" | "error">,
+	db?: Db,
+): Promise<ConnectedAccountRow[]> {
+	const d = getDb(db);
+
+	const rows = await d.query.connectedAccount.findMany({
+		where: (t, { eq: eqFn, and, inArray }) => {
+			const ownershipClause = eqFn(t.userId, userId);
+			if (statusFilter && statusFilter.length > 0) {
+				return and(ownershipClause, inArray(t.status, statusFilter));
+			}
+			return ownershipClause;
+		},
+		orderBy: (t, { asc }) => [asc(t.createdAt)],
+	});
+
+	return rows as ConnectedAccountRow[];
+}
