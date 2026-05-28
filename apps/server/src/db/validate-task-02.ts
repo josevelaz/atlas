@@ -345,7 +345,7 @@ await db.insert(schema.syncState).values({
 	id: ssId,
 	connectedAccountId: caId,
 	syncCursor: null,
-	syncMode: "full",
+	syncMode: "initial",
 	health: "ok",
 	createdAt: new Date(),
 	updatedAt: new Date(),
@@ -360,7 +360,7 @@ assert(
 	ss?.connectedAccountId === caId,
 );
 assert(
-	"sync_state: initial cursor is null (full sync required)",
+	"sync_state: initial cursor is null (initial sync required)",
 	ss?.syncCursor === null,
 );
 
@@ -371,7 +371,7 @@ await expectConstraintViolation(
 		db.insert(schema.syncState).values({
 			id: "ss-02-dup",
 			connectedAccountId: caId, // same account
-			syncMode: "full",
+			syncMode: "initial",
 			health: "ok",
 			createdAt: new Date(),
 			updatedAt: new Date(),
@@ -400,7 +400,7 @@ assert(
 await db.insert(schema.syncJob).values({
 	id: "sj-01",
 	connectedAccountId: caId,
-	jobType: "full",
+	jobType: "initial",
 	status: "success",
 	startedAt: new Date(Date.now() - 60_000),
 	finishedAt: new Date(Date.now() - 30_000),
@@ -430,8 +430,8 @@ assert(
 	jobs.length === 2,
 );
 assert(
-	"sync_job: first job is full sync",
-	jobs.some((j) => j.jobType === "full" && j.status === "success"),
+	"sync_job: first job is initial sync",
+	jobs.some((j) => j.jobType === "initial" && j.status === "success"),
 );
 assert(
 	"sync_job: second job is incremental sync",
@@ -444,7 +444,7 @@ await expectConstraintViolation(
 	() =>
 		client.execute({
 			sql: "INSERT INTO sync_job (id, connected_account_id, job_type, status, started_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-			args: ["sj-bad", caId, "full", "bad_status", Date.now(), Date.now()],
+			args: ["sj-bad", caId, "initial", "bad_status", Date.now(), Date.now()],
 		}),
 );
 

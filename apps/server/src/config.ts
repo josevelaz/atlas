@@ -160,6 +160,130 @@ if (NODE_ENV === "production") {
 	}
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Sync infrastructure configuration
+//
+// All values have safe defaults for local development. Invalid enum or
+// out-of-range numeric values throw at config-load time (fail-fast).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Number of sync jobs a single worker processes concurrently.
+ * Higher values increase throughput but consume more Redis connections and
+ * memory. Keep at 5 for local dev; tune upward in production based on
+ * instance size.
+ */
+const SYNC_WORKER_CONCURRENCY = env
+	.get("SYNC_WORKER_CONCURRENCY")
+	.default(5)
+	.asIntPositive();
+
+/**
+ * Maximum number of delivery attempts for a sync job before it is moved to
+ * the dead-letter queue. Applies to all sync job types (initial, incremental).
+ */
+const SYNC_MAX_ATTEMPTS = env
+	.get("SYNC_MAX_ATTEMPTS")
+	.default(3)
+	.asIntPositive();
+
+/**
+ * Base delay in milliseconds for the first exponential-backoff retry.
+ * Subsequent retries double this value: delay × 2^(attempt-1).
+ * Default: 5 000 ms (5 s).
+ */
+const SYNC_BACKOFF_DELAY_MS = env
+	.get("SYNC_BACKOFF_DELAY_MS")
+	.default(5_000)
+	.asIntPositive();
+
+/**
+ * Jitter percentage (0–100) added to each backoff delay to spread retry
+ * storms across workers. A value of 20 means ±20 % of the computed delay is
+ * added at random. Default: 20.
+ */
+const SYNC_BACKOFF_JITTER_PERCENT = (() => {
+	const raw = env
+		.get("SYNC_BACKOFF_JITTER_PERCENT")
+		.default(20)
+		.asIntPositive();
+	if (raw > 100) {
+		throw new Error(
+			`SYNC_BACKOFF_JITTER_PERCENT must be between 0 and 100, got ${raw}`,
+		);
+	}
+	return raw;
+})();
+
+/**
+ * Time-to-live in milliseconds for distributed sync locks.
+ * A lock that is not renewed within this window is automatically released,
+ * allowing another worker to claim the job. Default: 30 000 ms (30 s).
+ */
+const SYNC_LOCK_TTL_MS = env
+	.get("SYNC_LOCK_TTL_MS")
+	.default(30_000)
+	.asIntPositive();
+
+/**
+ * Time-to-live in milliseconds for enqueue deduplication keys.
+ * Duplicate enqueue requests within this window are silently dropped.
+ * Default: 60 000 ms (60 s).
+ */
+const SYNC_ENQUEUE_DEDUPE_TTL_MS = env
+	.get("SYNC_ENQUEUE_DEDUPE_TTL_MS")
+	.default(60_000)
+	.asIntPositive();
+
+/**
+ * Sliding-window duration in milliseconds used to detect duplicate enqueue
+ * requests. Requests arriving within this window for the same account are
+ * collapsed into a single job. Default: 30 000 ms (30 s).
+ */
+const SYNC_ENQUEUE_DEDUPE_WINDOW_MS = env
+	.get("SYNC_ENQUEUE_DEDUPE_WINDOW_MS")
+	.default(30_000)
+	.asIntPositive();
+
+/**
+ * How often the reconciliation scheduler fires, in milliseconds.
+ * The reconciler catches accounts whose push/webhook triggers were missed.
+ * Default: 300 000 ms (5 minutes). Must not be set below 60 000 ms (1 min)
+ * to avoid hammering the mail provider.
+ */
+const SYNC_RECONCILIATION_CADENCE_MS = (() => {
+	const raw = env
+		.get("SYNC_RECONCILIATION_CADENCE_MS")
+		.default(300_000)
+		.asIntPositive();
+	if (raw < 60_000) {
+		throw new Error(
+			`SYNC_RECONCILIATION_CADENCE_MS must be at least 60000 ms (1 minute), got ${raw}`,
+		);
+	}
+	return raw;
+})();
+
+/**
+ * Whether the sync worker is enabled. Set to "false" in test environments
+ * to prevent background workers from interfering with unit/integration tests.
+ * Default: true.
+ */
+const SYNC_WORKER_ENABLED = env
+	.get("SYNC_WORKER_ENABLED")
+	.default("true")
+	.asBool();
+
+/**
+ * Whether the sync scheduler (reconciliation cron) is enabled. Set to
+ * "false" in test environments to prevent scheduled jobs from firing during
+ * tests. Default: true.
+ */
+const SYNC_SCHEDULER_ENABLED = env
+	.get("SYNC_SCHEDULER_ENABLED")
+	.default("true")
+	.asBool();
+
 export const config = {
 	NODE_ENV,
 	HAY_ENV,
@@ -207,4 +331,16 @@ export const config = {
 	MICROSOFT_CLIENT_SECRET,
 	GITHUB_CLIENT_ID,
 	GITHUB_CLIENT_SECRET,
+
+	// ── Sync infrastructure ──────────────────────────────────────────────────
+	SYNC_WORKER_CONCURRENCY,
+	SYNC_MAX_ATTEMPTS,
+	SYNC_BACKOFF_DELAY_MS,
+	SYNC_BACKOFF_JITTER_PERCENT,
+	SYNC_LOCK_TTL_MS,
+	SYNC_ENQUEUE_DEDUPE_TTL_MS,
+	SYNC_ENQUEUE_DEDUPE_WINDOW_MS,
+	SYNC_RECONCILIATION_CADENCE_MS,
+	SYNC_WORKER_ENABLED,
+	SYNC_SCHEDULER_ENABLED,
 };

@@ -80,6 +80,14 @@ A person who authenticates to Atlas and owns the app-level data, preferences, an
 
 A third-party email account that the user authorizes the product to access. A Connected Account is specifically an email/mailbox concept, not a generic integration record for every external service. The product is a sync-only email client: it organizes mail from connected accounts rather than issuing or hosting new email addresses. The user can send replies and compose new emails through a connected account, so outgoing mail appears to come from the user's existing email address.
 
+### Sync State
+
+The durable per-Connected-Account record of sync progress. Sync State stores the current provider cursor and overall sync health for a Connected Account, and answers "where are we up to?" for future sync runs.
+
+### Sync Job
+
+An append-only record of one mailbox sync attempt for a Connected Account. A Sync Job captures the operational outcome of a run — such as timing, status, counts, errors, and starting cursor snapshot — and answers "what happened during this attempt?"
+
 ### Contact
 
 A user-scoped person or entity representation that may group multiple Email Identities across the user's connected accounts. Contacts support Atlas's unified-by-default experience, but they do not change the exact-email routing model: screening and Sender Routing Rules still operate on Email Identities within a connected account.

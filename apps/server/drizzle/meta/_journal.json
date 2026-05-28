@@ -43,6 +43,13 @@
       "when": 1779908173808,
       "tag": "0005_pr23-constraint-fixes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1748390400000,
+      "tag": "0006_rename-sync-taxonomy",
+      "breakpoints": true
     }
   ]
 }

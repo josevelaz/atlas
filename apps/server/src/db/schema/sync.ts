@@ -47,13 +47,15 @@ export const syncState = sqliteTable(
 			.references(() => connectedAccount.id, { onDelete: "cascade" }),
 
 		// Provider-specific cursor / page token for incremental sync.
-		// Null means a full sync is required (initial or after reset).
+		// Null means an initial sync is required (first connect or after reset).
 		syncCursor: text("sync_cursor"),
 
-		// Sync mode: "full" | "incremental"
-		syncMode: text("sync_mode", { enum: ["full", "incremental"] })
+		// Sync mode: "initial" | "incremental"
+		// "initial"     — first-ever sync for this account (no cursor yet)
+		// "incremental" — cursor-driven delta sync
+		syncMode: text("sync_mode", { enum: ["initial", "incremental"] })
 			.notNull()
-			.default("full"),
+			.default("initial"),
 
 		// Overall sync health: "ok" | "degraded" | "failed"
 		health: text("health", { enum: ["ok", "degraded", "failed"] })
@@ -87,7 +89,7 @@ export const syncState = sqliteTable(
 		// Enforce sync_mode value set.
 		check(
 			"sync_state_mode_check",
-			sql`${table.syncMode} IN ('full', 'incremental')`,
+			sql`${table.syncMode} IN ('initial', 'incremental')`,
 		),
 	],
 );
@@ -106,9 +108,11 @@ export const syncJob = sqliteTable(
 			.notNull()
 			.references(() => connectedAccount.id, { onDelete: "cascade" }),
 
-		// Job type: "full" | "incremental" | "partial"
+		// Job type: "initial" | "incremental"
+		// "initial"     — first-ever sync run for this account
+		// "incremental" — cursor-driven delta sync run
 		jobType: text("job_type", {
-			enum: ["full", "incremental", "partial"],
+			enum: ["initial", "incremental"],
 		}).notNull(),
 
 		// Outcome: "running" | "success" | "partial_success" | "failed" | "cancelled"
@@ -152,7 +156,7 @@ export const syncJob = sqliteTable(
 		// Enforce job_type value set.
 		check(
 			"sync_job_type_check",
-			sql`${table.jobType} IN ('full', 'incremental', 'partial')`,
+			sql`${table.jobType} IN ('initial', 'incremental')`,
 		),
 	],
 );
