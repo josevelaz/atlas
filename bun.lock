@@ -71,6 +71,7 @@
         "@tanstack/start-client-core": "1.170.2",
         "@tanstack/start-plugin-core": "1.171.3",
         "@tanstack/start-server-core": "1.169.2",
+        "better-auth": "^1.6.11",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "lucide-solid": "^0.545.0",

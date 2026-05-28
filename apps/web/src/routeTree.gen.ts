@@ -9,58 +9,96 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DevTanstack_librariesRouteImport } from './routes/dev/tanstack_libraries'
-import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
+import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
+import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
+import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
 
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DevTanstack_librariesRoute = DevTanstack_librariesRouteImport.update({
-  id: '/dev/tanstack_libraries',
-  path: '/dev/tanstack_libraries',
+const AuthSignUpRoute = AuthSignUpRouteImport.update({
+  id: '/auth/sign-up',
+  path: '/auth/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DevDesignSystemRoute = DevDesignSystemRouteImport.update({
-  id: '/dev/design-system',
-  path: '/dev/design-system',
+const AuthSignInRoute = AuthSignInRouteImport.update({
+  id: '/auth/sign-in',
+  path: '/auth/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCompleteRoute = AuthCompleteRouteImport.update({
+  id: '/auth/complete',
+  path: '/auth/complete',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dev/design-system': typeof DevDesignSystemRoute
-  '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
+  '/onboarding': typeof OnboardingRoute
+  '/auth/complete': typeof AuthCompleteRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dev/design-system': typeof DevDesignSystemRoute
-  '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
+  '/onboarding': typeof OnboardingRoute
+  '/auth/complete': typeof AuthCompleteRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dev/design-system': typeof DevDesignSystemRoute
-  '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
+  '/onboarding': typeof OnboardingRoute
+  '/auth/complete': typeof AuthCompleteRoute
+  '/auth/sign-in': typeof AuthSignInRoute
+  '/auth/sign-up': typeof AuthSignUpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dev/design-system' | '/dev/tanstack_libraries'
+  fullPaths:
+    | '/'
+    | '/onboarding'
+    | '/auth/complete'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dev/design-system' | '/dev/tanstack_libraries'
-  id: '__root__' | '/' | '/dev/design-system' | '/dev/tanstack_libraries'
+  to: '/' | '/onboarding' | '/auth/complete' | '/auth/sign-in' | '/auth/sign-up'
+  id:
+    | '__root__'
+    | '/'
+    | '/onboarding'
+    | '/auth/complete'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DevDesignSystemRoute: typeof DevDesignSystemRoute
-  DevTanstack_librariesRoute: typeof DevTanstack_librariesRoute
+  OnboardingRoute: typeof OnboardingRoute
+  AuthCompleteRoute: typeof AuthCompleteRoute
+  AuthSignInRoute: typeof AuthSignInRoute
+  AuthSignUpRoute: typeof AuthSignUpRoute
 }
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -68,18 +106,25 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dev/tanstack_libraries': {
-      id: '/dev/tanstack_libraries'
-      path: '/dev/tanstack_libraries'
-      fullPath: '/dev/tanstack_libraries'
-      preLoaderRoute: typeof DevTanstack_librariesRouteImport
+    '/auth/sign-up': {
+      id: '/auth/sign-up'
+      path: '/auth/sign-up'
+      fullPath: '/auth/sign-up'
+      preLoaderRoute: typeof AuthSignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dev/design-system': {
-      id: '/dev/design-system'
-      path: '/dev/design-system'
-      fullPath: '/dev/design-system'
-      preLoaderRoute: typeof DevDesignSystemRouteImport
+    '/auth/sign-in': {
+      id: '/auth/sign-in'
+      path: '/auth/sign-in'
+      fullPath: '/auth/sign-in'
+      preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/complete': {
+      id: '/auth/complete'
+      path: '/auth/complete'
+      fullPath: '/auth/complete'
+      preLoaderRoute: typeof AuthCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -87,8 +132,10 @@ declare module '@tanstack/solid-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DevDesignSystemRoute: DevDesignSystemRoute,
-  DevTanstack_librariesRoute: DevTanstack_librariesRoute,
+  OnboardingRoute: OnboardingRoute,
+  AuthCompleteRoute: AuthCompleteRoute,
+  AuthSignInRoute: AuthSignInRoute,
+  AuthSignUpRoute: AuthSignUpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

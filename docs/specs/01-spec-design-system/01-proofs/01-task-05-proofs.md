@@ -1,3 +1,5 @@
+> **Note:** `/dev/*` routes were removed in spec 02 (social auth). These proof artifacts document the state at the time of spec 01 completion.
+
 # Task 5.0 — Dev Route: `/dev/design-system` Showcase Page — Proof Artifacts
 
 ## Summary

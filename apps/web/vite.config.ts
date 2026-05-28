@@ -8,6 +8,19 @@ export default defineConfig({
 	server: {
 		port: 3001,
 	},
+	build: {
+		rollupOptions: {
+			// Tauri plugin APIs are only available at runtime inside the Tauri shell.
+			// Externalize them so the web build doesn't try to bundle them.
+			// Dynamic imports of these modules will fail gracefully in the browser
+			// (isDesktop() returns false, so they are never called in web builds).
+			external: [
+				"@tauri-apps/plugin-opener",
+				"@tauri-apps/api/event",
+				"@tauri-apps/api/core",
+			],
+		},
+	},
 	optimizeDeps: {
 		exclude: [
 			"@tanstack/solid-router",
@@ -17,6 +30,10 @@ export default defineConfig({
 			"@tanstack/solid-start-server",
 			"@tanstack/start-client-core",
 			"@tanstack/start-server-core",
+			// Tauri plugin APIs — only available at runtime inside the Tauri shell
+			"@tauri-apps/plugin-opener",
+			"@tauri-apps/api/event",
+			"@tauri-apps/api/core",
 		],
 	},
 	plugins: [
