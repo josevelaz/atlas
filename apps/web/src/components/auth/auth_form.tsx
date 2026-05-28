@@ -20,22 +20,24 @@ type Provider = (typeof PROVIDERS)[number]["id"];
 
 const AuthForm: Component<AuthFormProps> = (props) => {
 	const handleProviderClick = async (provider: Provider) => {
+		const originRoute =
+			props.mode === "sign-in" ? "/auth/sign-in" : "/auth/sign-up";
+
 		if (isDesktop()) {
-			await startDesktopAuth(
-				provider,
-				props.mode === "sign-in" ? "/auth/sign-in" : "/auth/sign-up",
-			);
+			await startDesktopAuth(provider, originRoute, props.redirect);
 			return;
 		}
 
-		const errorCallbackURL =
-			props.mode === "sign-in" ? "/auth/sign-in" : "/auth/sign-up";
+		// Build callbackURL with redirect param so /auth/complete can forward the user
+		const callbackURL = props.redirect
+			? `/auth/complete?redirect=${encodeURIComponent(props.redirect)}`
+			: "/auth/complete";
 
 		await authClient.signIn.social({
 			provider,
-			callbackURL: "/auth/complete",
-			errorCallbackURL,
-			newUserCallbackURL: "/auth/complete",
+			callbackURL,
+			errorCallbackURL: originRoute,
+			newUserCallbackURL: callbackURL,
 		});
 	};
 

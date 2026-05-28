@@ -192,6 +192,40 @@ export const app = new Elysia()
 				return { error: "Failed to create session" };
 			}
 
+			// Sign the session token and set the Better Auth session cookie.
+			// Better Auth uses HMAC-SHA256: signed value = "<token>.<base64(signature)>"
+			const token = session.token;
+			const secret = ctx.secret;
+			const key = await crypto.subtle.importKey(
+				"raw",
+				new TextEncoder().encode(secret),
+				{ name: "HMAC", hash: "SHA-256" },
+				false,
+				["sign"],
+			);
+			const sigBuf = await crypto.subtle.sign(
+				"HMAC",
+				key,
+				new TextEncoder().encode(token),
+			);
+			const sig = btoa(String.fromCharCode(...new Uint8Array(sigBuf)));
+			const signedToken = `${token}.${sig}`;
+
+			const cookieName = ctx.authCookies.sessionToken.name;
+			const attrs = ctx.authCookies.sessionToken.attributes;
+			const maxAge = ctx.sessionConfig.expiresIn;
+
+			// Build Set-Cookie header string
+			let cookieStr = `${cookieName}=${encodeURIComponent(signedToken)}`;
+			if (maxAge) cookieStr += `; Max-Age=${maxAge}`;
+			if (attrs.path) cookieStr += `; Path=${attrs.path}`;
+			if (attrs.domain) cookieStr += `; Domain=${attrs.domain}`;
+			if (attrs.sameSite) cookieStr += `; SameSite=${attrs.sameSite}`;
+			if (attrs.secure) cookieStr += "; Secure";
+			if (attrs.httpOnly) cookieStr += "; HttpOnly";
+
+			set.headers["Set-Cookie"] = cookieStr;
+
 			return { ok: true };
 		},
 		{

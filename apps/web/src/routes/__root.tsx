@@ -64,7 +64,8 @@ export const Route = createRootRoute({
 			try {
 				const session = await authClient.getSession();
 				if (!session?.data?.session) {
-					const redirectUrl = `/auth/sign-in?redirect=${encodeURIComponent(location.pathname)}`;
+					const fullPath = location.pathname + location.search + location.hash;
+					const redirectUrl = `/auth/sign-in?redirect=${encodeURIComponent(fullPath)}`;
 					throw redirect({ to: redirectUrl as "/" });
 				}
 			} catch (err) {
@@ -73,7 +74,8 @@ export const Route = createRootRoute({
 					throw err;
 				}
 				// API server down — redirect to sign-in
-				const redirectUrl = `/auth/sign-in?redirect=${encodeURIComponent(location.pathname)}`;
+				const fullPath = location.pathname + location.search + location.hash;
+				const redirectUrl = `/auth/sign-in?redirect=${encodeURIComponent(fullPath)}`;
 				throw redirect({ to: redirectUrl as "/" });
 			}
 		}

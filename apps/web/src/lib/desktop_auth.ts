@@ -33,6 +33,7 @@ export function isDesktop(): boolean {
 export async function startDesktopAuth(
 	provider: string,
 	originRoute: string,
+	redirect?: string,
 ): Promise<void> {
 	try {
 		// Step 1: Get the provider authorization URL without redirecting
@@ -51,12 +52,9 @@ export async function startDesktopAuth(
 			throw new Error("No authorization URL returned from provider");
 		}
 
-		// Step 2: Open the URL in the system browser (dynamic import for tree-shaking)
-		// Externalized in vite.config.ts — only exists at runtime in Tauri
-		const { open } = await import("@tauri-apps/plugin-opener");
-		await open(authUrl);
-
-		// Step 3: Listen for the deep-link callback event from lib.rs
+		// Step 2: Set up the deep-link listener BEFORE opening the browser to
+		// eliminate the race condition where a fast callback arrives before
+		// listen() is registered.
 		const { listen } = await import("@tauri-apps/api/event");
 
 		await new Promise<void>((resolve, reject) => {
@@ -71,6 +69,7 @@ export async function startDesktopAuth(
 				5 * 60 * 1000,
 			);
 
+			// Register the listener first, then open the browser once it's ready
 			listen<{ url: string }>("atlas://auth-callback", async (event) => {
 				clearTimeout(timeout);
 				unlisten?.();
@@ -100,14 +99,23 @@ export async function startDesktopAuth(
 						throw new Error(`Exchange failed: ${exchangeRes.status}`);
 					}
 
-					// Step 6: Navigate to /auth/complete on success
-					window.location.href = "/auth/complete";
+					// Step 6: Navigate to /auth/complete on success, preserving redirect
+					const dest = redirect
+						? `/auth/complete?redirect=${encodeURIComponent(redirect)}`
+						: "/auth/complete";
+					window.location.href = dest;
 					resolve();
 				} catch (err) {
 					reject(err);
 				}
 			}).then((fn) => {
 				unlisten = fn;
+
+				// Step 3: Open the URL in the system browser AFTER listener is ready
+				// Externalized in vite.config.ts — only exists at runtime in Tauri
+				import("@tauri-apps/plugin-opener")
+					.then(({ open }) => open(authUrl))
+					.catch(reject);
 			});
 		});
 	} catch {
