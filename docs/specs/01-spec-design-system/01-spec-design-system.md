@@ -53,7 +53,7 @@ Establish the visual foundation for the Hay inbox application. This spec defines
 
 **Functional Requirements:**
 
-**Button (`apps/web/src/components/ui/Button.tsx`):**
+**Button (`apps/web/src/components/ui/button.tsx`):**
 - The system shall render a `<button>` element with variants: `primary` (purple `--color-main` background), `ghost` (transparent, no shadow), and default (secondary background with offset shadow)
 - The system shall support a `sm` size modifier (28px height, 10px padding, 12px font)
 - The system shall apply pressable feedback on active state: translate by `(shadow-x, shadow-y)` and collapse box-shadow to zero using `solid-motionone` `<Motion>` with `whileTap`
@@ -61,27 +61,27 @@ Establish the visual foundation for the Hay inbox application. This spec defines
 - The system shall accept a `disabled` prop that sets `opacity: 0.5` and `cursor: not-allowed`
 - The system shall accept an `onClick` prop and forward all native button attributes via `JSX.ButtonHTMLAttributes`
 
-**Avatar (`apps/web/src/components/ui/Avatar.tsx`):**
+**Avatar (`apps/web/src/components/ui/avatar.tsx`):**
 - The system shall render a square element (36×36px default) with `--radius` border and `--border-w` border
 - The system shall display the first two characters of the `name` prop as initials (uppercase)
 - The system shall derive background color by hashing the `name` string to an index in a fixed palette: `[main, feed, paper, ai, inbox, danger]` using the corresponding CSS custom property values
 - The system shall support `sm` (28×28px) and `lg` (48×48px) size variants via a `size` prop
 - The system shall apply a slight rotation (`rotate(-1deg)`) as a neobrutalist detail
 
-**Toggle (`apps/web/src/components/ui/Toggle.tsx`):**
+**Toggle (`apps/web/src/components/ui/toggle.tsx`):**
 - The system shall render an accessible toggle using a visually hidden `<input type="checkbox">` with a custom styled track and thumb
 - The system shall accept `checked: boolean` and `onChange: (checked: boolean) => void` props (controlled)
 - The system shall animate the thumb sliding from left to right using `solid-motionone` `<Motion>` with `animate` driven by the `checked` prop
 - The system shall accept an optional `label` prop rendered as visible text beside the toggle
 - The system shall respect `prefers-reduced-motion` by disabling the slide animation when reduced motion is preferred
 
-**Icon (`apps/web/src/components/ui/Icon.tsx`):**
+**Icon (`apps/web/src/components/ui/icon.tsx`):**
 - The system shall accept an `icon` prop typed as a `LucideIcon` component from `lucide-solid`
 - The system shall accept `size` (number, default `16`) and `strokeWidth` (number, default `2`) props
 - The system shall forward `class` and other SVG attributes to the underlying icon component
 - The system shall render the icon at the specified size with consistent stroke width
 
-**Badge (`apps/web/src/components/ui/Badge.tsx`):**
+**Badge (`apps/web/src/components/ui/badge.tsx`):**
 - The system shall render an inline pill (border-radius 999px) with `--border-w` border
 - The system shall support a `variant` prop with values: `default`, `main`, `feed`, `paper`, `ai`, `danger`, `inbox`, `muted` — each applying the corresponding background color
 - The system shall support a `square` prop that switches border-radius to `--radius` instead of pill
