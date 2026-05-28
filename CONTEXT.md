@@ -72,6 +72,10 @@ The primary handling states are:
 - **Set Aside** — the user wants to come back to the thread later, but the thread does not necessarily require a reply.
 - **Reply Later** — the thread specifically needs a response from the user.
 
+### User
+
+A person who authenticates to Atlas and owns the app-level data, preferences, and connected accounts within the product.
+
 ### Connected Account
 
 A third-party email account that the user authorizes the product to access. A Connected Account is specifically an email/mailbox concept, not a generic integration record for every external service. The product is a sync-only email client: it organizes mail from connected accounts rather than issuing or hosting new email addresses. The user can send replies and compose new emails through a connected account, so outgoing mail appears to come from the user's existing email address.
@@ -91,3 +95,7 @@ A unified journal of Atlas write operations to external systems. The Integration
 ### Unified View
 
 A cross-account view that combines threads from all connected accounts into one experience. The product is unified by default, so the user sees one Inbox, one Feed, one Paper Trail, and one Screener across connected accounts. Threads remain associated with their connected account and can be filtered by account.
+
+## Flagged ambiguities
+
+- "Hay" vs "Atlas" was used inconsistently across repo assets — resolved: **Atlas** is the public product brand.

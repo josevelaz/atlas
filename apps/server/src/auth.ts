@@ -59,12 +59,68 @@ const crossOriginCookieAttributes = {
 	secure: true,
 };
 
+/**
+ * Build the socialProviders config block.
+ * Each provider is only included when both CLIENT_ID and CLIENT_SECRET are set.
+ * This allows the server to start without any social provider credentials
+ * and enables providers incrementally as credentials are added.
+ */
+const socialProviders: Record<
+	string,
+	{ clientId: string; clientSecret: string }
+> = {};
+
+if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
+	socialProviders.google = {
+		clientId: config.GOOGLE_CLIENT_ID,
+		clientSecret: config.GOOGLE_CLIENT_SECRET,
+	};
+}
+
+if (config.MICROSOFT_CLIENT_ID && config.MICROSOFT_CLIENT_SECRET) {
+	socialProviders.microsoft = {
+		clientId: config.MICROSOFT_CLIENT_ID,
+		clientSecret: config.MICROSOFT_CLIENT_SECRET,
+	};
+}
+
+if (config.GITHUB_CLIENT_ID && config.GITHUB_CLIENT_SECRET) {
+	socialProviders.github = {
+		clientId: config.GITHUB_CLIENT_ID,
+		clientSecret: config.GITHUB_CLIENT_SECRET,
+	};
+}
+
 export const auth = betterAuth({
 	database: drizzleAdapter(db, { provider: "sqlite" }),
 	basePath: "/api/auth",
 	baseURL: config.BETTER_AUTH_URL,
 	secret: config.BETTER_AUTH_SECRET,
 	trustedOrigins: config.CORS_ALLOWED_ORIGINS,
+
+	/**
+	 * Social OAuth providers.
+	 * Each provider is only active when both CLIENT_ID and CLIENT_SECRET are set.
+	 * Providers without credentials are excluded from the config entirely.
+	 */
+	socialProviders,
+
+	/**
+	 * Account linking policy: DISABLED.
+	 *
+	 * We do not allow automatic account linking (same email, different provider).
+	 * If a user signs in with Google and then tries to sign in with GitHub using
+	 * the same email, Better Auth will return an error instead of merging the
+	 * accounts. This prevents silent account takeover via email-verified OAuth.
+	 *
+	 * Users who want to link accounts must do so explicitly through a dedicated
+	 * account management flow (not yet implemented).
+	 */
+	account: {
+		accountLinking: {
+			enabled: false,
+		},
+	},
 
 	advanced: {
 		// Force the __Secure- cookie prefix in production.
