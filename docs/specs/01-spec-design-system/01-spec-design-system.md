@@ -2,7 +2,7 @@
 
 ## Introduction/Overview
 
-Establish the visual foundation for the Hay inbox application. This spec defines the token system (colors, typography, spacing, motion), wires those tokens into Tailwind v4, and builds the five primitive UI components that all subsequent screens will consume. Components are scaffolded via Solid UI (a shadcn-style copy-into-project library built on Kobalte/corvu) and then styled with Hay's neobrutalist design tokens. Without this foundation, no UI work can proceed consistently.
+Establish the visual foundation for the Atlas inbox application. This spec defines the token system (colors, typography, spacing, motion), wires those tokens into Tailwind v4, and builds the five primitive UI components that all subsequent screens will consume. Components are scaffolded via Solid UI (a shadcn-style copy-into-project library built on Kobalte/corvu) and then styled with Hay's neobrutalist design tokens. Without this foundation, no UI work can proceed consistently.
 
 ## Goals
 
@@ -14,9 +14,9 @@ Establish the visual foundation for the Hay inbox application. This spec defines
 
 ## User Stories
 
-**As a developer building Hay screens**, I want a documented token system so that I can apply consistent colors, spacing, and typography without guessing values.
+**As a developer building Atlas screens**, I want a documented token system so that I can apply consistent colors, spacing, and typography without guessing values.
 
-**As a developer building Hay screens**, I want pre-built primitive components so that I can compose screens without re-implementing buttons, badges, or avatars from scratch.
+**As a developer building Atlas screens**, I want pre-built primitive components so that I can compose screens without re-implementing buttons, badges, or avatars from scratch.
 
 **As a designer reviewing the UI**, I want a `/dev/design-system` page so that I can inspect all components and variants in one place without navigating through the full app.
 
@@ -49,7 +49,7 @@ Establish the visual foundation for the Hay inbox application. This spec defines
 
 ### Unit 2: Base Components
 
-**Purpose:** Deliver the five primitive components that all Hay screens will use. Each component must be visually correct per the prototype and functionally complete.
+**Purpose:** Deliver the five primitive components that all Atlas screens will use. Each component must be visually correct per the prototype and functionally complete.
 
 **Functional Requirements:**
 
@@ -137,6 +137,7 @@ The design system follows a **neobrutalist** aesthetic:
 - Mono font: JetBrains Mono → SF Mono → Menlo fallback stack
 
 **Token reference (light mode):**
+
 | Token | Value |
 |---|---|
 | `--color-background` | `oklch(92.13% 0.0388 282.36)` |
@@ -153,6 +154,7 @@ The design system follows a **neobrutalist** aesthetic:
 | `--color-inbox` | `#7A83FF` |
 
 **Dark mode token overrides:**
+
 | Token | Dark value |
 |---|---|
 | `--color-background` | `oklch(26.58% 0.0737 283.96)` |
@@ -174,11 +176,11 @@ The full interactive prototype at `docs/prototype/hay-inbox-prototype.html` is t
 - **Formatter**: Biome — all files must pass `biome check` without errors
 - **Commits**: Conventional Commits — `feat(ui): add button component`, `feat(tokens): wire OKLCH tokens into Tailwind v4`
 - **Package manager**: Bun — use `bun add` for any new dependencies
-- **Component library**: Solid UI (`bunx solidui-cli@latest`) — scaffold base components via CLI, then customize with Hay tokens. Run `bunx solidui-cli@latest init` once to set up `ui.config.json`, then `bunx solidui-cli@latest add <component>` per component.
+- **Component library**: Solid UI (`bunx solidui-cli@latest`) — scaffold base components via CLI, then customize with Atlas tokens. Run `bunx solidui-cli@latest init` once to set up `ui.config.json`, then `bunx solidui-cli@latest add <component>` per component.
 
 ## Technical Considerations
 
-- **Solid UI scaffold workflow**: Run `bunx solidui-cli@latest init` in `apps/web/` to initialize (creates `ui.config.json`, installs Kobalte/corvu deps, sets up `cn` utility). Then `bunx solidui-cli@latest add button badge toggle` etc. to copy component source into `apps/web/src/components/ui/`. After copying, rename files to `snake_case` and replace Solid UI's default Tailwind classes with Hay's token-based classes. Preserve Kobalte/corvu accessibility primitives — only change visual styling.
+- **Solid UI scaffold workflow**: Run `bunx solidui-cli@latest init` in `apps/web/` to initialize (creates `ui.config.json`, installs Kobalte/corvu deps, sets up `cn` utility). Then `bunx solidui-cli@latest add button badge toggle` etc. to copy component source into `apps/web/src/components/ui/`. After copying, rename files to `snake_case` and replace Solid UI's default Tailwind classes with Atlas's token-based classes. Preserve Kobalte/corvu accessibility primitives — only change visual styling.
 - **Solid UI + Tailwind v4 compatibility**: Solid UI's `init` command may configure Tailwind v3-style. Since this project uses Tailwind v4 (CSS-first), do not let `solidui-cli init` overwrite `styles.css` or add a `tailwind.config.js`. Run init, then manually verify `styles.css` still uses `@import "tailwindcss"` and `@theme {}` — not `@tailwind base/components/utilities`.
 - **Biome `useFilenamingConvention`**: Add to root `biome.json` under `linter.rules.style`: `"useFilenamingConvention": { "level": "error", "options": { "filenameCases": ["snake_case"] } }`. Biome natively exempts `__root.tsx`, `[param].tsx`, and `.filename` patterns — no overrides needed for TanStack Router route files.
 - **Tailwind v4 `@theme` block**: All design tokens are declared as CSS custom properties inside `@theme {}` in `styles.css`. Tailwind v4 automatically generates utility classes from `--color-*`, `--font-*`, `--shadow-*` etc. No JavaScript config file is needed.

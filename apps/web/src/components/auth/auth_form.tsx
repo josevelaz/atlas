@@ -1,5 +1,5 @@
 import type { Component } from "solid-js";
-import { Show } from "solid-js";
+import { For, Show } from "solid-js";
 import { authClient } from "../../lib/auth";
 import { isDesktop, startDesktopAuth } from "../../lib/desktop_auth";
 import { Button } from "../ui/button";
@@ -67,11 +67,19 @@ const AuthForm: Component<AuthFormProps> = (props) => {
 							style={{ "box-shadow": "var(--shadow-sm)" }}
 						>
 							<strong>Sign-in error:</strong>{" "}
-							{props.error === "access_denied"
-								? "Access was denied. Please try again."
-								: props.error === "desktop_auth_failed"
-									? "Desktop authentication failed. Please try again."
-									: `Authentication error: ${props.error}`}
+							<Show
+								when={props.error === "access_denied"}
+								fallback={
+									<Show
+										when={props.error === "desktop_auth_failed"}
+										fallback={`Authentication error: ${props.error}`}
+									>
+										Desktop authentication failed. Please try again.
+									</Show>
+								}
+							>
+								Access was denied. Please try again.
+							</Show>{" "}
 						</div>
 					</Show>
 
@@ -84,15 +92,17 @@ const AuthForm: Component<AuthFormProps> = (props) => {
 
 					{/* Provider buttons */}
 					<div class="flex flex-col gap-3">
-						{PROVIDERS.map((provider) => (
-							<Button
-								variant="default"
-								class="w-full justify-center"
-								onClick={() => handleProviderClick(provider.id)}
-							>
-								{provider.label}
-							</Button>
-						))}
+						<For each={PROVIDERS}>
+							{(provider) => (
+								<Button
+									variant="default"
+									class="w-full justify-center"
+									onClick={() => handleProviderClick(provider.id)}
+								>
+									{provider.label}
+								</Button>
+							)}
+						</For>
 					</div>
 
 					{/* Desktop hint */}
