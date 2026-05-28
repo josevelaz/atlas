@@ -13,7 +13,7 @@ Which font should the design system use?
 - [ ] (C) Both — use Archivo for headings, DM Sans for body
 - [ ] (D) Other (describe)
 
-**Recommended answer(s):** [(A)]
+**Recommended answer(s):** [(B)]
 
 **Why this is recommended:**
 
@@ -75,7 +75,7 @@ Should the design system spec include dark mode token variants?
 - [x] (B) Yes — include dark mode CSS variables alongside light mode tokens
 - [ ] (C) Partial — define the dark token values in DESIGN.md documentation only, no CSS implementation yet
 
-**Recommended answer(s):** [(A)]
+**Recommended answer(s):** [(B)]
 
 **Why this is recommended:**
 
