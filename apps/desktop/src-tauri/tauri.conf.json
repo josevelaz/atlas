@@ -1,6 +1,6 @@
 {
 	"$schema": "./gen/schemas/desktop-schema.json",
-	"productName": "Hay",
+	"productName": "Atlas",
 	"version": "0.1.0",
 	"identifier": "com.hay.desktop",
 	"build": {
@@ -13,7 +13,7 @@
 		"windows": [
 			{
 				"label": "main",
-				"title": "Hay",
+				"title": "Atlas",
 				"width": 1280,
 				"height": 800
 			}
@@ -31,5 +31,12 @@
 			"icons/icon.ico",
 			"icons/icon.png"
 		]
+	},
+	"plugins": {
+		"deep-link": {
+			"desktop": {
+				"schemes": ["atlas"]
+			}
+		}
 	}
 }
