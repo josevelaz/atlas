@@ -22,3 +22,14 @@ export const redis = new Redis({
 	// are not dropped on transient connection errors.
 	maxRetriesPerRequest: null,
 });
+
+/**
+ * Gracefully disconnect the shared Redis client.
+ *
+ * Call this during process shutdown (after all BullMQ workers and queues have
+ * been closed) to release the TCP connection cleanly.  Safe to call multiple
+ * times — ioredis ignores disconnect calls on an already-closed connection.
+ */
+export async function disconnectRedis(): Promise<void> {
+	await redis.quit();
+}
