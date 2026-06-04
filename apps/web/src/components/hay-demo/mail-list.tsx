@@ -80,8 +80,18 @@ export const MailList: Component<{
 									<span class="from">{row.from}</span>
 									<span class="subj">{row.subject}</span>
 									<span class="preview">{row.preview}</span>
-									<Show when={row.tags && row.tags.length > 0}>
+									<Show
+										when={row.priority || (row.tags && row.tags.length > 0)}
+									>
 										<div class="row-tags">
+											<Show when={row.priority}>
+												<span
+													class="priority"
+													classList={{ [`${row.priority}`]: true }}
+												>
+													{row.priority?.toUpperCase()}
+												</span>
+											</Show>
 											<For each={row.tags}>
 												{(tag) => (
 													<span
