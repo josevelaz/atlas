@@ -39,7 +39,9 @@ export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		tanstackRouter({ target: "solid", autoCodeSplitting: true }),
-		tanstackStart(),
+		tanstackStart({
+			spa: { enabled: true, prerender: { outputPath: "/index" } },
+		}),
 		// solid's vite plugin must come after start's vite plugin
 		viteSolid({ ssr: true }),
 	],

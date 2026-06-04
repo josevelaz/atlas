@@ -8,6 +8,7 @@ import {
 } from "@tanstack/solid-router";
 import { QueryClientProvider } from "@tanstack/solid-query";
 import type * as Solid from "solid-js";
+import { HydrationScript } from "solid-js/web";
 import appCss from "../styles.css?url";
 import { queryClient } from "../lib/tanstack/query";
 import { authClient } from "../lib/auth";
@@ -97,6 +98,13 @@ function RootDocument(props: { children: Solid.JSX.Element }) {
 	return (
 		<html lang="en">
 			<head>
+				{/*
+				 * Emits Solid's client-side hydration runtime (globalThis._$HY).
+				 * Without this, the client `hydrate()` call throws
+				 * "Cannot read properties of undefined (reading 'done')" and
+				 * interactivity silently breaks app-wide.
+				 */}
+				<HydrationScript />
 				<HeadContent />
 			</head>
 			<body>

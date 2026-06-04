@@ -85,9 +85,21 @@ Screenshot set (one per step, captured at 1440×900):
 | 4 | `01-onboarding-step4-assistant.png` | Step 4 of 5 — Ask Hay anything |
 | 5 | `01-onboarding-step5-new-mail-only.png` | Step 5 of 5 — New mail only |
 
-Each step was rendered via the `?step=N` deep-link the route exposes
-(`validateSearch` → `initialStep`), which deterministically renders any step's
-true content/layout (verified server-side: `?step=3` renders "Everything sorts…").
+These steps were also captured by **clicking the Next control in-browser**
+(not via `?step=N`), proving the click-driven transitions work end-to-end. The
+click-driven captures live alongside the deterministic deep-link set:
+
+| Step | Click-driven capture | Heading reached via click |
+| --- | --- | --- |
+| 1 | `01-onboarding-interactive-step1.png` | Connect your mailbox |
+| 2 | `01-onboarding-interactive-step2.png` | The Screener decides who gets in |
+| 3 | `01-onboarding-interactive-step3.png` | Everything sorts into categories |
+| 4 | `01-onboarding-interactive-step4.png` | Ask Hay anything |
+| 5 | `01-onboarding-interactive-step5.png` | New mail only |
+| shell | `01-onboarding-interactive-shell.png` | "You're in." (after **Open Hay**) |
+
+The original `?step=N` deep-link set (`01-onboarding-step{1..5}-*.png`) is also
+retained; the route still exposes the `?step=N` deep-link via `validateSearch`.
 
 ### 1.4 — Onboarding is the default first-run surface, hands off to shell
 
@@ -110,36 +122,68 @@ $ bun run --cwd apps/web build        → exit 0 (hay-inbox + onboarding chunks 
 
 ## Browser validation (`npx agent-browser`)
 
-- URL exercised: `http://localhost:3001/dev/hay-inbox` (and `?step=1..5`).
-- The demo route renders with **zero console errors** and **zero network
-  errors** (favicon 404 is the only request miss and is unrelated/benign).
-- Route-local CSS verified to apply via computed styles (see 1.2).
-- All 5 onboarding steps verified to render the correct counter + heading.
+- URL exercised: `http://localhost:3001/dev/hay-inbox` against a production
+  build served by `vite preview --port 3001` (port 3001 is the CORS-trusted
+  origin in `apps/server` config, so the auth guard resolves correctly).
+- Authentication for the guarded route was satisfied by stubbing
+  `GET /api/auth/get-session` with a valid demo session via
+  `agent-browser network route` (no source code was modified to bypass auth).
+- The demo route **renders and hydrates cleanly**: `globalThis._$HY` and
+  `$_TSR` hydration completes, with **zero console errors/warnings** and **zero
+  page errors** across the full interactive flow.
 
-### Known environment limitation (pre-existing, app-wide — NOT introduced by task 1)
+### Interactive navigation — verified end-to-end (click-driven)
 
-In the current `apps/web` dev **and** production-preview builds, client
-**hydration does not attach interactive event handlers** for any route. This was
-proven independent of task 1:
+The following were exercised by **real clicks** in-browser (not `?step=N`):
 
-- A top-level `onMount` in the demo component never fires.
-- The pre-existing home route's **"Sign out"** button is equally non-functional.
-- `apps/web/vite.config.ts` on `main` uses `tanstackStart()` **without** the
-  `spa: { enabled: true, prerender: { outputPath: "/index" } }` configuration
-  that `AGENTS.md` documents as **required**. The committed config omits it.
+- **Next** advances Step 1 → 2 → 3 → 4 → 5 (heading + "Step N of 5" counter
+  update reactively on each click).
+- **Back** returns Step 5 → 4 (and is hidden on Step 1).
+- **Skip** dismisses onboarding and hands off to the `AppShell` ("You're in.").
+- **Open Hay** (final-step Next label) dismisses onboarding → `AppShell`.
+- **Replay onboarding** (shell affordance) returns to Step 1 of 5.
 
-Because of this, click-driven step transitions cannot be exercised in-browser at
-this time. To keep task 1 scoped (it must not replace production routes or
-re-architect the app's render mode), the SSR-rendered `?step=N` deep-link was
-used to capture each step's true rendered output as proof, and the navigation
-logic itself is verified by `tsc` and code review. Restoring the documented
-`spa.enabled`/`prerender` Vite config (an app-wide infrastructure fix) is the
-correct follow-up to enable full click-through interaction proof — tracked as a
-discrepancy in the task report rather than silently expanding task 1's scope.
+All transitions confirmed via the live `data-testid=ob-step-counter` /
+`.ob-step h2` / `data-testid=hay-shell` DOM reads after each click.
+
+### Root-cause fix that unblocked in-browser interaction
+
+The previous attempt could not exercise click-driven transitions because client
+hydration silently failed **app-wide** (handlers never attached). Three issues
+were diagnosed and fixed:
+
+1. **`apps/web/src/lib/auth.ts`** — the Better Auth client was constructed at
+   import time with a **relative** `baseURL` (`/api/auth`) when
+   `VITE_API_BASE_URL` is unset. Better Auth throws `Invalid base URL` for a
+   relative URL, which crashed the entire client bundle before hydration could
+   start. Fixed by always resolving an **absolute** URL (anchored to
+   `window.location.origin` on the client).
+2. **`apps/web/src/routes/__root.tsx`** — the root document did not render
+   Solid's **`<HydrationScript />`**, so `globalThis._$HY` was never emitted and
+   the client `hydrate()` threw
+   `TypeError: Cannot read properties of undefined (reading 'done')`. Added
+   `<HydrationScript />` to the document `<head>` (matches the official
+   TanStack Start Solid root entry).
+3. **`apps/web/src/client.tsx`** — the client entry used `render()` instead of
+   the canonical Solid `hydrate()` for SSR'd markup. Switched to `hydrate()` per
+   the official `@tanstack/solid-start` Solid client entry.
+4. **`apps/web/vite.config.ts`** — restored the documented SPA config
+   `tanstackStart({ spa: { enabled: true, prerender: { outputPath: "/index" } } })`
+   per `AGENTS.md`.
+
+After these fixes, the home route and `/auth/sign-in` route also hydrate and
+render correctly (no regression to the existing auth/home interaction model).
+
+> Note: an `AbortError: Transition was skipped` (a benign, non-console router
+> view-transition rejection) was observed only when the route additionally
+> declared `ssr: false`; that experiment was reverted, and the final build has
+> **zero** page/console errors.
 
 ---
 
 ## Files added/changed for task 1
+
+Initial implementation (commit `99e95e7`):
 
 - `apps/web/src/routes/dev/hay-inbox.tsx` (new)
 - `apps/web/src/components/hay-demo/hay-inbox-demo.tsx` (new)
@@ -148,5 +192,14 @@ discrepancy in the task report rather than silently expanding task 1's scope.
 - `apps/web/src/components/hay-demo/hay-inbox-styles.css` (new)
 - `apps/web/src/routeTree.gen.ts` (regenerated by the router plugin)
 - `docs/specs/04-spec-inbox-ui-recreation/04-tasks-inbox-ui-recreation.md` (task state)
-- `docs/specs/04-spec-inbox-ui-recreation/proof/01-onboarding-*.png` (proof set)
-- `docs/specs/04-spec-inbox-ui-recreation/proof/01-onboarding-PROOF.md` (this file)
+- `docs/specs/04-spec-inbox-ui-recreation/proof/01-onboarding-step*.png` (deep-link proof set)
+
+In-browser interaction fix (retry):
+
+- `apps/web/vite.config.ts` — restored documented SPA config.
+- `apps/web/src/lib/auth.ts` — always resolve an absolute Better Auth `baseURL`.
+- `apps/web/src/routes/__root.tsx` — render Solid `<HydrationScript />`.
+- `apps/web/src/client.tsx` — use canonical Solid `hydrate()`.
+- `docs/specs/04-spec-inbox-ui-recreation/proof/01-onboarding-interactive-*.png`
+  (click-driven proof set: 5 steps + shell handoff).
+- `docs/specs/04-spec-inbox-ui-recreation/proof/01-onboarding-PROOF.md` (this file).

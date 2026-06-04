@@ -18,12 +18,31 @@ import { apiUrl } from "./api";
  *   await authClient.signOut()
  */
 
-// In SSR context, relative URLs are invalid for fetch(). Use an absolute URL.
-// The SSR guard (import.meta.env.SSR check) in beforeLoad prevents actual calls.
-const baseURL = import.meta.env.SSR
-	? "http://localhost:3000/api/auth"
-	: apiUrl("/api/auth");
+/**
+ * Better Auth's client requires an ABSOLUTE base URL — constructing the client
+ * with a relative path (e.g. "/api/auth") throws "Invalid base URL" at import
+ * time, which crashes the entire client bundle and silently breaks hydration
+ * app-wide (event handlers never attach). To stay resilient we always resolve
+ * to an absolute URL:
+ *
+ *   - SSR: there is no `window`, so use an absolute localhost fallback. The SSR
+ *     guard (import.meta.env.SSR check) in beforeLoad means it is never called.
+ *   - Client: prefer the configured API base (VITE_API_BASE_URL via apiUrl()).
+ *     If that is unset, `apiUrl()` returns a relative path, so we anchor it to
+ *     the current origin to guarantee an absolute URL.
+ */
+function resolveAuthBaseURL(): string {
+	if (import.meta.env.SSR) {
+		return "http://localhost:3000/api/auth";
+	}
+	const resolved = apiUrl("/api/auth");
+	// apiUrl() returns a relative path when VITE_API_BASE_URL is empty; anchor it
+	// to the current origin so better-auth always receives an absolute URL.
+	return resolved.startsWith("http")
+		? resolved
+		: new URL(resolved, window.location.origin).toString();
+}
 
 export const authClient = createAuthClient({
-	baseURL,
+	baseURL: resolveAuthBaseURL(),
 });
