@@ -3,7 +3,7 @@
 Feature: `04-spec-inbox-ui-recreation`
 Parent task: **1.0 — Create the protected demo route, prototype styling foundation, and onboarding recreation**
 Sub-tasks covered: 1.1, 1.2, 1.3, 1.4, 1.5
-Date captured: 2026-06-04
+Date captured: 2026-06-04 (onboarding-parity pass re-capture)
 Review viewport: **1440 × 900** (single consistent desktop viewport, resolving the spec's Open Question #1)
 
 ---
@@ -16,6 +16,17 @@ component tree whose first surface is a recreated **5-step onboarding
 walkthrough** matching the prototype's neobrutalist visual treatment. Dismissing
 onboarding (Skip or finish) hands off to a main Hay shell surface (`AppShell`),
 which exposes a "Replay onboarding" affordance.
+
+> **Onboarding-parity pass (latest):** the onboarding flow was reworked to match
+> the prototype much more closely. The prototype's exact copy/titles/order, header
+> (HAY. logo chip + `Get started — N/M` mono label on the left, **Skip on the
+> right**), footer (**Back — step-dots — Next/Open Hay**, with chevron icons), and
+> per-step **visuals** (paired OAuth connect cards, the Maya Chen Screener card
+> with Accept/Reject split, three category rows, the AI-summary card with
+> extracted task/date rows, and the empty-inbox state) were all ported from
+> `docs/prototype/hay-inbox-prototype.html` (the bundled prototype's
+> `ONB_STEPS` / `Onboarding`). All visuals consume the existing `.hay-demo` token
+> aliases — no new colors were introduced.
 
 All prototype-specific fidelity styling lives in
 `apps/web/src/components/hay-demo/hay-inbox-styles.css`, scoped under a
@@ -62,41 +73,44 @@ Global tokens untouched: `apps/web/src/styles.css` has no task-1 changes.
 
 ### 1.3 — Multi-step onboarding with forward/back/skip/finish
 
-Five steps, matching the spec's required onboarding themes (Unit 1):
+Five steps, ported verbatim from the prototype's `ONB_STEPS` (titles, sub-copy,
+and order — Unit 1 themes):
 
-1. **Connect your mailbox** — mailbox connection
-2. **The Screener decides who gets in** — Screener explanation
-3. **Everything sorts into categories** — category explanation (Inbox / Feed / Paper)
-4. **Ask Hay anything** — AI assistance explanation
-5. **New mail only** — new-mail-only disclosure
+1. **Welcome to Hay.** — mailbox connection (paired Google / Microsoft OAuth cards)
+2. **Strangers go to the Screener.** — Screener explanation (Maya Chen card + Accept/Reject)
+3. **Three categories. No folders to manage.** — Inbox / Feed / Paper Trail rows
+4. **AI helps you triage. You stay in charge.** — AI-summary card + extracted task/date rows
+5. **Hay organizes new mail. Not old mail.** — empty-inbox / new-mail-only disclosure
 
-Branded treatment present: **HAY** wordmark + "Step N of 5" mono label in the
-card header, step-dot progress indicator, and **Back / Skip / Next** (→ **Open Hay**
-on the final step) controls in the footer. Navigation logic is local-state only
-(`createSignal`), clamps to `[0, 4]`, and calls `onFinish` on Skip / final-step.
+Branded treatment present and matching the prototype: **HAY.** logo chip +
+`Get started — N/M` mono label in the **left** of the card header, **Skip** on the
+**right**; in the footer, **Back** (left, chevron-left, disabled on step 1) —
+**step-dots** (center, only the current step active) — **Next / Open Hay** (right,
+chevron-right). Navigation logic is local-state only (`createSignal`), clamps to
+`[0, 4]`, and calls `onFinish` on Skip / final-step.
 
 Screenshot set (one per step, captured at 1440×900):
 
-| Step | File | Header shown |
+| Step | File | Title shown |
 | --- | --- | --- |
-| 1 | `01-onboarding-step1-connect.png` | Step 1 of 5 — Connect your mailbox |
-| 2 | `01-onboarding-step2-screener.png` | Step 2 of 5 — The Screener decides who gets in |
-| 3 | `01-onboarding-step3-categories.png` | Step 3 of 5 — Everything sorts into categories |
-| 4 | `01-onboarding-step4-assistant.png` | Step 4 of 5 — Ask Hay anything |
-| 5 | `01-onboarding-step5-new-mail-only.png` | Step 5 of 5 — New mail only |
+| 1 | `01-onboarding-step1-connect.png` | Welcome to Hay. |
+| 2 | `01-onboarding-step2-screener.png` | Strangers go to the Screener. |
+| 3 | `01-onboarding-step3-categories.png` | Three categories. No folders to manage. |
+| 4 | `01-onboarding-step4-assistant.png` | AI helps you triage. You stay in charge. |
+| 5 | `01-onboarding-step5-new-mail-only.png` | Hay organizes new mail. Not old mail. |
 
 These steps were also captured by **clicking the Next control in-browser**
 (not via `?step=N`), proving the click-driven transitions work end-to-end. The
 click-driven captures live alongside the deterministic deep-link set:
 
-| Step | Click-driven capture | Heading reached via click |
+| Step | Click-driven capture | Title reached via click |
 | --- | --- | --- |
-| 1 | `01-onboarding-interactive-step1.png` | Connect your mailbox |
-| 2 | `01-onboarding-interactive-step2.png` | The Screener decides who gets in |
-| 3 | `01-onboarding-interactive-step3.png` | Everything sorts into categories |
-| 4 | `01-onboarding-interactive-step4.png` | Ask Hay anything |
-| 5 | `01-onboarding-interactive-step5.png` | New mail only |
-| shell | `01-onboarding-interactive-shell.png` | "You're in." (after **Open Hay**) |
+| 1 | `01-onboarding-interactive-step1.png` | Welcome to Hay. |
+| 2 | `01-onboarding-interactive-step2.png` | Strangers go to the Screener. |
+| 3 | `01-onboarding-interactive-step3.png` | Three categories. No folders to manage. |
+| 4 | `01-onboarding-interactive-step4.png` | AI helps you triage. You stay in charge. |
+| 5 | `01-onboarding-interactive-step5.png` | Hay organizes new mail. Not old mail. |
+| shell | `01-onboarding-interactive-shell.png` | Hay shell (after **Open Hay**) |
 
 The original `?step=N` deep-link set (`01-onboarding-step{1..5}-*.png`) is also
 retained; the route still exposes the `?step=N` deep-link via `validateSearch`.
@@ -114,7 +128,7 @@ retained; the route still exposes the `?step=N` deep-link via `validateSearch`.
 
 ```
 $ bun run --cwd apps/web typecheck   → exit 0
-$ bun run --cwd apps/web lint         → exit 0 (Checked 30 files, no fixes)
+$ bun run --cwd apps/web lint         → exit 0 (Checked 40 files, no fixes)
 $ bun run --cwd apps/web build        → exit 0 (hay-inbox + onboarding chunks emitted)
 ```
 
@@ -134,17 +148,48 @@ $ bun run --cwd apps/web build        → exit 0 (hay-inbox + onboarding chunks 
 
 ### Interactive navigation — verified end-to-end (click-driven)
 
-The following were exercised by **real clicks** in-browser (not `?step=N`):
+The following were exercised by **real clicks** in-browser (not `?step=N`) during
+the onboarding-parity re-capture:
 
-- **Next** advances Step 1 → 2 → 3 → 4 → 5 (heading + "Step N of 5" counter
+- **Next** advances Step 1 → 2 → 3 → 4 → 5 (title + `Get started — N/5` counter
   update reactively on each click).
-- **Back** returns Step 5 → 4 (and is hidden on Step 1).
-- **Skip** dismisses onboarding and hands off to the `AppShell` ("You're in.").
-- **Open Hay** (final-step Next label) dismisses onboarding → `AppShell`.
-- **Replay onboarding** (shell affordance) returns to Step 1 of 5.
+- **Back** returns Step 5 → 4 (counter read confirmed `GET STARTED — 4/5`) and is
+  **disabled** on Step 1.
+- **Skip** dismisses onboarding and hands off to the `AppShell`
+  (`[data-testid=hay-shell]` count = 1).
+- **Open Hay** (final-step Next label) dismisses onboarding → `AppShell` (full nav,
+  mail rows, AI usage card all render).
+- **Replay onboarding** (shell affordance) returns to Step 1 (`GET STARTED — 1/5`).
 
 All transitions confirmed via the live `data-testid=ob-step-counter` /
-`.ob-step h2` / `data-testid=hay-shell` DOM reads after each click.
+`.ob-step h1` (title) / `data-testid=hay-shell` DOM reads after each click.
+Console was cleared and re-checked after a hard reload: **zero errors / zero
+warnings** on the demo page across the full interactive flow.
+
+### Computed-style token check (no invented colors)
+
+Live `getComputedStyle` reads on Step 1 confirm the reworked visuals consume the
+existing `.hay-demo` token aliases (which map onto the global Hay tokens), not
+hard-coded colors:
+
+```
+.onboarding-card        → border-width 3px; border-radius 8px; box-shadow 4px 4px 0 0 <main>
+.logo                   → background <main>; box-shadow 2px 2px 0 0 <border>
+.ob-title               → font-size 32px
+.ob-connect-icon.is-google → background <main>   (prototype used var(--main) for the Google chip)
+.btn.sm.primary         → background <main>
+.step-dot.active        → background <main>
+```
+
+> **Known remaining mismatch (out of scope for this pass):** the global
+> `--color-main` token in `apps/web/src/styles.css` resolves to a blue/purple
+> (`oklch(66.34% 0.1806 277.2)`), whereas the prototype's `--main` is the yellow
+> `#FACC00`. This affects the HAY. logo chip and all primary buttons **app-wide**
+> (the main shell already renders them blue), so it is a global-token concern, not
+> an onboarding-specific one. The onboarding now matches the prototype's
+> *structure and token usage* exactly; aligning the `--color-main` value is a
+> separate, broader change deliberately left untouched here per the task's
+> "do not modify other major mismatch areas yet" constraint.
 
 ### Root-cause fix that unblocked in-browser interaction
 
@@ -203,3 +248,21 @@ In-browser interaction fix (retry):
 - `docs/specs/04-spec-inbox-ui-recreation/proof/01-onboarding-interactive-*.png`
   (click-driven proof set: 5 steps + shell handoff).
 - `docs/specs/04-spec-inbox-ui-recreation/proof/01-onboarding-PROOF.md` (this file).
+
+Onboarding-parity pass (latest):
+
+- `apps/web/src/components/hay-demo/onboarding.tsx` — reworked to port the
+  prototype's exact copy/titles/order, header (logo chip + `Get started — N/M`
+  + Skip-right), footer (Back / dots / Next-or-Open-Hay with chevrons), and the
+  five per-step visuals (connect cards, Screener card, category rows, AI-summary
+  card, empty-inbox state). Behavior (Back / Next / Skip / Open Hay / replay /
+  `?step=N` deep-link / `initialStep`) preserved.
+- `apps/web/src/components/hay-demo/hay-inbox-styles.css` — replaced the generic
+  `.ob-icon` / `.ob-preview` / `.ob-chip` step-content styles with
+  prototype-faithful `.ob-title` / `.ob-sub` / `.ob-connect-*` / `.ob-screener-*`
+  / `.ob-cat-*` / `.ob-ai-*` / `.ob-extract-*` / `.ob-empty-*` rules, all scoped
+  under `.hay-demo` and consuming existing token aliases. Removed the now-unused
+  `.wordmark` rule.
+- `docs/specs/04-spec-inbox-ui-recreation/proof/01-onboarding-step*.png` and
+  `01-onboarding-interactive-*.png` — re-captured against the corrected UI at
+  1440×900.

@@ -73,14 +73,7 @@
 	border-bottom: var(--border-w) solid var(--demo-border);
 }
 
-.hay-demo .onboarding-head .wordmark {
-	font-weight: var(--font-weight-heading);
-	font-size: 20px;
-	letter-spacing: 0.04em;
-	color: var(--demo-fg);
-}
-
-/* "Step N of M" pixel label — prototype rendered these in VT323 mono */
+/* "Get started — N/M" pixel label — prototype rendered these in VT323 mono */
 .hay-demo .mono-label {
 	font-family: var(--font-mono);
 	font-size: 12px;
@@ -126,70 +119,334 @@
 .hay-demo .ob-step {
 	display: flex;
 	flex-direction: column;
-	gap: 18px;
 }
 
-.hay-demo .ob-step .ob-icon {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 56px;
-	height: 56px;
-	border: var(--border-w) solid var(--demo-border);
-	border-radius: var(--radius);
-	box-shadow: var(--demo-shadow-sm);
-	background: var(--demo-surface);
-}
-
-.hay-demo .ob-step h2 {
+.hay-demo .ob-title {
 	font-weight: var(--font-weight-heading);
-	font-size: 26px;
+	font-size: 32px;
 	line-height: 1.1;
+	letter-spacing: -0.01em;
 	color: var(--demo-fg);
+	margin-bottom: 8px;
 }
 
-.hay-demo .ob-step p {
-	font-size: 15px;
+.hay-demo .ob-sub {
+	font-size: 14px;
 	line-height: 1.5;
 	color: var(--demo-muted);
-	max-width: 56ch;
+	max-width: 540px;
+	margin-bottom: 24px;
 }
 
-/* Preview visual frame inside an onboarding step */
-.hay-demo .ob-preview {
+.hay-demo .ob-visual {
+	display: block;
+}
+
+/* ----- Step 1: connect cards (prototype ConnectCard) ----- */
+.hay-demo .ob-connect-grid {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.hay-demo .ob-connect-card {
+	flex: 1;
+	min-width: 200px;
 	border: var(--border-w) solid var(--demo-border);
-	border-radius: var(--radius);
-	box-shadow: var(--demo-shadow-sm);
-	background: var(--demo-bg);
+	border-radius: var(--radius-lg);
 	padding: 16px;
+	background: var(--demo-surface);
+	box-shadow: var(--demo-shadow);
 }
 
-.hay-demo .ob-preview-row {
+.hay-demo .ob-connect-head {
 	display: flex;
 	align-items: center;
 	gap: 10px;
-	padding: 8px 10px;
-	border: var(--border-w) solid var(--demo-border);
-	border-radius: var(--radius);
-	background: var(--demo-surface);
+	margin-bottom: 10px;
 }
 
-.hay-demo .ob-preview-row + .ob-preview-row {
-	margin-top: 8px;
-}
-
-.hay-demo .ob-chip {
+.hay-demo .ob-connect-icon {
 	display: inline-flex;
 	align-items: center;
-	padding: 2px 8px;
-	border: 1.5px solid var(--demo-border);
-	border-radius: 999px;
-	font-family: var(--font-mono);
-	font-size: 11px;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	background: var(--demo-surface);
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	color: #fff;
+}
+
+.hay-demo .ob-connect-icon.is-google {
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+}
+
+.hay-demo .ob-connect-icon.is-microsoft {
+	background: var(--demo-ai);
+	color: #fff;
+}
+
+.hay-demo .ob-connect-meta {
+	min-width: 0;
+	flex: 1;
+}
+
+.hay-demo .ob-connect-title {
+	font-weight: 900;
+	font-size: 15px;
+	line-height: 1.2;
 	color: var(--demo-fg);
+}
+
+.hay-demo .ob-connect-sub {
+	font-size: 10px;
+	color: var(--demo-muted);
+	margin-top: 4px;
+}
+
+.hay-demo .ob-connect-btn {
+	width: 100%;
+}
+
+/* ----- Step 2: Screener card (prototype Screener visual) ----- */
+.hay-demo .ob-screener-card {
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	box-shadow: var(--demo-shadow);
+	background: var(--demo-surface);
+}
+
+.hay-demo .ob-screener-head {
+	padding: 14px;
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	border-bottom: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .ob-screener-avatar {
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+}
+
+.hay-demo .ob-screener-name {
+	font-weight: 900;
+	color: var(--demo-fg);
+}
+
+.hay-demo .ob-screener-addr {
+	font-size: 11px;
+	color: var(--demo-muted);
+}
+
+.hay-demo .ob-screener-preview {
+	padding: 14px;
+	font-size: 13px;
+}
+
+.hay-demo .ob-screener-subj {
+	font-weight: 800;
+	margin-bottom: 6px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .ob-screener-body {
+	color: var(--demo-muted);
+}
+
+.hay-demo .ob-screener-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	border-top: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .ob-screener-accept,
+.hay-demo .ob-screener-reject {
+	padding: 16px 0;
+	text-align: center;
+	font-weight: 900;
+	letter-spacing: 0.04em;
+	color: #000;
+}
+
+.hay-demo .ob-screener-accept {
+	background: var(--demo-paper);
+	border-right: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .ob-screener-reject {
+	background: var(--demo-danger);
+}
+
+/* ----- Step 3: category rows (prototype CatRow) ----- */
+.hay-demo .ob-cat-list {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.hay-demo .ob-cat-row {
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	padding: 12px;
+	background: var(--demo-surface);
+	box-shadow: var(--demo-shadow-sm);
+	display: grid;
+	grid-template-columns: 44px 1fr;
+	gap: 12px;
+	align-items: center;
+}
+
+.hay-demo .ob-cat-icon {
+	width: 44px;
+	height: 44px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #000;
+}
+
+.hay-demo .ob-cat-icon.tone-inbox {
+	background: var(--demo-inbox);
+}
+.hay-demo .ob-cat-icon.tone-feed {
+	background: var(--demo-feed);
+}
+.hay-demo .ob-cat-icon.tone-paper {
+	background: var(--demo-paper);
+}
+
+.hay-demo .ob-cat-name {
+	font-weight: 900;
+	font-size: 15px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .ob-cat-desc {
+	color: var(--demo-muted);
+	font-size: 12px;
+	margin-top: 2px;
+}
+
+/* ----- Step 4: AI summary card (prototype AI visual) ----- */
+.hay-demo .ob-ai-card {
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--demo-shadow);
+	background: var(--demo-ai);
+	color: #fff;
+	overflow: hidden;
+}
+
+.hay-demo .ob-ai-head {
+	padding: 10px 14px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+	font-weight: 800;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.hay-demo .ob-ai-body {
+	background: #fff;
+	color: #000;
+	padding: 14px 16px;
+	font-size: 13px;
+	line-height: 1.5;
+}
+
+.hay-demo .ob-ai-extracted {
+	background: #fff;
+	color: #000;
+	padding: 10px 14px;
+	border-top: var(--border-w) solid var(--demo-border);
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.hay-demo .ob-extract-row {
+	display: grid;
+	grid-template-columns: 20px 1fr auto;
+	gap: 10px;
+	align-items: center;
+	padding: 6px 8px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: 4px;
+	background: var(--demo-bg);
+}
+
+.hay-demo .ob-extract-swatch {
+	width: 20px;
+	height: 20px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: 3px;
+}
+
+.hay-demo .ob-extract-swatch.tone-paper {
+	background: var(--demo-paper);
+}
+.hay-demo .ob-extract-swatch.tone-feed {
+	background: var(--demo-feed);
+}
+
+.hay-demo .ob-extract-label {
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--demo-fg);
+}
+
+.hay-demo .ob-extract-due {
+	font-size: 10px;
+	color: var(--demo-muted);
+	white-space: nowrap;
+}
+
+/* ----- Step 5: empty-inbox state (prototype new-mail-only visual) ----- */
+.hay-demo .ob-empty-card {
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--demo-shadow);
+	background: var(--demo-surface);
+	padding: 36px;
+	text-align: center;
+}
+
+.hay-demo .ob-empty-icon {
+	display: inline-flex;
+	width: 64px;
+	height: 64px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 12px;
+	box-shadow: var(--demo-shadow-sm);
+}
+
+.hay-demo .ob-empty-card h3 {
+	font-weight: var(--font-weight-heading);
+	font-size: 20px;
+	margin-bottom: 4px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .ob-empty-card p {
+	color: var(--demo-muted);
+	font-size: 13px;
+	line-height: 1.5;
+	max-width: 360px;
+	margin: 0 auto;
 }
 
 /* ===== Neobrutalist buttons (prototype .btn) ===== */
