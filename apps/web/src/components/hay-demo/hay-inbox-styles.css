@@ -1395,6 +1395,17 @@
 	background: linear-gradient(to bottom, transparent, var(--demo-surface));
 }
 
+.hay-demo .screener-subject {
+	font-weight: 800;
+	margin-bottom: 6px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .screener-head .screener-time {
+	flex-shrink: 0;
+	white-space: nowrap;
+}
+
 .hay-demo .screener-ai {
 	background: var(--demo-ai);
 	color: #fff;

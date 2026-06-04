@@ -91,7 +91,7 @@ export const SettingsScreen: Component<{
 					<div class="settings-row" data-testid="settings-account-google">
 						<IconChip icon={Mail} />
 						<div class="col gap-4" style={{ "min-width": "0" }}>
-							<span class="settings-title">you@hay.app</span>
+							<span class="settings-title">rob@hay.co</span>
 							<span class="mono settings-sub">
 								Google Workspace · synced 24s ago · 142 threads
 							</span>
@@ -106,7 +106,7 @@ export const SettingsScreen: Component<{
 					<div class="settings-row" data-testid="settings-account-outlook">
 						<IconChip icon={Mail} />
 						<div class="col gap-4" style={{ "min-width": "0" }}>
-							<span class="settings-title">you@outlook.com</span>
+							<span class="settings-title">rob.barrett@outlook.com</span>
 							<span class="mono settings-sub">
 								Microsoft 365 personal · paid tier required
 							</span>
@@ -220,14 +220,14 @@ const AI_ROWS: SettingRow[] = [
 		id: "ai-priority",
 		icon: Bolt,
 		title: "Priority badges",
-		desc: "Sort Inbox by P1 / P2 / P3 with explanations.",
+		desc: "Sort Inbox by P1/P2/P3 with explanations.",
 		accent: "feed",
 	},
 	{
 		id: "ai-extract",
 		icon: SquareCheck,
 		title: "Extract tasks & dates",
-		desc: "Surface confirmed items on the Tasks & Dates screen.",
+		desc: "Sync confirmed items to Google Tasks & Calendar.",
 		accent: "paper",
 	},
 	{
@@ -244,7 +244,7 @@ const NOTIFY_ROWS: SettingRow[] = [
 		id: "notify-inbox",
 		icon: Inbox,
 		title: "Inbox — high priority only",
-		desc: "Notify when a P1 thread arrives.",
+		desc: "PWA notification when a P1 thread arrives.",
 	},
 	{
 		id: "notify-screener",

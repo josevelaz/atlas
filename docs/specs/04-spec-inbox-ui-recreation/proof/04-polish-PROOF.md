@@ -41,7 +41,8 @@ Local-only New message / Reply overlay (`compose-overlay.tsx`) with From
 - GIF: `04-compose-overlay.gif` — opening (Compose button) and closing the overlay.
 - Still: `04-compose-overlay-open.png` — New message layout at the review viewport.
 - Still: `04-compose-reply.png` — Reply variant (opened from a thread's Reply
-  button) with the recipient (`dana@northstar.co`) and subject prefilled.
+  button) with the recipient (`priya@hay.co`) and subject ("Re: Q3 hiring plan
+  — final review") prefilled. From is `rob@hay.co`.
 
 Verified in-browser:
 - `c` opens Compose ("New message"); `Escape` closes it.
@@ -63,10 +64,11 @@ closes the overlay.
 
 Verified in-browser:
 - Search/Ask control opens the overlay; example prompt → AI reply with a citation.
-- "What did Dana want…" → cites Dana's thread (`i1`); clicking it routes to
-  **Inbox** and selects the thread.
-- "Find all receipts from Stripe…" → cites Stripe (`p1`); clicking it routes
-  **cross-category** to **Paper Trail** (`data-screen="paper"`) and selects it.
+- "What did Priya want me to confirm before our 1:1?" → cites Priya's thread
+  (`i1`); clicking it routes to **Inbox** and selects the thread.
+- "Find all receipts from Stripe this month" → cites Stripe (`p1`) + Notion
+  (`p6`); clicking routes **cross-category** to **Paper Trail**
+  (`data-screen="paper"`) and selects it.
 
 ## 4.3 — Tasks & Dates and Settings
 

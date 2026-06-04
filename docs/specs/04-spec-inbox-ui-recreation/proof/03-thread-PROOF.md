@@ -43,10 +43,11 @@ All state is local SolidJS signals — no backend, no persistence, no real mail.
 
 `hay-inbox-data.ts` models, all demo-only:
 
-- `MAIL_ROWS` — 8 rows across `inbox` / `feed` / `paper`, each with a full
-  `thread` (AI summary + extracted items + message stack).
-- `SCREENER_ITEMS` — 3 pending senders, each with a `suggested` category +
-  pill label and a `subject` used for the routed row.
+- `MAIL_ROWS` — 23 rows (Inbox 9 / Feed 7 / Paper Trail 7), each with a full
+  `thread` (AI summary + extracted items + message stack). Content is ported
+  from the prototype `SAMPLE` (see the content-parity correction below).
+- `SCREENER_ITEMS` — 4 pending senders, each with a `suggested` category +
+  AI hint and a `subject` used for the routed row.
 - `TASK_CARDS` / `DATE_CARDS` — Tasks & Dates content.
 - `screenerItemToMailRow(item)` — synthesizes a `MailRow` (category =
   `item.suggested`, unread, category-colored tag, single-message thread) for an
@@ -60,20 +61,20 @@ timestamp, optional tags, unread dot, selected state). Verified live per
 category:
 
 ```
-Inbox  → Dana Whitfield, Marcus Lee, Priya Nair, Acme Support
-Feed   → Stratechery, Lenny's Newsletter, GitHub
-Paper  → Stripe, Delta
+Inbox  → Priya Ramanathan, Marcus Okafor, Sara Bouchard, Dad, Jordan Vega, GitHub, Anya Volkov, Calendly, Toni Reyes
+Feed   → Stratechery, Vercel, Substack — Anne Helen Petersen, Figma, Morning Brew, The Browser, Linear
+Paper  → Stripe, Delta, Amazon, Brex, PG&E, Notion, DoorDash
 ```
 
 ### 3.3 — Thread-view pane
 
-Selecting `mail-row-i1` (Dana Whitfield) renders:
+Selecting `mail-row-i1` (Priya Ramanathan) renders:
 
 ```
 thread-view-i1 present       : true
-ai-summary present           : true   ("Dana moved the Q3 roadmap deck review…")
-extracted items              : 2      (task "Send pricing-slide edits" + date "Q3 roadmap review")
-messages                     : 2      (Dana, then You)
+ai-summary present           : true   ("Priya is reviewing the Q3 hiring plan…")
+extracted items              : 3      (2 tasks + 1 date — pod A staffing, design hire, 1:1)
+messages                     : 3      (Priya → You → Priya, oldest last)
 reply control present        : true
 archive control present      : true
 ```
@@ -89,27 +90,28 @@ Selection is owned by the shell via a per-category `selected` record and an
 
 | Action | reading pane (`data-testid`) | AI summary starts with | selected row |
 | --- | --- | --- | --- |
-| select Inbox i1 | `thread-view-i1` | "Dana moved the Q3 roadmap…" | Dana Whitfield |
-| select Inbox i2 | `thread-view-i2` | "Marcus sent the signed SOW…" | Marcus Lee |
-| Feed → select f1 | `thread-view-f1` | "This week's Stratechery argues…" | Stratechery |
+| select Inbox i1 | `thread-view-i1` | "Priya is reviewing the Q3 hiring plan…" | Priya Ramanathan |
+| select Inbox i2 | `thread-view-i2` | "Marcus from Catalyst sent SAFE redlines…" | Marcus Okafor |
+| Feed → select f1 | `thread-view-f1` | "Three years into the AI reset…" | Stratechery |
 
-GIF: `03-thread-selection.gif` (5 frames) — Inbox default → select Dana →
+GIF: `03-thread-selection.gif` (5 frames) — Inbox default → select Priya →
 select Marcus → Paper Trail (select Delta) → Feed (select Stratechery).
 
 ### 3.5 — Screener accept / reject / category routing
 
-Starting from 3 pending (`s1`→Feed, `s2`→Paper Trail, `s3`→Inbox):
+Starting from 4 pending (`s1` Maya Chen→Inbox, `s2` ResonateHQ→Feed,
+`s3` Stripe→Paper Trail, `s4` Liam Park→Inbox):
 
 ```
-Accept s3 (Sam Ortega → Inbox)   : queue → [s1, s2];  Inbox now leads with
-                                    "Sam Ortega — Following up from the conference"
-Reject s2 (Northwind → Paper)    : queue → [s1];       NOT routed to any list
-Accept s1 (Launch Weekly → Feed) : queue → [];         Feed now leads with "Launch Weekly"
+Accept s1 (Maya Chen → Inbox)    : queue 4 → 3;  Inbox now leads with "Maya Chen"
+                                    and the Inbox unread count rises 3 → 4
+Reject s2 (ResonateHQ → Feed)    : queue → 2;    NOT routed to any list
+Accept s3 (Stripe → Paper Trail) : queue → 1;    Paper Trail leads with "Stripe"
 Empty queue                      : Screener shows "Screener clear" empty state
 ```
 
-GIF: `03-screener-triage.gif` (5 frames) — 3 pending → accept s3 → reject s2 →
-accept s1 (0 pending / clear) → Inbox shows the routed "Sam Ortega" row.
+GIF: `03-screener-triage.gif` (5 frames) — pending → accept Maya → reject
+ResonateHQ → accept Stripe → Inbox shows the routed "Maya Chen" row.
 
 ### 3.6 — Demonstrable and error-free in-browser
 
@@ -183,3 +185,31 @@ Changed:
   marked 3.0 and 3.1–3.6 complete.
 
 `apps/server/src/routes/accounts_connect.ts` was left untouched.
+
+---
+
+## Content-parity correction (2026-06-04)
+
+A later content-fidelity pass replaced the originally-invented sample content
+with the prototype's actual mock data, extracted from
+`docs/prototype/hay-inbox-prototype.html` (bundled asset `cc85f047` —
+`const SAMPLE`; screen components in `fa7745fc`; root app in `ea22146a`). No
+visual/token changes were made — only the rendered content.
+
+Senders/threads/counts now match the prototype:
+
+- **Inbox (9):** Priya Ramanathan (P1, Q3 hiring plan — full 3-message thread),
+  Marcus Okafor (P1, Term sheet), Sara Bouchard (P2), Dad (P3), Jordan Vega
+  (P2), GitHub (P3), Anya Volkov (P2), Calendly (P3), Toni Reyes (P3).
+- **Feed (7):** Stratechery, Vercel, Substack — Anne Helen Petersen, Figma,
+  Morning Brew, The Browser, Linear.
+- **Paper Trail (7):** Stripe, Delta, Amazon, Brex, PG&E, Notion, DoorDash.
+- **Screener (4):** Maya Chen → Inbox, ResonateHQ → Feed, Stripe → Paper Trail,
+  Liam Park → Inbox, each with the prototype's AI hint + "ACCEPT INTO <CAT>".
+- **Nav counts** are now derived live (Screener 4, Inbox 3 unread, Feed 2
+  unread, Paper Trail 7 total, Tasks & Dates 5), matching the prototype rail.
+
+The sole rich `threadBody` in the prototype is the Priya thread (`i1`); other
+rows synthesize a single-message thread from their preview (faithful to the
+prototype, which shows no detailed body for those rows). See
+`04-content-parity-PROOF.md` for the full screenshot evidence of this pass.

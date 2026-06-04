@@ -54,7 +54,7 @@ export const ComposeOverlay: Component<{
 
 				<div class="compose-field">
 					<label for="compose-from">From</label>
-					<input id="compose-from" value="you@hay.app" disabled />
+					<input id="compose-from" value="rob@hay.co" disabled />
 				</div>
 				<div class="compose-field">
 					<label for="compose-to">To</label>
@@ -69,7 +69,7 @@ export const ComposeOverlay: Component<{
 					<input
 						id="compose-subject"
 						placeholder="Subject"
-						value={props.replyTo ? "Re: Q3 roadmap review" : ""}
+						value={props.replyTo ? "Re: Q3 hiring plan — final review" : ""}
 					/>
 				</div>
 
@@ -78,7 +78,7 @@ export const ComposeOverlay: Component<{
 						placeholder="Write your message…"
 						value={
 							props.replyTo
-								? "Dana —\n\nPricing-slide edits attached. Friday 2:00p works on my end — see you then."
+								? "Priya — \n\nQuick replies inline:\n\n1. Pod A: the seventh req moved to pod C in March when we restructured. Will pull the doc and confirm before our 1:1.\n\n2. Moving design forward by six weeks works for me if recruiting can backfill the platform req we'd planned for that slot."
 								: ""
 						}
 					/>

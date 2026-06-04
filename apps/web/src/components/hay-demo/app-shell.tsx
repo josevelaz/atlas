@@ -61,9 +61,11 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 ) => {
 	const [screen, setScreen] = createSignal<ScreenId>("inbox");
 	// Per-category selected row, so switching categories preserves selection.
+	// Inbox defaults to the Priya thread (i1), matching the prototype's
+	// initial `selected: { inbox: "i1" }` so the reading pane opens populated.
 	const [selected, setSelected] = createSignal<
 		Record<CategoryId, string | null>
-	>({ inbox: null, feed: null, paper: null });
+	>({ inbox: "i1", feed: null, paper: null });
 
 	// Mail rows live in local state so accepted Screener senders can be routed
 	// into their suggested category list at runtime.
@@ -119,12 +121,18 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 	};
 
 	// Open a cited thread from the assistant: route to its category and select
-	// it so the reading pane shows the thread. No-op if the id is unknown.
+	// it so the reading pane shows the thread. Screener citations (e.g. Maya
+	// Chen, "s1") route to the Screener surface. No-op if the id is unknown.
 	const openThread = (threadId: string) => {
 		const cat = categoryForThread(threadId);
-		if (!cat) return;
-		setScreen(cat);
-		selectRow(cat, threadId);
+		if (cat) {
+			setScreen(cat);
+			selectRow(cat, threadId);
+			return;
+		}
+		if (screenerItems().some((i) => i.id === threadId)) {
+			setScreen("screener");
+		}
 	};
 
 	// ===== Prototype keyboard shortcuts (scoped to the demo shell) =====
@@ -167,26 +175,48 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 		onCleanup(() => window.removeEventListener("keydown", onKey));
 	});
 
-	const NavRow: Component<{ item: NavItem }> = (p) => (
-		<button
-			type="button"
-			class="nav-item"
-			classList={{ active: screen() === p.item.id }}
-			data-testid={`nav-${p.item.id}`}
-			aria-current={screen() === p.item.id ? "page" : undefined}
-			onClick={() => setScreen(p.item.id)}
-		>
-			<span
-				class="dot"
-				classList={{ [`dot-${p.item.dot}`]: true }}
-				aria-hidden="true"
-			/>
-			<span>{p.item.label}</span>
-			<Show when={p.item.count !== undefined}>
-				<span class="count tabular">{p.item.count}</span>
-			</Show>
-		</button>
-	);
+	// Live nav counts, matching the prototype's derived rail: Screener = pending
+	// senders, Inbox/Feed = unread counts, Paper Trail = total, Tasks = fixed 5.
+	// These update reactively as the Screener queue / category lists change.
+	const navCount = (id: ScreenId): number | undefined => {
+		switch (id) {
+			case "screener":
+				return screenerItems().length;
+			case "inbox":
+				return rowsFor("inbox").filter((r) => r.unread).length;
+			case "feed":
+				return rowsFor("feed").filter((r) => r.unread).length;
+			case "paper":
+				return rowsFor("paper").length;
+			default:
+				return PRIMARY_NAV.concat(SECONDARY_NAV).find((n) => n.id === id)
+					?.count;
+		}
+	};
+
+	const NavRow: Component<{ item: NavItem }> = (p) => {
+		const count = () => navCount(p.item.id);
+		return (
+			<button
+				type="button"
+				class="nav-item"
+				classList={{ active: screen() === p.item.id }}
+				data-testid={`nav-${p.item.id}`}
+				aria-current={screen() === p.item.id ? "page" : undefined}
+				onClick={() => setScreen(p.item.id)}
+			>
+				<span
+					class="dot"
+					classList={{ [`dot-${p.item.dot}`]: true }}
+					aria-hidden="true"
+				/>
+				<span>{p.item.label}</span>
+				<Show when={count() !== undefined && (count() as number) > 0}>
+					<span class="count tabular">{count()}</span>
+				</Show>
+			</button>
+		);
+	};
 
 	return (
 		<div
@@ -227,7 +257,7 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 					data-testid="avatar"
 					aria-label="Your account"
 				>
-					YO
+					RB
 				</button>
 			</header>
 
@@ -258,8 +288,7 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 						<span style={{ width: `${AI_USAGE.pct}%` }} />
 					</div>
 					<span class="ai-usage-meta mono tabular">
-						{AI_USAGE.used.toLocaleString()} / {AI_USAGE.limit.toLocaleString()}{" "}
-						credits
+						{AI_USAGE.used}/{AI_USAGE.limit} monthly · {AI_USAGE.tier}
 					</span>
 				</div>
 

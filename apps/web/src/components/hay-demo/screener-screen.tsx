@@ -24,8 +24,10 @@ export const ScreenerScreen: Component<{
 		<div class="pane screener-pane" data-testid="screener-screen">
 			<div class="list-header">
 				<div class="col">
-					<h2>Screener</h2>
-					<span class="meta">First-time senders waiting on your call</span>
+					<h2>The Screener</h2>
+					<span class="meta">
+						First-time senders. Decide once — Hay routes the rest.
+					</span>
 				</div>
 				<span class="meta tabular">{props.items.length} pending</span>
 			</div>
@@ -40,8 +42,8 @@ export const ScreenerScreen: Component<{
 							</div>
 							<h3>Screener clear</h3>
 							<p>
-								No one's waiting. New senders will land here for a quick
-								accept-or-reject.
+								You've decided on everyone in the screener. New first-time
+								senders will land here when they arrive.
 							</p>
 						</div>
 					}
@@ -57,15 +59,20 @@ export const ScreenerScreen: Component<{
 										<span class="avatar lg" aria-hidden="true">
 											{item.initials}
 										</span>
-										<div class="col" style={{ "min-width": "0" }}>
+										<div class="col" style={{ "min-width": "0", flex: "1" }}>
 											<span class="name">{item.from}</span>
 											<span class="addr">{item.address}</span>
 										</div>
+										<span class="mono meta screener-time">{item.time}</span>
 									</div>
-									<div class="screener-preview">{item.preview}</div>
+									<div class="screener-preview">
+										<div class="screener-subject">{item.subject}</div>
+										<div>{item.preview}</div>
+									</div>
 									<div class="screener-ai">
 										<span class="pill">AI</span>
-										<span>{item.suggestedLabel}</span>
+										<span style={{ flex: "1" }}>{item.suggestedLabel}</span>
+										<span class="pill">{item.suggested.toUpperCase()}</span>
 									</div>
 									<div class="screener-actions">
 										<button
@@ -74,7 +81,7 @@ export const ScreenerScreen: Component<{
 											data-testid={`screener-accept-${item.id}`}
 											onClick={() => props.onAccept?.(item.id)}
 										>
-											Accept
+											Accept into {item.suggested.toUpperCase()}
 										</button>
 										<button
 											type="button"

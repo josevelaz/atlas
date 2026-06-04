@@ -33,7 +33,9 @@ export const TasksScreen: Component<{
 			<div class="thread-toolbar">
 				<div class="col" style={{ gap: "2px" }}>
 					<h2 class="thread-subject">Tasks &amp; Dates</h2>
-					<span class="mono meta">AI-extracted from your synced mail</span>
+					<span class="mono meta">
+						AI-extracted · sync to Google Tasks &amp; Calendar
+					</span>
 				</div>
 				<div class="thread-actions">
 					<button type="button" class="thread-act" data-testid="sync-tasks">
@@ -69,12 +71,6 @@ export const TasksScreen: Component<{
 										<span class="task-title">{task.title}</span>
 										<span class="mono task-due">Due: {task.due}</span>
 									</div>
-									<span
-										class="priority"
-										classList={{ [task.priority ?? "p3"]: true }}
-									>
-										{task.priority ?? "p3"}
-									</span>
 								</div>
 								<div class="src">From: {task.source}</div>
 							</div>

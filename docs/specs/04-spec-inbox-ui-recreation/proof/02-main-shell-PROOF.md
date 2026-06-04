@@ -60,8 +60,13 @@ Computed layout verified live:
 .app gridTemplateRows    → "56px 844px"          (56px topbar | 1fr)
 .logo                    → "HAY."
 .nav-item count          → 6
-AI usage                 → "37%"  (1840 / 5000 credits), bar width 68px @ 37%
+AI usage                 → "34%"  (34 / 100 monthly · Free tier), bar width @ 34%
 ```
+
+> Content-parity note (2026-06-04): the AI-usage figures and sample senders
+> below were later replaced with the prototype's actual mock content
+> (34/100 monthly · Free tier; Inbox leads with Priya Ramanathan). See
+> `04-content-parity-PROOF.md`.
 
 Screenshot: `02-main-shell.png` (Inbox active, default no-selection state).
 
@@ -92,15 +97,15 @@ Paper Trail → Tasks & Dates → Settings → Inbox.
 - **Three-pane category layout**: Inbox / Feed / Paper Trail render a `.list`
   rail (header with title + mono meta + unread/total counter) and a reading
   pane. Selecting a row applies `.mail-row.selected` and updates the pane —
-  verified: clicking `mail-row-i1` selects "Dana Whitfield" and the reading
+  verified: clicking `mail-row-i1` selects "Priya Ramanathan" and the reading
   pane updates. Screenshot: `02-main-shell-selected.png`.
 - **Full-width alternate views**: Screener / Tasks & Dates / Settings apply the
   `wide` class and collapse the grid to `240px 1fr`. Verified live on Screener:
-  `wide=true`, `gridTemplateColumns="240px 1200px"`, 3 screener cards rendered.
+  `wide=true`, `gridTemplateColumns="240px 1200px"`, 4 screener cards rendered.
   Screenshots: `02-screen-screener.png`, `02-screen-settings.png`.
 - **Badges / tags / priorities**: mail rows render category-colored tags
-  (e.g. `INVOICE`, `NEWSLETTER`), priority chips (`P1`/`P2`/`P3`), unread dots,
-  and mono timestamps — all ported from the prototype CSS.
+  (e.g. `RECEIPT`, `REPLY LATER`, `SET ASIDE`), priority chips (`P1`/`P2`/`P3`),
+  unread dots, and mono timestamps — all ported from the prototype CSS.
 
 ### 2.4 — Replay-onboarding affordance + shell mock counters/labels
 
@@ -110,8 +115,8 @@ Paper Trail → Tasks & Dates → Settings → Inbox.
   2. the Settings screen (`data-testid=settings-replay-onboarding`).
   Verified both present in the DOM (`true`).
 - **Mock counters / labels** consistent with the prototype hierarchy: per-nav
-  counts (Screener 3, Inbox 4, Feed 9, Paper Trail 2, Tasks & Dates 5), AI usage
-  `1,840 / 5,000 credits (37%)`, per-list `unread · total` meta, Screener
+  counts (Screener 4, Inbox 3, Feed 2, Paper Trail 7, Tasks & Dates 5), AI usage
+  `34 / 100 monthly · Free tier (34%)`, per-list `unread · total` meta, Screener
   `N pending`, and Tasks/Dates `N tasks · N dates`.
 
 ### 2.5 — Stable for screenshot/demo capture
