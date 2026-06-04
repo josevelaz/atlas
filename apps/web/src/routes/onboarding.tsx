@@ -1,18 +1,19 @@
-import { createFileRoute, redirect } from "@tanstack/solid-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/solid-router";
 import { authClient } from "../lib/auth";
+import { ConnectMailboxButton } from "../components/accounts/connect_mailbox_button";
 
 /**
- * /onboarding — Protected placeholder route.
+ * /onboarding — Protected first-account mailbox connect entry point.
  *
- * Shown to new users who have zero Connected Accounts.
+ * Shown to new users who have zero active Connected Accounts.
  * Explains:
  *   - Atlas organizes new mail only (new-mail-only disclosure)
  *   - Everyone starts unscreened
- *   - The next step is connecting Gmail or Outlook/Microsoft 365 (coming soon)
+ *   - The next step is connecting a Gmail mailbox
  *   - Atlas auth providers (Google/Microsoft/GitHub) are separate from
  *     Connected Account providers
  *
- * No fake CTA, no fake mailbox.
+ * On successful connect, navigates to / (the main app).
  */
 export const Route = createFileRoute("/onboarding")({
 	beforeLoad: async () => {
@@ -35,6 +36,18 @@ export const Route = createFileRoute("/onboarding")({
 });
 
 function OnboardingPage() {
+	const navigate = useNavigate();
+
+	const handleConnectSuccess = (result: {
+		accountId: string;
+		email: string;
+	}) => {
+		// Navigate to the main app after successful mailbox connect
+		void navigate({ to: "/" });
+		// Suppress unused variable warning — result is available for future use
+		void result;
+	};
+
 	return (
 		<main class="min-h-screen bg-background flex items-center justify-center p-4">
 			<div class="w-full max-w-lg">
@@ -49,7 +62,7 @@ function OnboardingPage() {
 						Welcome to Atlas
 					</h1>
 					<p class="text-muted text-sm mb-8">
-						You're signed in. Here's what happens next.
+						Connect your Gmail mailbox to get started.
 					</p>
 
 					<div class="flex flex-col gap-6">
@@ -87,31 +100,34 @@ function OnboardingPage() {
 							</p>
 						</div>
 
-						{/* Connect your inbox */}
+						{/* Connect Gmail CTA */}
 						<div
 							class="p-4 border-[length:var(--border-w)] border-border rounded-[var(--radius)] bg-background"
 							style={{ "box-shadow": "var(--shadow-sm)" }}
 						>
 							<h2
-								class="text-base text-foreground mb-1"
+								class="text-base text-foreground mb-3"
 								style={{ "font-weight": "var(--font-weight-base)" }}
 							>
-								Connect your inbox — coming soon
+								Connect your Gmail inbox
 							</h2>
-							<p class="text-muted text-sm">
-								The next step is connecting a Gmail or Outlook / Microsoft 365
-								mailbox. This feature is in development and will be available
-								shortly.
+							<p class="text-muted text-sm mb-4">
+								Atlas will request read-only access to your Gmail. You can
+								disconnect at any time from Settings.
 							</p>
+							<ConnectMailboxButton
+								returnIntent="/"
+								onSuccess={handleConnectSuccess}
+							/>
 						</div>
 
 						{/* Auth vs Connected Account distinction */}
 						<div class="text-xs text-muted border-t border-border pt-4">
 							<strong class="text-foreground">Note:</strong> The Google,
 							Microsoft, and GitHub accounts you use to sign in to Atlas are
-							separate from the Gmail or Outlook mailboxes you connect as
-							Connected Accounts. You can sign in with GitHub and still connect
-							a Gmail inbox.
+							separate from the Gmail mailboxes you connect as Connected
+							Accounts. You can sign in with GitHub and still connect a Gmail
+							inbox.
 						</div>
 					</div>
 				</div>
