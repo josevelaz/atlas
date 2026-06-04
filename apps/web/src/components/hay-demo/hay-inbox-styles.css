@@ -1311,16 +1311,626 @@
 	font-variant-numeric: tabular-nums;
 }
 
+/* ===== Button size + icon variants (prototype .btn.sm / .btn.icon) ===== */
+.hay-demo .btn.sm {
+	height: 28px;
+	padding: 0 10px;
+	font-size: 12px;
+	box-shadow: var(--demo-shadow-sm);
+}
+.hay-demo .btn.sm:hover {
+	transform: translate(-1px, -1px);
+	box-shadow: 3px 3px 0 0 var(--demo-main);
+}
+.hay-demo .btn.sm:active {
+	transform: translate(2px, 2px);
+	box-shadow: 0 0 0 0 var(--demo-main);
+}
+.hay-demo .btn.icon {
+	width: 36px;
+	padding: 0;
+}
+.hay-demo .btn.icon.sm {
+	width: 28px;
+}
+.hay-demo .btn.ghost.icon:hover {
+	background: rgba(0, 0, 0, 0.06);
+}
+
+/* ===== Card primitive (prototype .card) ===== */
+.hay-demo .card {
+	background: var(--demo-surface);
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	box-shadow: var(--demo-shadow);
+}
+
+/* ===== Badge (prototype .badge) ===== */
+.hay-demo .badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 22px;
+	padding: 0 8px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: 999px;
+	background: var(--demo-surface);
+	font-weight: 700;
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	color: var(--demo-fg);
+}
+.hay-demo .badge.sq {
+	border-radius: var(--radius);
+}
+.hay-demo .badge.solid-main {
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+}
+.hay-demo .badge.solid-feed {
+	background: var(--demo-feed);
+	color: #000;
+}
+.hay-demo .badge.solid-paper {
+	background: var(--demo-paper);
+	color: #000;
+}
+.hay-demo .badge.solid-ai {
+	background: var(--demo-ai);
+	color: #fff;
+}
+.hay-demo .badge.solid-danger {
+	background: var(--demo-danger);
+	color: #000;
+}
+
+/* ===== Input primitive (prototype .input) ===== */
+.hay-demo .input {
+	width: 100%;
+	padding: 8px 10px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	background: var(--demo-surface);
+	color: var(--demo-fg);
+	font-family: var(--font-sans);
+	font-weight: 600;
+	font-size: 14px;
+	outline: none;
+	transition:
+		transform var(--duration-fast) var(--ease-base),
+		box-shadow var(--duration-fast) var(--ease-base);
+}
+.hay-demo .input:focus {
+	box-shadow: var(--demo-shadow);
+	transform: translate(-2px, -2px);
+}
+
+/* =====================================================================
+ * OVERLAYS — Compose + Ask Hay (prototype .overlay / .compose-* / .ask)
+ * ===================================================================== */
+.hay-demo .overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	background: rgba(0, 0, 0, 0.55);
+	animation: hay-overlay-in var(--duration-base) var(--ease-base);
+}
+
+@keyframes hay-overlay-in {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+/* ===== Compose card ===== */
+.hay-demo .compose-card {
+	background: var(--demo-surface);
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--demo-shadow-lg);
+	width: 100%;
+	max-width: 720px;
+	max-height: 86vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.hay-demo .compose-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .compose-head h3 {
+	font-weight: var(--font-weight-heading);
+	font-size: 16px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .compose-field {
+	display: grid;
+	grid-template-columns: 60px 1fr;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 16px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .compose-field label {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--demo-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-weight: 700;
+}
+
+.hay-demo .compose-field input {
+	border: 0;
+	background: transparent;
+	outline: none;
+	font-family: var(--font-sans);
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--demo-fg);
+	width: 100%;
+}
+
+.hay-demo .compose-field input:disabled {
+	color: var(--demo-muted);
+}
+
+.hay-demo .compose-body {
+	padding: 16px;
+	min-height: 240px;
+	flex: 1;
+	overflow-y: auto;
+}
+
+.hay-demo .compose-body textarea {
+	width: 100%;
+	height: 100%;
+	min-height: 240px;
+	border: 0;
+	outline: none;
+	resize: none;
+	background: transparent;
+	font-family: var(--font-sans);
+	font-size: 14px;
+	line-height: 1.5;
+	font-weight: 600;
+	color: var(--demo-fg);
+}
+
+.hay-demo .compose-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 12px 16px;
+	border-top: var(--border-w) solid var(--demo-border);
+	background: var(--demo-bg);
+}
+
+/* ===== Ask Hay (assistant) overlay card ===== */
+.hay-demo .overlay-card {
+	background: var(--demo-bg);
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--demo-shadow-lg);
+	width: 100%;
+	max-width: 720px;
+	max-height: 90vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.hay-demo .assistant-card {
+	height: 82vh;
+}
+
+.hay-demo .overlay-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 18px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .assistant-head {
+	background: var(--demo-ai);
+	color: #fff;
+}
+
+.hay-demo .assistant-head h3 {
+	font-weight: var(--font-weight-heading);
+	font-size: 18px;
+	color: #fff;
+}
+
+.hay-demo .assistant-badge {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	padding: 2px 8px;
+	background: #fff;
+	color: #000;
+	border: var(--border-w) solid #000;
+	border-radius: 4px;
+}
+
+.hay-demo .assistant-close {
+	color: #fff;
+}
+.hay-demo .assistant-close:hover {
+	background: rgba(255, 255, 255, 0.18);
+}
+
+.hay-demo .assistant-body {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* ===== Chat bubbles ===== */
+.hay-demo .chat-bubble {
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	padding: 10px 12px;
+	background: var(--demo-surface);
+	color: var(--demo-fg);
+	font-size: 13px;
+	line-height: 1.5;
+	box-shadow: var(--demo-shadow-sm);
+	max-width: 92%;
+}
+
+.hay-demo .chat-bubble.user {
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+	align-self: flex-end;
+	max-width: 80%;
+}
+
+.hay-demo .chat-bubble.ai {
+	align-self: flex-start;
+}
+
+.hay-demo .chat-bubble.thinking {
+	opacity: 0.6;
+	font-style: italic;
+}
+
+.hay-demo .chat-text {
+	white-space: pre-wrap;
+}
+
+/* ===== Citations ===== */
+.hay-demo .cite {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	margin-top: 8px;
+	padding: 6px 8px;
+	background: var(--demo-bg);
+	border: 1.5px solid var(--demo-border);
+	border-radius: 4px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--demo-fg);
+	cursor: pointer;
+	text-align: left;
+	transition:
+		transform var(--duration-fast) var(--ease-base),
+		box-shadow var(--duration-fast) var(--ease-base);
+}
+
+.hay-demo .cite:hover {
+	transform: translate(-1px, -1px);
+	box-shadow: var(--demo-shadow-sm);
+}
+
+.hay-demo .cite:focus-visible {
+	outline: 2px solid var(--demo-main);
+	outline-offset: 2px;
+}
+
+.hay-demo .cite-num {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	background: var(--demo-ai);
+	color: #fff;
+	border: 1.5px solid var(--demo-border);
+	border-radius: 3px;
+	font-weight: 800;
+	font-size: 10px;
+}
+
+.hay-demo .cite-body {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-width: 0;
+}
+
+.hay-demo .cite-from {
+	font-family: var(--font-sans);
+	font-weight: 800;
+	font-size: 12px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .cite-subject {
+	font-size: 11px;
+	color: var(--demo-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.hay-demo .cite-time {
+	font-size: 10px;
+	color: var(--demo-muted);
+	white-space: nowrap;
+}
+
+/* ===== Example prompts ===== */
+.hay-demo .assistant-examples {
+	margin-top: 4px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.hay-demo .examples-label {
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--demo-muted);
+	margin-bottom: 2px;
+}
+
+.hay-demo .example-prompt {
+	justify-content: flex-start;
+	height: auto;
+	padding: 8px 10px;
+	text-align: left;
+	white-space: normal;
+	line-height: 1.4;
+	font-size: 13px;
+}
+
+/* ===== Assistant footer / input ===== */
+.hay-demo .assistant-foot {
+	padding: 12px;
+	border-top: var(--border-w) solid var(--demo-border);
+	background: var(--demo-bg);
+}
+
+.hay-demo .assistant-foot form {
+	width: 100%;
+}
+
+.hay-demo .assistant-input {
+	flex: 1;
+}
+
+/* =====================================================================
+ * SETTINGS — grouped section cards (prototype Settings view)
+ * ===================================================================== */
+.hay-demo .settings-body {
+	max-width: 760px;
+	margin: 0 auto;
+	width: 100%;
+}
+
+.hay-demo .settings-section {
+	font-family: var(--font-mono);
+	font-size: 13px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--demo-muted);
+	margin: 0 0 8px;
+}
+
+.hay-demo .settings-section:not(:first-child) {
+	margin-top: 24px;
+}
+
+.hay-demo .settings-card {
+	overflow: hidden;
+}
+
+.hay-demo .settings-title {
+	font-weight: 800;
+	font-size: 15px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .settings-sub {
+	font-size: 12px;
+	color: var(--demo-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.hay-demo .settings-row-add {
+	background: var(--demo-bg);
+}
+
+/* Icon-chip accents */
+.hay-demo .settings-row .ic.ic-ai {
+	background: var(--demo-ai);
+	color: #fff;
+}
+.hay-demo .settings-row .ic.ic-feed {
+	background: var(--demo-feed);
+	color: #000;
+}
+.hay-demo .settings-row .ic.ic-paper {
+	background: var(--demo-paper);
+	color: #000;
+}
+.hay-demo .settings-row .ic.ic-danger {
+	background: var(--demo-danger);
+	color: #000;
+}
+
+/* Settings toggle switch */
+.hay-demo .settings-toggle {
+	position: relative;
+	width: 52px;
+	height: 28px;
+	flex-shrink: 0;
+	padding: 0;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	background: var(--demo-surface);
+	box-shadow: var(--demo-shadow-sm);
+	cursor: pointer;
+	transition: background var(--duration-base) var(--ease-base);
+}
+
+.hay-demo .settings-toggle.on {
+	background: var(--demo-main);
+}
+
+.hay-demo .settings-toggle .knob {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 20px;
+	height: 20px;
+	background: #000;
+	border-radius: 3px;
+	transition: left var(--duration-base) var(--ease-base);
+}
+
+.hay-demo .settings-toggle.on .knob {
+	left: 26px;
+}
+
+.hay-demo .settings-toggle:focus-visible {
+	outline: 2px solid var(--demo-main);
+	outline-offset: 2px;
+}
+
+/* =====================================================================
+ * TASKS & DATES — card tiles (prototype Tasks view)
+ * ===================================================================== */
+.hay-demo .tasks-col h3 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 12px;
+}
+
+.hay-demo .tasks-col h3 .count-label {
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--demo-muted);
+}
+
+.hay-demo .task-main {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+}
+
+.hay-demo .task-check {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	margin-top: 2px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: 4px;
+	background: var(--demo-bg);
+}
+
+.hay-demo .task-title {
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.4;
+	color: var(--demo-fg);
+}
+
+.hay-demo .task-due {
+	font-size: 11px;
+	color: var(--demo-muted);
+	margin-top: 4px;
+}
+
+.hay-demo .date-tile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	flex-shrink: 0;
+	margin-top: 2px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: 4px;
+	background: var(--demo-feed);
+	color: #000;
+	line-height: 1;
+}
+
+.hay-demo .date-mon {
+	font-family: var(--font-mono);
+	font-size: 9px;
+	font-weight: 800;
+}
+
+.hay-demo .date-day {
+	font-size: 14px;
+	font-weight: 900;
+}
+
 /* ===== Reduced motion: prototype-local animations are disabled.
    The global styles.css already forces transition/animation durations to
    ~0ms under prefers-reduced-motion; this scoped rule reinforces it for the
    demo's interactive button/step affordances. ===== */
 @media (prefers-reduced-motion: reduce) {
 	.hay-demo .btn,
-	.hay-demo .step-dot {
+	.hay-demo .step-dot,
+	.hay-demo .input,
+	.hay-demo .cite,
+	.hay-demo .settings-toggle,
+	.hay-demo .settings-toggle .knob {
 		transition: none;
 	}
-	.hay-demo .btn:hover {
+	.hay-demo .btn:hover,
+	.hay-demo .input:focus,
+	.hay-demo .cite:hover {
 		transform: none;
+	}
+	.hay-demo .overlay {
+		animation: none;
 	}
 }

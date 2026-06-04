@@ -1,10 +1,20 @@
 import { PenLine, RotateCcw, Search } from "lucide-solid";
 import type { Component } from "solid-js";
-import { createMemo, createSignal, For, Show } from "solid-js";
+import {
+	createMemo,
+	createSignal,
+	For,
+	onCleanup,
+	onMount,
+	Show,
+} from "solid-js";
+import { AssistantOverlay } from "./assistant-overlay";
+import { ComposeOverlay } from "./compose-overlay";
 import {
 	AI_USAGE,
 	CATEGORY_META,
 	type CategoryId,
+	categoryForThread,
 	DATE_CARDS,
 	MAIL_ROWS,
 	type MailRow,
@@ -97,6 +107,66 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 	const isWideView = () =>
 		screen() === "screener" || screen() === "tasks" || screen() === "settings";
 
+	// ===== Overlays (Compose + Ask Hay) — local/demo-only visibility =====
+	const [composeOpen, setComposeOpen] = createSignal(false);
+	const [replyTo, setReplyTo] = createSignal<string | undefined>(undefined);
+	const [assistantOpen, setAssistantOpen] = createSignal(false);
+
+	// Open the Compose overlay as a reply to the selected thread's sender.
+	const replyToSelected = () => {
+		setReplyTo(selectedRow()?.address);
+		setComposeOpen(true);
+	};
+
+	// Open a cited thread from the assistant: route to its category and select
+	// it so the reading pane shows the thread. No-op if the id is unknown.
+	const openThread = (threadId: string) => {
+		const cat = categoryForThread(threadId);
+		if (!cat) return;
+		setScreen(cat);
+		selectRow(cat, threadId);
+	};
+
+	// ===== Prototype keyboard shortcuts (scoped to the demo shell) =====
+	// 1–4 jump to surfaces, c opens Compose, / or ⌘/Ctrl-K opens Ask Hay,
+	// Escape closes any open overlay. Typing in inputs/textareas is ignored.
+	onMount(() => {
+		const onKey = (e: KeyboardEvent) => {
+			const target = e.target as HTMLElement | null;
+			const tag = target?.tagName;
+			if (tag === "INPUT" || tag === "TEXTAREA") {
+				if (e.key === "Escape") {
+					setAssistantOpen(false);
+					setComposeOpen(false);
+				}
+				return;
+			}
+			if (e.metaKey || e.ctrlKey) {
+				if (e.key.toLowerCase() === "k") {
+					e.preventDefault();
+					setAssistantOpen(true);
+				}
+				return;
+			}
+			if (e.key === "1") setScreen("screener");
+			else if (e.key === "2") setScreen("inbox");
+			else if (e.key === "3") setScreen("feed");
+			else if (e.key === "4") setScreen("paper");
+			else if (e.key === "c" || e.key === "C") {
+				setReplyTo(undefined);
+				setComposeOpen(true);
+			} else if (e.key === "/") {
+				e.preventDefault();
+				setAssistantOpen(true);
+			} else if (e.key === "Escape") {
+				setAssistantOpen(false);
+				setComposeOpen(false);
+			}
+		};
+		window.addEventListener("keydown", onKey);
+		onCleanup(() => window.removeEventListener("keydown", onKey));
+	});
+
 	const NavRow: Component<{ item: NavItem }> = (p) => (
 		<button
 			type="button"
@@ -132,13 +202,22 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 					type="button"
 					class="btn search-control"
 					data-testid="search-ask"
+					onClick={() => setAssistantOpen(true)}
 				>
 					<Search size={16} stroke-width={2.5} />
 					<span>Search or ask Hay…</span>
 					<span class="kbd">/</span>
 				</button>
 				<span class="spacer" />
-				<button type="button" class="btn primary" data-testid="compose">
+				<button
+					type="button"
+					class="btn primary"
+					data-testid="compose"
+					onClick={() => {
+						setReplyTo(undefined);
+						setComposeOpen(true);
+					}}
+				>
 					<PenLine size={16} stroke-width={2.5} />
 					<span>Compose</span>
 				</button>
@@ -232,7 +311,7 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 									</div>
 								}
 							>
-								{(row) => <ThreadView row={row()} />}
+								{(row) => <ThreadView row={row()} onReply={replyToSelected} />}
 							</Show>
 						</section>
 					</>
@@ -253,6 +332,20 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 						onReplayOnboarding={() => props.onReplayOnboarding()}
 					/>
 				</Show>
+			</Show>
+
+			{/* ===== Overlays ===== */}
+			<Show when={composeOpen()}>
+				<ComposeOverlay
+					replyTo={replyTo()}
+					onClose={() => setComposeOpen(false)}
+				/>
+			</Show>
+			<Show when={assistantOpen()}>
+				<AssistantOverlay
+					onClose={() => setAssistantOpen(false)}
+					onOpenThread={openThread}
+				/>
 			</Show>
 		</div>
 	);

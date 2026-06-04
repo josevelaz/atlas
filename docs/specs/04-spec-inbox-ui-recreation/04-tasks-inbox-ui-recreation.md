@@ -80,7 +80,7 @@
 - [x] 3.5 Implement Screener accept/reject/category-routing behavior in local state so accepted items appear in the correct destination list and rejected items are removed from pending review.
 - [x] 3.6 Verify thread-reading and Screener-triage flows are demonstrable and error-free in-browser.
 
-### [ ] 4.0 Recreate overlays, secondary screens, keyboard interactions, and final fidelity polish
+### [x] 4.0 Recreate overlays, secondary screens, keyboard interactions, and final fidelity polish
 
 #### 4.0 Proof Artifact(s)
 
@@ -92,9 +92,9 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Recreate the Compose overlay with local-only fields, close/discard controls, and prototype-aligned layout and styling.
-- [ ] 4.2 Recreate the Ask Hay/search overlay with mock chat history, example prompts, cited result links, and open-thread affordances consistent with the prototype.
-- [ ] 4.3 Recreate the Tasks & Dates and Settings screens with their prototype content blocks and visual hierarchy.
-- [ ] 4.4 Add prototype keyboard shortcuts and local toggle interactions where specified, ensuring they remain scoped to the demo experience.
-- [ ] 4.5 Perform final fidelity polish for spacing, shadows, borders, typography, and state feedback against the prototype source of truth.
-- [ ] 4.6 Run lint, typecheck, and browser validation to confirm the demo route is ready for implementation proof artifacts and later validation.
+- [x] 4.1 Recreate the Compose overlay with local-only fields, close/discard controls, and prototype-aligned layout and styling.
+- [x] 4.2 Recreate the Ask Hay/search overlay with mock chat history, example prompts, cited result links, and open-thread affordances consistent with the prototype.
+- [x] 4.3 Recreate the Tasks & Dates and Settings screens with their prototype content blocks and visual hierarchy.
+- [x] 4.4 Add prototype keyboard shortcuts and local toggle interactions where specified, ensuring they remain scoped to the demo experience.
+- [x] 4.5 Perform final fidelity polish for spacing, shadows, borders, typography, and state feedback against the prototype source of truth.
+- [x] 4.6 Run lint, typecheck, and browser validation to confirm the demo route is ready for implementation proof artifacts and later validation.

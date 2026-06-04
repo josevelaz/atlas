@@ -111,6 +111,8 @@ export type TaskCard = {
 	id: string;
 	title: string;
 	source: string;
+	/** Mono "due" label shown under the title, e.g. "Before Fri". */
+	due: string;
 	priority?: "p1" | "p2" | "p3";
 };
 
@@ -585,20 +587,37 @@ export function screenerItemToMailRow(item: ScreenerItem): MailRow {
 export const TASK_CARDS: TaskCard[] = [
 	{
 		id: "t1",
-		title: "Send signed SOW back to Marcus",
-		source: "Invoice #4821 — net 30",
+		title: "Counter-sign and return SOW to Marcus",
+		due: "Before the 27th",
+		source: "Marcus Lee · Invoice #4821",
 		priority: "p1",
 	},
 	{
 		id: "t2",
-		title: "Review Q3 roadmap deck before Friday",
-		source: "Re: Q3 roadmap review",
+		title: "Send pricing-slide edits to Dana",
+		due: "Before Fri",
+		source: "Dana Whitfield · Q3 roadmap review",
 		priority: "p2",
 	},
 	{
 		id: "t3",
+		title: "Check in for SFO → JFK flight",
+		due: "Jun 13",
+		source: "Delta confirmation HAY42Q",
+		priority: "p2",
+	},
+	{
+		id: "t4",
 		title: "Reply to Sam about the integration idea",
-		source: "Screener — Sam Ortega",
+		due: "This week",
+		source: "Screener · Sam Ortega",
+		priority: "p3",
+	},
+	{
+		id: "t5",
+		title: "Confirm lunch with Priya",
+		due: "Before Thu",
+		source: "Priya Nair · Lunch Thursday?",
 		priority: "p3",
 	},
 ];
@@ -607,14 +626,26 @@ export const TASK_CARDS: TaskCard[] = [
 export const DATE_CARDS: DateCard[] = [
 	{
 		id: "d1",
-		title: "Invoice #4821 due",
-		when: "Fri, the 27th",
-		source: "Marcus Lee",
+		title: "Q3 roadmap review",
+		when: "Fri May 23, 2:00 PM",
+		source: "Dana Whitfield · Northstar",
 	},
 	{
 		id: "d2",
+		title: "Lunch with Priya",
+		when: "Thu May 22, 12:30 PM",
+		source: "Priya Nair",
+	},
+	{
+		id: "d3",
+		title: "Invoice #4821 due",
+		when: "Tue May 27",
+		source: "Marcus Lee · Brightfold",
+	},
+	{
+		id: "d4",
 		title: "Flight SFO → JFK",
-		when: "Jun 14, 8:05a",
+		when: "Sat Jun 14, 8:05 AM",
 		source: "Delta confirmation HAY42Q",
 	},
 ];
@@ -627,3 +658,132 @@ export const AI_USAGE = {
 		return Math.round((this.used / this.limit) * 100);
 	},
 };
+
+/* ===================================================================
+ * Ask Hay (assistant) — mock conversation + citations.
+ *
+ * The assistant overlay is a local-only mock chat. Asking a question
+ * appends the user message, then (after a short "thinking" delay) appends
+ * a canned AI reply with cited results. Each citation links to an existing
+ * demo thread id so the "open thread" affordance can route the shell into
+ * the right category and select that thread — no backend, no real search.
+ * =================================================================== */
+
+/** A cited source attached to an assistant reply. */
+export type AssistantCitation = {
+	num: number;
+	from: string;
+	subject: string;
+	time: string;
+	/** Existing MailRow id to open when the citation is clicked. */
+	threadId: string;
+};
+
+/** A single message in the Ask Hay conversation. */
+export type AssistantMessage = {
+	role: "ai" | "user";
+	text: string;
+	cites?: AssistantCitation[];
+};
+
+/** The assistant's opening message (shown before the user asks anything). */
+export const ASSISTANT_GREETING: AssistantMessage = {
+	role: "ai",
+	text: "Search synced threads, ask about anything you've received, or issue a read-only bulk command. I won't send or delete without confirmation.",
+	cites: [],
+};
+
+/** Example prompts surfaced before the first question. */
+export const ASSISTANT_EXAMPLES: string[] = [
+	"What did Dana want me to send before the roadmap review?",
+	"Find all receipts from Stripe this month",
+	"Anything urgent in the screener?",
+	"Summarize Marcus's invoice thread",
+];
+
+/**
+ * assistantReply — mock semantic-search responder.
+ *
+ * Matches the user's text against a few canned intents and returns an AI
+ * message with citations pointing at existing demo threads. Falls back to a
+ * capability blurb for anything unrecognized. Pure + deterministic.
+ */
+export function assistantReply(text: string): AssistantMessage {
+	if (/dana|roadmap|pricing/i.test(text)) {
+		return {
+			role: "ai",
+			text: "Dana wants your pricing-slide edits before the Q3 roadmap review, which she moved to Friday 2:00p so Legal can review the contract-terms slide first.\n\nShe asked you to confirm the new time works.",
+			cites: [
+				{
+					num: 1,
+					from: "Dana Whitfield",
+					subject: "Re: Q3 roadmap review",
+					time: "Today, 9:41a",
+					threadId: "i1",
+				},
+			],
+		};
+	}
+	if (/stripe|receipt|vercel/i.test(text)) {
+		return {
+			role: "ai",
+			text: "Found 1 Stripe receipt in your Paper Trail this month:\n\n• Vercel — $49.00 (Paid May 1)\n\nNo action needed — it's filed for your records.",
+			cites: [
+				{
+					num: 1,
+					from: "Stripe",
+					subject: "Receipt for your payment",
+					time: "May 1",
+					threadId: "p1",
+				},
+			],
+		};
+	}
+	if (/urgent|screener/i.test(text)) {
+		return {
+			role: "ai",
+			text: "Three first-time senders are waiting in the Screener. The only one I'd surface as time-sensitive is Sam Ortega — a warm follow-up from the conference about an integration idea.\n\nThe other two (Launch Weekly, Northwind Accounts) look routine.",
+			cites: [],
+		};
+	}
+	if (/marcus|invoice|sow|term/i.test(text)) {
+		return {
+			role: "ai",
+			text: "Marcus sent the signed SOW for invoice #4821. Terms are net 30 with a due date of the 27th. He's asking you to counter-sign and return it.",
+			cites: [
+				{
+					num: 1,
+					from: "Marcus Lee",
+					subject: "Invoice #4821 — net 30",
+					time: "Today, 8:12a",
+					threadId: "i2",
+				},
+			],
+		};
+	}
+	if (/flight|delta|trip|travel/i.test(text)) {
+		return {
+			role: "ai",
+			text: "Your Delta trip HAY42Q (SFO → JFK) departs Jun 14 at 8:05a, seat 14C. Check-in opens 24 hours before departure, so set a reminder for Jun 13.",
+			cites: [
+				{
+					num: 1,
+					from: "Delta",
+					subject: "Your trip confirmation — SFO → JFK",
+					time: "Apr 28",
+					threadId: "p2",
+				},
+			],
+		};
+	}
+	return {
+		role: "ai",
+		text: "I can search synced threads, summarize, surface tasks and dates, and propose bulk archives. I won't draft replies or compose for you in this demo.",
+		cites: [],
+	};
+}
+
+/** Which category a given thread id lives in, for the open-thread affordance. */
+export function categoryForThread(threadId: string): CategoryId | null {
+	return MAIL_ROWS.find((r) => r.id === threadId)?.category ?? null;
+}

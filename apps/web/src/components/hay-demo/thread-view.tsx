@@ -25,7 +25,11 @@ import type { MailRow } from "./hay-inbox-data";
  * Selection is owned by the parent shell; this component is a pure render of
  * the selected row's `thread` detail.
  */
-export const ThreadView: Component<{ row: MailRow }> = (props) => {
+export const ThreadView: Component<{
+	row: MailRow;
+	/** Opens the Compose overlay as a reply (local/demo-only). */
+	onReply?: () => void;
+}> = (props) => {
 	return (
 		<div class="thread" data-testid={`thread-view-${props.row.id}`}>
 			{/* ===== Toolbar ===== */}
@@ -53,6 +57,7 @@ export const ThreadView: Component<{ row: MailRow }> = (props) => {
 						class="thread-act primary"
 						data-testid="thread-reply"
 						aria-label="Reply"
+						onClick={() => props.onReply?.()}
 					>
 						<CornerUpLeft size={15} stroke-width={2.5} />
 						<span>Reply</span>
