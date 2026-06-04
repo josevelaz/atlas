@@ -1,23 +1,27 @@
 import { PenLine, RotateCcw, Search } from "lucide-solid";
 import type { Component } from "solid-js";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 import {
 	AI_USAGE,
-	type CategoryId,
 	CATEGORY_META,
+	type CategoryId,
 	DATE_CARDS,
 	MAIL_ROWS,
+	type MailRow,
 	type NavItem,
 	PRIMARY_NAV,
 	SCREENER_ITEMS,
-	SECONDARY_NAV,
+	type ScreenerItem,
 	type ScreenId,
+	SECONDARY_NAV,
+	screenerItemToMailRow,
 	TASK_CARDS,
 } from "./hay-inbox-data";
 import { MailList } from "./mail-list";
 import { ScreenerScreen } from "./screener-screen";
 import { SettingsScreen } from "./settings-screen";
 import { TasksScreen } from "./tasks-screen";
+import { ThreadView } from "./thread-view";
 
 /**
  * AppShell — the main Hay application shell for the /dev/hay-inbox demo.
@@ -51,11 +55,44 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 		Record<CategoryId, string | null>
 	>({ inbox: null, feed: null, paper: null });
 
-	const rowsFor = (cat: CategoryId) =>
-		MAIL_ROWS.filter((r) => r.category === cat);
+	// Mail rows live in local state so accepted Screener senders can be routed
+	// into their suggested category list at runtime.
+	const [rows, setRows] = createSignal<MailRow[]>(MAIL_ROWS);
+	// Screener queue is local state so accept/reject can mutate it.
+	const [screenerItems, setScreenerItems] =
+		createSignal<ScreenerItem[]>(SCREENER_ITEMS);
+
+	const rowsFor = (cat: CategoryId) => rows().filter((r) => r.category === cat);
 
 	const selectRow = (cat: CategoryId, id: string) =>
 		setSelected((s) => ({ ...s, [cat]: id }));
+
+	// Active category for the three-pane category view. Null on wide views.
+	const activeCategory = createMemo<CategoryId | null>(() => {
+		const s = screen();
+		return isCategory(s) ? s : null;
+	});
+
+	const selectedRow = createMemo<MailRow | null>(() => {
+		const cat = activeCategory();
+		if (!cat) return null;
+		const id = selected()[cat];
+		if (!id) return null;
+		return rows().find((r) => r.id === id) ?? null;
+	});
+
+	// Accept: route the sender into their suggested category list, then drop
+	// them from the pending Screener queue.
+	const acceptScreener = (id: string) => {
+		const item = screenerItems().find((i) => i.id === id);
+		if (!item) return;
+		setRows((prev) => [screenerItemToMailRow(item), ...prev]);
+		setScreenerItems((prev) => prev.filter((i) => i.id !== id));
+	};
+
+	// Reject: drop the sender from the pending Screener queue (no routing).
+	const rejectScreener = (id: string) =>
+		setScreenerItems((prev) => prev.filter((i) => i.id !== id));
 
 	const isWideView = () =>
 		screen() === "screener" || screen() === "tasks" || screen() === "settings";
@@ -164,61 +201,49 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 				when={isWideView()}
 				fallback={
 					<>
-						<Show when={isCategory(screen())}>
-							{(_) => {
-								const cat = screen() as CategoryId;
-								return (
-									<MailList
-										category={cat}
-										rows={rowsFor(cat)}
-										selectedId={selected()[cat]}
-										onSelect={(id) => selectRow(cat, id)}
-									/>
-								);
-							}}
+						<Show when={activeCategory()}>
+							{(cat) => (
+								<MailList
+									category={cat()}
+									rows={rowsFor(cat())}
+									selectedId={selected()[cat()]}
+									onSelect={(id) => selectRow(cat(), id)}
+								/>
+							)}
 						</Show>
 						<section class="pane" data-testid="reading-pane">
 							<Show
-								when={
-									isCategory(screen()) && selected()[screen() as CategoryId]
-								}
+								when={selectedRow()}
 								fallback={
 									<div class="empty">
 										<div class="ic-box" aria-hidden="true">
 											✦
 										</div>
 										<h3>
-											{isCategory(screen())
-												? CATEGORY_META[screen() as CategoryId].title
+											{activeCategory()
+												? CATEGORY_META[activeCategory() as CategoryId].title
 												: "Hay"}
 										</h3>
 										<p>
-											Select a message to read it here. Full thread view —
-											sender details, AI summary, and extracted tasks — lands
-											next.
+											Select a message to read it here — sender details, AI
+											summary, and extracted tasks &amp; dates show up in this
+											pane.
 										</p>
 									</div>
 								}
 							>
-								<div class="reading-placeholder">
-									<div class="thread-toolbar">
-										<span class="mono muted">Thread preview</span>
-									</div>
-									<div class="thread-body">
-										<p class="muted">
-											Reading pane for the selected message. The full prototype
-											thread view (sender metadata, tags, AI summary, extracted
-											tasks &amp; dates, reply controls) is built in task 3.0.
-										</p>
-									</div>
-								</div>
+								{(row) => <ThreadView row={row()} />}
 							</Show>
 						</section>
 					</>
 				}
 			>
 				<Show when={screen() === "screener"}>
-					<ScreenerScreen items={SCREENER_ITEMS} />
+					<ScreenerScreen
+						items={screenerItems()}
+						onAccept={acceptScreener}
+						onReject={rejectScreener}
+					/>
 				</Show>
 				<Show when={screen() === "tasks"}>
 					<TasksScreen tasks={TASK_CARDS} dates={DATE_CARDS} />

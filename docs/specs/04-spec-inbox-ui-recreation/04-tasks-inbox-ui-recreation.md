@@ -62,7 +62,7 @@
 - [x] 2.4 Add replay-onboarding affordance and shell-level mock counters/labels consistent with the prototype’s information hierarchy.
 - [x] 2.5 Verify navigation flows and shell visuals are stable enough for screenshot and demo capture.
 
-### [ ] 3.0 Recreate mock mail data flows, thread reading, and local Screener triage behavior
+### [x] 3.0 Recreate mock mail data flows, thread reading, and local Screener triage behavior
 
 #### 3.0 Proof Artifact(s)
 
@@ -73,12 +73,12 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Add structured mock data for screener items, inbox/feed/paper lists, tasks, dates, and detailed thread content derived from the prototype findings.
-- [ ] 3.2 Build reusable mail-list rendering for Inbox, Feed, and Paper Trail with selected-row state, unread indicators, previews, and category-specific labels.
-- [ ] 3.3 Build the thread-view pane with sender details, tags, AI summary, extracted tasks/dates, and visible reply/archive-related controls shown in the prototype.
-- [ ] 3.4 Implement local selection state so choosing a thread updates the reading pane correctly across Inbox, Feed, and Paper Trail.
-- [ ] 3.5 Implement Screener accept/reject/category-routing behavior in local state so accepted items appear in the correct destination list and rejected items are removed from pending review.
-- [ ] 3.6 Verify thread-reading and Screener-triage flows are demonstrable and error-free in-browser.
+- [x] 3.1 Add structured mock data for screener items, inbox/feed/paper lists, tasks, dates, and detailed thread content derived from the prototype findings.
+- [x] 3.2 Build reusable mail-list rendering for Inbox, Feed, and Paper Trail with selected-row state, unread indicators, previews, and category-specific labels.
+- [x] 3.3 Build the thread-view pane with sender details, tags, AI summary, extracted tasks/dates, and visible reply/archive-related controls shown in the prototype.
+- [x] 3.4 Implement local selection state so choosing a thread updates the reading pane correctly across Inbox, Feed, and Paper Trail.
+- [x] 3.5 Implement Screener accept/reject/category-routing behavior in local state so accepted items appear in the correct destination list and rejected items are removed from pending review.
+- [x] 3.6 Verify thread-reading and Screener-triage flows are demonstrable and error-free in-browser.
 
 ### [ ] 4.0 Recreate overlays, secondary screens, keyboard interactions, and final fidelity polish
 
