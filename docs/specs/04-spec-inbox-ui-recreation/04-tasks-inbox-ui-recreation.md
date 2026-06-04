@@ -45,7 +45,7 @@
 - [x] 1.4 Ensure onboarding loads as the default first-run surface within the demo experience and hands off cleanly to the main Hay shell when dismissed.
 - [x] 1.5 Verify the new route and onboarding flow compile cleanly and are ready for browser proof capture.
 
-### [ ] 2.0 Recreate the main Hay shell, sidebar navigation, and category-specific layouts
+### [x] 2.0 Recreate the main Hay shell, sidebar navigation, and category-specific layouts
 
 #### 2.0 Proof Artifact(s)
 
@@ -56,11 +56,11 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Build the main Hay shell layout with topbar, wordmark, search/ask control, compose control, avatar, sidebar sections, counts, and AI usage card.
-- [ ] 2.2 Implement local screen-navigation state for Screener, Inbox, Feed, Paper Trail, Tasks & Dates, and Settings, matching the prototype’s desktop-first pane behavior.
-- [ ] 2.3 Recreate category-specific shell styling, active states, badges, counters, and pane layouts so the primary desktop composition matches the prototype.
-- [ ] 2.4 Add replay-onboarding affordance and shell-level mock counters/labels consistent with the prototype’s information hierarchy.
-- [ ] 2.5 Verify navigation flows and shell visuals are stable enough for screenshot and demo capture.
+- [x] 2.1 Build the main Hay shell layout with topbar, wordmark, search/ask control, compose control, avatar, sidebar sections, counts, and AI usage card.
+- [x] 2.2 Implement local screen-navigation state for Screener, Inbox, Feed, Paper Trail, Tasks & Dates, and Settings, matching the prototype’s desktop-first pane behavior.
+- [x] 2.3 Recreate category-specific shell styling, active states, badges, counters, and pane layouts so the primary desktop composition matches the prototype.
+- [x] 2.4 Add replay-onboarding affordance and shell-level mock counters/labels consistent with the prototype’s information hierarchy.
+- [x] 2.5 Verify navigation flows and shell visuals are stable enough for screenshot and demo capture.
 
 ### [ ] 3.0 Recreate mock mail data flows, thread reading, and local Screener triage behavior
 

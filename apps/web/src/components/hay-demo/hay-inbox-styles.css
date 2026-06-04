@@ -289,6 +289,803 @@
 	color: var(--demo-muted);
 }
 
+/* =====================================================================
+ * MAIN SHELL — ported from prototype .app / .topbar / .sidebar / .list /
+ * .mail-row / .pane / .screener-* / .tasks-* / .settings-*.
+ * All selectors stay scoped under .hay-demo and consume the demo token
+ * aliases (which map onto the global Hay tokens in styles.css).
+ * ===================================================================== */
+
+/* Map a few extra aliases the prototype shell CSS reads directly. */
+.hay-demo {
+	--demo-feed: var(--color-feed);
+	--demo-paper: var(--color-paper);
+	--demo-danger: var(--color-danger);
+	--demo-ai: var(--color-ai);
+	--demo-inbox: var(--color-inbox);
+	--demo-main-fg: var(--color-main-foreground);
+}
+
+/* ===== App grid ===== */
+.hay-demo .app {
+	display: grid;
+	grid-template-columns: 240px 380px 1fr;
+	grid-template-rows: 56px 1fr;
+	height: 100dvh;
+	width: 100%;
+	background: var(--demo-bg);
+	overflow: hidden;
+}
+
+/* Full-width alternate views (Screener / Tasks & Dates / Settings) collapse
+   the list+pane columns into a single content area. */
+.hay-demo .app.wide {
+	grid-template-columns: 240px 1fr;
+}
+
+/* ===== Topbar ===== */
+.hay-demo .topbar {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 0 16px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+	background: var(--demo-bg);
+	z-index: 2;
+}
+
+.hay-demo .logo {
+	font-family: var(--font-sans);
+	font-weight: 900;
+	font-size: 22px;
+	letter-spacing: -0.02em;
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	padding: 4px 10px;
+	box-shadow: var(--demo-shadow-sm);
+	user-select: none;
+}
+
+/* Search / Ask Hay control — left-aligned label + trailing kbd hint. */
+.hay-demo .kbd {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border: 1.5px solid var(--demo-border);
+	border-radius: 4px;
+	background: var(--demo-surface);
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 700;
+	color: var(--demo-fg);
+	box-shadow: 1.5px 1.5px 0 0 var(--demo-border);
+}
+
+.hay-demo .search-control {
+	flex: 0 1 360px;
+	justify-content: flex-start;
+	gap: 8px;
+	color: var(--demo-muted);
+	font-weight: 600;
+}
+
+.hay-demo .search-control .kbd {
+	margin-left: auto;
+}
+
+/* ===== Avatar chip ===== */
+.hay-demo .avatar {
+	width: 36px;
+	height: 36px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 800;
+	font-size: 13px;
+	background: var(--demo-surface);
+	color: var(--demo-fg);
+	flex-shrink: 0;
+}
+
+.hay-demo .avatar.sm {
+	width: 28px;
+	height: 28px;
+	font-size: 11px;
+}
+
+.hay-demo .avatar.lg {
+	width: 48px;
+	height: 48px;
+	font-size: 16px;
+}
+
+.hay-demo .avatar-btn {
+	cursor: pointer;
+	transition: transform var(--duration-fast) var(--ease-base);
+}
+
+.hay-demo .avatar-btn:hover {
+	transform: translate(-1px, -1px);
+}
+
+.hay-demo .avatar-btn:focus-visible {
+	outline: 2px solid var(--demo-main);
+	outline-offset: 2px;
+}
+
+/* ===== Sidebar ===== */
+.hay-demo .sidebar {
+	background: var(--demo-bg);
+	border-right: var(--border-w) solid var(--demo-border);
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.hay-demo .section-title {
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--demo-muted);
+	padding: 12px 10px 4px;
+	white-space: nowrap;
+}
+
+.hay-demo .nav-item {
+	display: grid;
+	grid-template-columns: 28px 1fr auto;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+	border: var(--border-w) solid transparent;
+	border-radius: var(--radius);
+	cursor: pointer;
+	font-weight: 700;
+	font-size: 14px;
+	color: var(--demo-fg);
+	background: transparent;
+	text-align: left;
+	width: 100%;
+}
+
+.hay-demo .nav-item:hover {
+	background: rgba(0, 0, 0, 0.06);
+}
+
+.hay-demo .nav-item.active {
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+	border-color: var(--demo-border);
+	box-shadow: var(--demo-shadow-sm);
+}
+
+.hay-demo .nav-item:focus-visible {
+	outline: 2px solid var(--demo-main);
+	outline-offset: 2px;
+}
+
+.hay-demo .nav-item .dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 999px;
+	border: 1.5px solid var(--demo-border);
+	justify-self: center;
+	background: var(--demo-surface);
+}
+
+.hay-demo .nav-item .dot.dot-inbox {
+	background: var(--demo-inbox);
+}
+.hay-demo .nav-item .dot.dot-feed {
+	background: var(--demo-feed);
+}
+.hay-demo .nav-item .dot.dot-paper {
+	background: var(--demo-paper);
+}
+.hay-demo .nav-item .dot.dot-main {
+	background: var(--demo-main);
+}
+
+/* Active rows render the dot solid black, matching the prototype. Placed
+   after the dot-* color classes so it wins on equal-specificity cascade. */
+.hay-demo .nav-item.active .dot.dot-inbox,
+.hay-demo .nav-item.active .dot.dot-feed,
+.hay-demo .nav-item.active .dot.dot-paper,
+.hay-demo .nav-item.active .dot.dot-main {
+	background: #000;
+}
+
+.hay-demo .nav-item .count {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	background: var(--demo-surface);
+	border: 1.5px solid var(--demo-border);
+	padding: 0 5px;
+	border-radius: 4px;
+	min-width: 22px;
+	text-align: center;
+	color: var(--demo-fg);
+}
+
+.hay-demo .nav-item.active .count {
+	background: var(--demo-bg);
+}
+
+/* ===== AI usage card ===== */
+.hay-demo .ai-usage {
+	margin-top: 12px;
+	padding: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	background: var(--demo-surface);
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	box-shadow: var(--demo-shadow-sm);
+}
+
+.hay-demo .ai-usage-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-weight: 800;
+	font-size: 13px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .ai-usage-bar {
+	height: 10px;
+	border: 1.5px solid var(--demo-border);
+	border-radius: 999px;
+	background: var(--demo-bg);
+	overflow: hidden;
+}
+
+.hay-demo .ai-usage-bar > span {
+	display: block;
+	height: 100%;
+	background: var(--demo-ai);
+	border-right: 1.5px solid var(--demo-border);
+}
+
+.hay-demo .ai-usage-meta {
+	font-size: 11px;
+	color: var(--demo-muted);
+}
+
+.hay-demo .replay-shell {
+	margin-top: 8px;
+	justify-content: flex-start;
+	font-size: 13px;
+	color: var(--demo-muted);
+}
+
+/* ===== List column (Inbox / Feed / Paper Trail) ===== */
+.hay-demo .list {
+	background: var(--demo-bg);
+	border-right: var(--border-w) solid var(--demo-border);
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.hay-demo .list-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	padding: 14px 16px 10px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+	gap: 8px;
+}
+
+.hay-demo .list-header h2 {
+	font-weight: var(--font-weight-heading);
+	font-size: 22px;
+	color: var(--demo-fg);
+	letter-spacing: -0.01em;
+}
+
+.hay-demo .list-header .meta {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--demo-muted);
+}
+
+.hay-demo .list-scroll {
+	overflow-y: auto;
+	flex: 1;
+	min-height: 0;
+}
+
+/* ===== Mail row ===== */
+.hay-demo .mail-row {
+	display: grid;
+	grid-template-columns: 40px 1fr auto;
+	gap: 10px;
+	padding: 12px 16px;
+	border: 0;
+	border-bottom: var(--border-w) solid var(--demo-border);
+	cursor: pointer;
+	background: var(--demo-bg);
+	color: var(--demo-fg);
+	position: relative;
+	text-align: left;
+	width: 100%;
+	font: inherit;
+}
+
+.hay-demo .mail-row:hover {
+	background: var(--demo-surface);
+}
+
+.hay-demo .mail-row.selected {
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+}
+
+.hay-demo .mail-row:focus-visible {
+	outline: 2px solid var(--demo-main);
+	outline-offset: -2px;
+}
+
+.hay-demo .mail-row.unread::before {
+	content: "";
+	position: absolute;
+	left: 6px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 6px;
+	height: 6px;
+	background: var(--demo-main);
+	border-radius: 999px;
+	border: 1.5px solid var(--demo-border);
+}
+
+.hay-demo .mail-row.selected.unread::before {
+	background: #000;
+}
+
+.hay-demo .mail-row .from {
+	font-weight: 700;
+	font-size: 13px;
+}
+
+.hay-demo .mail-row.unread .from {
+	font-weight: 800;
+}
+
+.hay-demo .mail-row .subj {
+	font-size: 13px;
+	font-weight: 700;
+	margin-top: 1px;
+}
+
+.hay-demo .mail-row .preview {
+	font-size: 12px;
+	color: var(--demo-muted);
+	font-weight: 500;
+	margin-top: 2px;
+	line-height: 1.35;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+.hay-demo .mail-row.selected .preview {
+	color: rgba(0, 0, 0, 0.7);
+}
+
+.hay-demo .mail-row .meta-text {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--demo-muted);
+	text-align: right;
+	white-space: nowrap;
+}
+
+.hay-demo .mail-row.selected .meta-text {
+	color: rgba(0, 0, 0, 0.7);
+}
+
+.hay-demo .mail-row .row-tags {
+	display: flex;
+	gap: 4px;
+	margin-top: 6px;
+	flex-wrap: wrap;
+}
+
+/* ===== Tags / priorities ===== */
+.hay-demo .tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 1px 6px;
+	font-size: 10px;
+	font-weight: 700;
+	border: 1.5px solid var(--demo-border);
+	border-radius: 3px;
+	background: var(--demo-surface);
+	color: var(--demo-fg);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-family: var(--font-mono);
+	white-space: nowrap;
+}
+
+.hay-demo .tag.solid-feed {
+	background: var(--demo-feed);
+	color: #000;
+}
+.hay-demo .tag.solid-paper {
+	background: var(--demo-paper);
+	color: #000;
+}
+.hay-demo .tag.solid-inbox {
+	background: var(--demo-inbox);
+	color: #000;
+}
+.hay-demo .tag.solid-ai {
+	background: var(--demo-ai);
+	color: #fff;
+}
+.hay-demo .tag.solid-danger {
+	background: var(--demo-danger);
+	color: #000;
+}
+.hay-demo .tag.solid-main {
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+}
+
+.hay-demo .priority {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-family: var(--font-mono);
+	font-weight: 700;
+	font-size: 10px;
+	padding: 1px 6px;
+	border-radius: 3px;
+	border: 1.5px solid var(--demo-border);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.hay-demo .priority.p1 {
+	background: var(--demo-danger);
+	color: #000;
+}
+.hay-demo .priority.p2 {
+	background: var(--demo-feed);
+	color: #000;
+}
+.hay-demo .priority.p3 {
+	background: var(--demo-surface);
+	color: var(--demo-fg);
+}
+
+/* ===== Pane (reading pane + full-width screens) ===== */
+.hay-demo .pane {
+	border-right: 0;
+	background: var(--demo-bg);
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.hay-demo .thread-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 20px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+	gap: 8px;
+}
+
+.hay-demo .reading-placeholder {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	flex: 1;
+}
+
+.hay-demo .thread-body {
+	overflow-y: auto;
+	flex: 1;
+	padding: 20px 24px 40px;
+	font-size: 14px;
+	line-height: 1.55;
+}
+
+/* ===== Empty state ===== */
+.hay-demo .empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	gap: 14px;
+	padding: 40px;
+	text-align: center;
+}
+
+.hay-demo .empty .ic-box {
+	width: 80px;
+	height: 80px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--demo-shadow-lg);
+	background: var(--demo-main);
+	color: var(--demo-main-fg);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 28px;
+	margin-bottom: 6px;
+}
+
+.hay-demo .empty h3 {
+	font-weight: var(--font-weight-heading);
+	font-size: 22px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .empty p {
+	color: var(--demo-muted);
+	max-width: 320px;
+	line-height: 1.5;
+}
+
+/* ===== Screener ===== */
+.hay-demo .screener-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+.hay-demo .screener-stack {
+	max-width: 640px;
+	margin: 0 auto;
+	padding: 20px;
+}
+
+.hay-demo .screener-card {
+	background: var(--demo-surface);
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--demo-shadow-lg);
+	margin-bottom: 18px;
+	overflow: hidden;
+}
+
+.hay-demo .screener-head {
+	display: flex;
+	gap: 14px;
+	padding: 16px 18px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+	align-items: center;
+}
+
+.hay-demo .screener-head .name {
+	font-weight: 900;
+	font-size: 18px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .screener-head .addr {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--demo-muted);
+}
+
+.hay-demo .screener-preview {
+	padding: 14px 18px;
+	font-size: 13px;
+	line-height: 1.5;
+	max-height: 110px;
+	overflow: hidden;
+	position: relative;
+	color: var(--demo-fg);
+}
+
+.hay-demo .screener-preview::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 40px;
+	background: linear-gradient(to bottom, transparent, var(--demo-surface));
+}
+
+.hay-demo .screener-ai {
+	background: var(--demo-ai);
+	color: #fff;
+	padding: 8px 16px;
+	font-size: 12px;
+	font-weight: 700;
+	border-top: var(--border-w) solid var(--demo-border);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.hay-demo .screener-ai .pill {
+	background: #fff;
+	color: #000;
+	padding: 2px 8px;
+	border-radius: 999px;
+	border: 1.5px solid #000;
+	font-size: 11px;
+	font-weight: 800;
+}
+
+.hay-demo .screener-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	border-top: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .screener-actions .accept,
+.hay-demo .screener-actions .reject {
+	height: 56px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	font-family: var(--font-sans);
+	font-weight: 900;
+	font-size: 13px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	cursor: pointer;
+	user-select: none;
+	border: 0;
+	border-right: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .screener-actions .accept {
+	background: var(--demo-paper);
+	color: #000;
+}
+
+.hay-demo .screener-actions .reject {
+	background: var(--demo-danger);
+	color: #000;
+	border-right: 0;
+}
+
+.hay-demo .screener-actions .accept:hover,
+.hay-demo .screener-actions .reject:hover {
+	filter: brightness(0.92);
+}
+
+/* ===== Tasks & Dates ===== */
+.hay-demo .tasks-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	padding: 20px;
+	overflow-y: auto;
+	flex: 1;
+	min-height: 0;
+}
+
+.hay-demo .tasks-col h3 {
+	font-weight: var(--font-weight-heading);
+	font-size: 16px;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .task-card {
+	background: var(--demo-surface);
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	box-shadow: var(--demo-shadow);
+	padding: 12px 14px;
+	margin-bottom: 12px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .task-card .src {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--demo-muted);
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1.5px dashed var(--demo-border);
+}
+
+/* ===== Settings ===== */
+.hay-demo .settings-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 20px;
+}
+
+.hay-demo .settings-card {
+	max-width: 640px;
+	margin: 0 auto;
+	background: var(--demo-surface);
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	box-shadow: var(--demo-shadow);
+	overflow: hidden;
+}
+
+.hay-demo .settings-row {
+	display: grid;
+	grid-template-columns: 48px 1fr auto;
+	gap: 14px;
+	align-items: center;
+	padding: 14px 16px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .settings-row:last-child {
+	border-bottom: 0;
+}
+
+.hay-demo .settings-row .ic {
+	width: 48px;
+	height: 48px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	background: var(--demo-bg);
+	color: var(--demo-fg);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* ===== Utility classes used by shell screens ===== */
+.hay-demo .row {
+	display: flex;
+	align-items: center;
+}
+.hay-demo .col {
+	display: flex;
+	flex-direction: column;
+}
+.hay-demo .gap-4 {
+	gap: 4px;
+}
+.hay-demo .gap-8 {
+	gap: 8px;
+}
+.hay-demo .spacer {
+	flex: 1;
+}
+.hay-demo .muted {
+	color: var(--demo-muted);
+}
+.hay-demo .mono {
+	font-family: var(--font-mono);
+}
+.hay-demo .tabular {
+	font-variant-numeric: tabular-nums;
+}
+
 /* ===== Reduced motion: prototype-local animations are disabled.
    The global styles.css already forces transition/animation durations to
    ~0ms under prefers-reduced-motion; this scoped rule reinforces it for the
