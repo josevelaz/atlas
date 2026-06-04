@@ -1,3 +1,4 @@
+import { Sparkles } from "lucide-solid";
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
 import { CATEGORY_META, type CategoryId, type MailRow } from "./hay-inbox-data";
@@ -21,19 +22,31 @@ export const MailList: Component<{
 	onSelect: (id: string) => void;
 }> = (props) => {
 	const meta = () => CATEGORY_META[props.category];
-	const unreadCount = () => props.rows.filter((r) => r.unread).length;
+	// Inbox-only AI nudge banner (prototype parity): count P1 unread threads.
+	const p1Count = () =>
+		props.rows.filter((r) => r.unread && r.priority === "p1").length;
 
 	return (
 		<div class="list" data-testid={`mail-list-${props.category}`}>
 			<div class="list-header">
-				<div class="col">
-					<h2>{meta().title}</h2>
-					<span class="meta">{meta().meta}</span>
-				</div>
-				<span class="meta tabular">
-					{unreadCount()} unread · {props.rows.length} total
-				</span>
+				<h2>{meta().title}</h2>
+				<span class="meta tabular">{props.rows.length}</span>
 			</div>
+
+			{/* Inbox AI banner — surfaces priority threads needing a reply. */}
+			<Show when={props.category === "inbox" && p1Count() > 0}>
+				<div class="ai-banner" data-testid="inbox-ai-banner">
+					<Sparkles size={12} stroke-width={2.5} />
+					<span>
+						{p1Count()} P1 thread{p1Count() === 1 ? "" : "s"} need
+						{p1Count() === 1 ? "s" : ""} a reply today.
+					</span>
+					<span class="spacer" />
+					<button type="button" class="ai-banner-action">
+						Sort by priority
+					</button>
+				</div>
+			</Show>
 
 			<div class="list-scroll">
 				<Show

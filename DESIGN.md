@@ -1,203 +1,274 @@
-# Hay Design System
-
-This document is the canonical reference for all design tokens, typography, spacing, shadows, borders, and motion used in the Hay application. All tokens are defined in `apps/web/src/styles.css` using Tailwind v4's `@theme` directive and mirrored in a `:root` block for guaranteed CSS custom property availability.
-
+---
+version: alpha
+name: Hay
+description: A retro, neobrutalist design system for an AI-managed email client. Hard offset shadows, heavy 2px ink borders, warm-cream paper, a single electric accent, and a typewriter/arcade type voice.
+colors:
+  primary: "#1D1F27"
+  secondary: "#6B6456"
+  tertiary: "#FACC00"
+  neutral: "#F0EBE0"
+  surface: "#FFFDF7"
+  on-surface: "#1D1F27"
+  border: "#1D1F27"
+  muted: "#6B6456"
+  muted-2: "#9A9184"
+  feed: "#FFD600"
+  paper: "#00E5A0"
+  ai: "#3D7EFF"
+  inbox: "#A78BFA"
+  error: "#FF4D50"
+typography:
+  display:
+    fontFamily: Bungee
+    fontSize: 22px
+    fontWeight: 400
+    lineHeight: 1
+    letterSpacing: -0.02em
+  headline-lg:
+    fontFamily: Bungee
+    fontSize: 22px
+    fontWeight: 400
+    lineHeight: 1.1
+    letterSpacing: -0.01em
+  headline-md:
+    fontFamily: Bungee
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 1.1
+  body-md:
+    fontFamily: Space Mono
+    fontSize: 14px
+    fontWeight: 400
+    lineHeight: 1.55
+  body-sm:
+    fontFamily: Space Mono
+    fontSize: 13px
+    fontWeight: 400
+    lineHeight: 1.35
+  label-md:
+    fontFamily: Space Mono
+    fontSize: 11px
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: 0.02em
+  label-caps:
+    fontFamily: Space Mono
+    fontSize: 10px
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: 0.08em
+  data-mono:
+    fontFamily: VT323
+    fontSize: 11px
+    fontWeight: 400
+    lineHeight: 1
+rounded:
+  none: 0px
+  sm: 4px
+  md: 5px
+  lg: 8px
+  full: 9999px
+spacing:
+  base: 8px
+  xs: 4px
+  sm: 8px
+  md: 12px
+  lg: 16px
+  xl: 20px
+  xxl: 24px
+  border-w: 2px
+elevation:
+  shadow-sm: 2px 2px 0 0 {colors.border}
+  shadow: 4px 4px 0 0 {colors.border}
+  shadow-lg: 6px 6px 0 0 {colors.border}
+components:
+  button-primary:
+    backgroundColor: "{colors.tertiary}"
+    textColor: "{colors.on-surface}"
+    rounded: "{rounded.md}"
+    padding: 0 14px
+    height: 36px
+    typography: "{typography.label-md}"
+  button-primary-hover:
+    backgroundColor: "{colors.tertiary}"
+  button-secondary:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.md}"
+    height: 36px
+  button-danger:
+    backgroundColor: "{colors.error}"
+    textColor: "{colors.on-surface}"
+    rounded: "{rounded.md}"
+  card:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.md}"
+  input:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.primary}"
+    rounded: "{rounded.md}"
+    padding: 8px 10px
+  badge:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.full}"
+    height: 22px
+    padding: 0 8px
+    typography: "{typography.label-md}"
+  nav-item-active:
+    backgroundColor: "{colors.tertiary}"
+    textColor: "{colors.on-surface}"
+    rounded: "{rounded.md}"
+  ai-surface:
+    backgroundColor: "{colors.ai}"
+    textColor: "{colors.surface}"
+    rounded: "{rounded.md}"
 ---
 
-## Approach: Tailwind v4 `@theme`
+# Hay — Design System
 
-Hay uses **Tailwind CSS v4** with the `@theme {}` directive to define design tokens. This approach:
+## Overview
 
-- Registers tokens as Tailwind utility classes (e.g., `bg-main`, `text-foreground`, `shadow-sm`)
-- Exposes tokens as CSS custom properties on `:root` / `:host`
-- Enables arbitrary-value usage: `bg-[var(--color-main)]`
+Hay is an AI-managed inbox that triages, summarizes, and extracts tasks from
+email. The interface borrows the confident, slightly mischievous energy of
+late-90s / early-2000s software and arcade UI, filtered through a modern
+neobrutalist discipline.
 
-Tokens are also mirrored in a plain `:root {}` block to guarantee availability regardless of Tailwind's utility-class tree-shaking.
+The feeling should be **tactile and engineered**: every surface is a physical
+chip stamped onto warm paper, outlined in heavy ink, and lifted by a hard,
+blur-free drop shadow. Nothing floats softly — things sit, click, and snap.
+Color is rationed: the canvas is calm warm-cream, type is near-black ink, and a
+single electric accent does the pointing. Category colors (feed, paper trail,
+AI, inbox) are loud on purpose but appear only as small coded tokens, never as
+fields.
 
----
+Voice: direct, technical, a little retro. Monospace for the running text gives
+the product a "terminal you trust" quality; the arcade display face reserves
+spectacle for names and headlines only.
 
-## Color Tokens
+## Colors
 
-### Light Mode (default)
+The palette is built on warm neutrals, ink-black structure, and a rationed set
+of saturated "coded" accents.
 
-| Token | CSS Variable | Value | Usage |
-|---|---|---|---|
-| Background | `--color-background` | `oklch(92.13% 0.0388 282.36)` | Page/app background |
-| Secondary Background | `--color-secondary-background` | `oklch(100% 0 0)` | Card/panel background |
-| Foreground | `--color-foreground` | `oklch(0% 0 0)` | Primary text |
-| Muted | `--color-muted` | `oklch(40% 0.02 282)` | Secondary/muted text |
-| Main | `--color-main` | `oklch(66.34% 0.1806 277.2)` | Primary brand color (purple-blue) |
-| Main Foreground | `--color-main-foreground` | `oklch(0% 0 0)` | Text on `main` backgrounds |
-| Border | `--color-border` | `oklch(0% 0 0)` | All borders (neobrutalist black) |
-| Feed | `--color-feed` | `#FACC00` | Feed feature accent (yellow) |
-| Paper | `--color-paper` | `#00D696` | Paper feature accent (green) |
-| Danger | `--color-danger` | `#FF4D50` | Error/destructive states (red) |
-| AI | `--color-ai` | `#0099FF` | AI feature accent (blue) |
-| Inbox | `--color-inbox` | `#7A83FF` | Inbox feature accent (indigo) |
+- **Primary / Ink (#1D1F27):** Near-black slate for all body text, headlines,
+  borders, and rings. This is the structural color of the system.
+- **Secondary / Muted (#6B6456):** Warm taupe for metadata, captions, and
+  secondary labels.
+- **Tertiary / Accent (#FACC00):** Electric yellow. The single driver of
+  primary action and active state — buttons, the selected nav item, the logo
+  chip, selected rows.
+- **Neutral / Paper (#F0EBE0):** Warm limestone-cream canvas. The base
+  background everything sits on.
+- **Surface (#FFFDF7):** Near-white warm paper for cards, inputs, messages, and
+  raised chips.
+- **Coded accents:** Each appears only as a small badge, dot, or icon tile —
+  never as a large fill. `feed #FFD600` (yellow), `paper #00E5A0` (mint),
+  `ai #3D7EFF` (electric blue, the AI's signature), `inbox #A78BFA` (lilac),
+  `error #FF4D50` (alarm red, also used for P1 priority).
 
-### Dark Mode Overrides
+A grain/noise texture is layered over the whole viewport at ~3% opacity to keep
+flat fields from feeling sterile — part of the retro character.
 
-Applied via `@media (prefers-color-scheme: dark)` on `:root`.
-
-| Token | CSS Variable | Dark Value |
-|---|---|---|
-| Background | `--color-background` | `oklch(26.58% 0.0737 283.96)` |
-| Secondary Background | `--color-secondary-background` | `oklch(20% 0 0)` |
-| Foreground | `--color-foreground` | `oklch(96% 0 0)` |
-| Muted | `--color-muted` | `oklch(75% 0.02 282)` |
-
-> Feature accent colors (`feed`, `paper`, `danger`, `ai`, `inbox`) do not change in dark mode — they are intentionally vivid in both modes.
-
-### Tailwind Utility Classes
-
-| Token | Tailwind Class Examples |
-|---|---|
-| `--color-main` | `bg-main`, `text-main`, `border-main` |
-| `--color-background` | `bg-background` |
-| `--color-foreground` | `text-foreground` |
-| `--color-feed` | `bg-feed`, `text-feed` |
-| `--color-paper` | `bg-paper`, `text-paper` |
-| `--color-danger` | `bg-danger`, `text-danger` |
-| `--color-ai` | `bg-ai`, `text-ai` |
-| `--color-inbox` | `bg-inbox`, `text-inbox` |
-
----
+A dark theme inverts the canvas to deep navy (`#1D1F27` background, `#282A35`
+surfaces, `#EEEFE9` ink) while keeping black borders and the yellow ring.
 
 ## Typography
 
-### Font Families
+Three families, each with a strict job. Never blur the roles.
 
-| Token | CSS Variable | Value | Tailwind Class |
-|---|---|---|---|
-| Sans | `--font-sans` | `"Archivo", ui-sans-serif, system-ui, sans-serif` | `font-sans` |
-| Mono | `--font-mono` | `"JetBrains Mono", "SF Mono", Menlo, monospace` | `font-mono` |
+- **Display — Bungee:** A chunky arcade marquee face. Used *only* for the logo,
+  view titles, and short headlines. Loud, never long. Set at its natural weight
+  (400) — Bungee is bold by design, so do not stack extra weight on it.
+- **Body — Space Mono:** The workhorse. All running text, mail rows, message
+  bodies, buttons, and most labels are monospace. This is what gives Hay its
+  "trustworthy terminal" texture. 14px base, 1.55 line-height for long form.
+- **Data — VT323:** A pixel/CRT mono for dense numeric and telemetry data —
+  counts, usage meters, timestamps where a retro-computer flavor is wanted.
 
-**Archivo** is loaded from Google Fonts with the following weights and styles:
-- `400` (regular)
-- `400 italic`
-- `600` (semibold)
-- `700` (bold)
-- `900` (black)
+Labels and metadata are set in uppercase Space Mono at 10–11px with positive
+letter-spacing (0.02–0.08em) to read as engineered tags rather than prose.
 
-Google Fonts link is added via `<link>` tags in `apps/web/src/routes/__root.tsx`:
-```html
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap">
-```
+## Layout
 
-### Font Weights
+A fixed three-column application shell with a full-width top bar:
 
-| Token | CSS Variable | Value | Usage |
-|---|---|---|---|
-| Base | `--font-weight-base` | `600` | Default UI text weight (semibold) |
-| Heading | `--font-weight-heading` | `900` | Headings and display text (black) |
+- **Top bar (56px):** logo chip, global search, compose, account — separated
+  from the body by a 2px ink rule.
+- **Sidebar (240px):** mail folders (Screener, Inbox, Feed, Paper Trail) and
+  assist tools (Tasks & Dates, Settings).
+- **List (380px):** the active mail list.
+- **Pane (1fr):** the open thread, with an optional 360px AI assistant rail
+  sliding in from the right.
 
-> Hay uses heavier-than-normal default weights as part of its neobrutalist aesthetic.
+Spacing follows an 8px-rooted scale (4 / 8 / 12 / 16 / 20 / 24). Columns and
+regions are divided by structural 2px ink borders rather than gaps or shadows —
+the grid itself is drawn. Internal padding is generous (12–20px) so dense
+monospace text breathes.
 
----
+## Elevation & Depth
 
-## Border & Shadow
+Depth is **physical, not atmospheric**. There are no soft, blurred shadows.
 
-### Border
+- Every raised element (button, card, message, badge stack) carries a hard
+  offset shadow: `Npx Npx 0 0 ink` with **zero blur and zero spread**, default
+  4px offset.
+- Interaction is kinetic: on hover an element nudges up-left (`translate(-1,-1)`)
+  and its shadow grows by 1px; on press it slams down into its shadow
+  (`translate(4,4)`, shadow collapses to 0) so the surface looks physically
+  depressed.
+- Tonal layering reinforces hierarchy: cream canvas → near-white surface chips.
+- The shadow offset is a tunable token (2–6px) — larger = more playful, smaller
+  = more restrained.
 
-| Token | CSS Variable | Value | Usage |
-|---|---|---|---|
-| Border Width | `--border-w` | `2px` | All component borders |
-| Border Color | `--color-border` | `oklch(0% 0 0)` | All borders (black) |
-| Radius | `--radius` | `5px` | Default border radius |
-| Radius Large | `--radius-lg` | `8px` | Larger elements (modals, cards) |
+## Shapes
 
-Usage pattern: `border-[length:var(--border-w)] border-border rounded-[var(--radius)]`
+A tight, engineered radius language.
 
-### Shadow
+- Interactive chips and surfaces use a small **5px** radius (`rounded.md`);
+  inputs, nav items, and buttons share it.
+- Larger containers (onboarding, overlays, compose) step up to **8px**
+  (`rounded.lg`).
+- Pills and dots use `full` (9999px) — reserved for badges and status dots.
+- Borders are uniformly **2px solid ink** on every bounded element. Hairline
+  details (kbd keys, dots, small tags) drop to 1.5px.
 
-Hay uses **flat offset shadows** (neobrutalist style) — no blur, solid black.
+## Components
 
-| Token | CSS Variable | Value | Usage |
-|---|---|---|---|
-| Shadow X | `--shadow-x` | `4px` | Horizontal shadow offset |
-| Shadow Y | `--shadow-y` | `4px` | Vertical shadow offset |
-| Shadow (default) | `--shadow` | `4px 4px 0px oklch(0% 0 0)` | Default component shadow |
-| Shadow Small | `--shadow-sm` | `2px 2px 0px oklch(0% 0 0)` | Compact components |
-| Shadow Large | `--shadow-lg` | `6px 6px 0px oklch(0% 0 0)` | Prominent elements |
+- **Buttons:** 2px ink border, 5px radius, hard offset shadow, 36px tall (28px
+  for `.sm`). `primary` fills with the yellow accent; `danger` fills alarm red;
+  `ghost` drops border and shadow for tertiary actions. All buttons share the
+  press-into-shadow kinetic.
+- **Cards / Messages:** surface fill, 2px ink border, 5px radius, default offset
+  shadow. No internal elevation — structure comes from border dividers.
+- **Inputs / Textareas:** surface fill, 2px ink border; on focus they lift
+  up-left and gain the offset shadow rather than changing border color.
+- **Badges & Tags:** pill (badge) or 3px-radius (tag) ink-bordered chips. Solid
+  variants carry a coded accent fill; tags and priorities use uppercase mono.
+- **Priority chips:** `P1` = error red, `P2` = feed yellow, `P3` = neutral
+  surface — small mono caps with a 1.5px border.
+- **Nav items:** transparent until active; the active item fills yellow, gains
+  an ink border and a small offset shadow. Counts ride in a mono pill.
+- **AI surfaces:** anything the AI authors (summaries, the assistant rail head,
+  screener verdicts) is keyed to electric blue `#3D7EFF` with white text, so the
+  machine's voice is always visually distinct from the user's.
+- **Kbd:** small mono key caps with a 1.5px border and 1.5px offset shadow.
 
-**Press interaction**: On click/tap, components translate by `(var(--shadow-x), var(--shadow-y))` and collapse `box-shadow` to `none`, simulating a physical press.
+## Do's and Don'ts
 
----
+- **Do** reserve the yellow accent for the single most important action or the
+  active state per region.
+- **Do** key every AI-authored surface to electric blue so the machine's voice
+  is unmistakable.
+- **Do** keep coded accents (feed/paper/ai/inbox/error) as small tokens —
+  badges, dots, icon tiles — never large fields.
+- **Do** use Bungee only for the logo and short titles; everything readable is
+  Space Mono.
+- **Don't** use blurred or soft shadows. Every shadow is a hard, blur-free
+  offset of ink.
+- **Don't** mix radii arbitrarily — 5px for chips, 8px for big containers, full
+  only for pills/dots.
+- **Don't** drop below the 2px ink border on bounded elements (1.5px is the only
+  exception, for hairline details).
+- **Don't** stack heavy font-weights on Bungee, and don't set long passages in
+  the display or pixel faces.
 
-## Motion
-
-| Token | CSS Variable | Value | Usage |
-|---|---|---|---|
-| Duration Fast | `--duration-fast` | `60ms` | Micro-interactions, icon swaps |
-| Duration Base | `--duration-base` | `120ms` | Standard transitions |
-| Ease Base | `--ease-base` | `ease` | Default easing function |
-
-### Reduced Motion
-
-A global `@media (prefers-reduced-motion: reduce)` rule overrides all transitions and animations to `0.01ms`, effectively disabling them for users who prefer reduced motion:
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
-}
-```
-
-Components using `solid-motionone` also check `window.matchMedia("(prefers-reduced-motion: reduce)").matches` on mount and set animation duration to `0` when true.
-
----
-
-## Usage Notes
-
-### Referencing Tokens in CSS
-
-```css
-/* Direct CSS variable reference */
-.my-component {
-  background-color: var(--color-main);
-  box-shadow: var(--shadow);
-  border: var(--border-w) solid var(--color-border);
-  border-radius: var(--radius);
-}
-```
-
-### Referencing Tokens in Tailwind Classes
-
-```html
-<!-- Tailwind utility classes (generated from @theme) -->
-<div class="bg-main text-main-foreground rounded-[var(--radius)]">
-  Primary button
-</div>
-
-<!-- Arbitrary values with CSS variables -->
-<div class="border-[length:var(--border-w)] border-border">
-  Bordered element
-</div>
-```
-
-### Dark Mode
-
-Dark mode is handled automatically via `@media (prefers-color-scheme: dark)`. No class toggling is needed. The four tokens that change in dark mode (`background`, `secondary-background`, `foreground`, `muted`) are overridden in the media query.
-
-### Neobrutalist Aesthetic
-
-Hay's design language is **neobrutalist**:
-- Heavy borders (2px solid black)
-- Flat offset shadows (no blur)
-- Bold typography (600–900 weight)
-- Slight rotations on badges/avatars (`transform: rotate(-1deg)`)
-- Press feedback via shadow collapse + translate on click
-
----
-
-## File Reference
-
-| File | Purpose |
-|---|---|
-| `apps/web/src/styles.css` | All `@theme` tokens, `:root` mirror, dark mode overrides, reduced-motion rule |
-| `apps/web/src/routes/__root.tsx` | Google Fonts preconnect + Archivo stylesheet links |
-| `apps/web/src/components/ui/` | Component library using these tokens |

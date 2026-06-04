@@ -19,6 +19,13 @@ desktop-first composition:
 - **Sidebar** — two sections (Triage / Workspace) of nav items with mock counts,
   category-colored dots, an **AI usage** card with a progress bar, and a
   **Replay onboarding** affordance.
+
+> Fidelity update (2026-06-04): the sidebar section labels were later corrected
+> to the prototype's **Mail / Assist**, and the colored dots replaced with the
+> prototype's **bordered colored icon chips**. The topbar gained the `v0.1 · MVP`
+> version badge, `⌘K` / `C` kbd hints, and the avatar divider; the demo accent
+> was aligned to the prototype's live yellow (`#FACC00`). See
+> `04-fidelity-PROOF.md`.
 - **Content area** — a three-pane category layout (`240px 380px 1fr`) for
   Inbox / Feed / Paper Trail (list rail + reading pane), and full-width
   alternate views (`240px 1fr`) for Screener, Tasks & Dates, and Settings.

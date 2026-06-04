@@ -29,11 +29,26 @@ export type ScreenId =
 /** The three category surfaces that render a mail list + reading pane. */
 export type CategoryId = "inbox" | "feed" | "paper";
 
+/** Which lucide-solid icon renders inside a nav item's leading chip. */
+export type NavIcon =
+	| "screener"
+	| "inbox"
+	| "feed"
+	| "paper"
+	| "tasks"
+	| "settings";
+
 export type NavItem = {
 	id: ScreenId;
 	label: string;
-	/** Accent token name (CSS var suffix) for the leading dot. */
-	dot: "inbox" | "feed" | "paper" | "main";
+	/** lucide-solid icon shown in the leading bordered chip. */
+	icon: NavIcon;
+	/**
+	 * Accent tone for the leading chip background, matching the prototype's
+	 * per-item color (`var(--danger|main|feed|paper|ai)`). `null` = no fill
+	 * (neutral surface chip), used for Settings.
+	 */
+	tone: "screener" | "inbox" | "feed" | "paper" | "tasks" | null;
 	/** Mock unread/pending count shown in the rail. Undefined = no count. */
 	count?: number;
 };
@@ -159,15 +174,27 @@ function tag(label: string, variant?: Tag["variant"]): Tag {
  * live from the local-state lists; these are the initial/default values.
  */
 export const PRIMARY_NAV: NavItem[] = [
-	{ id: "screener", label: "Screener", dot: "main", count: 4 },
-	{ id: "inbox", label: "Inbox", dot: "inbox", count: 3 },
-	{ id: "feed", label: "Feed", dot: "feed", count: 2 },
-	{ id: "paper", label: "Paper Trail", dot: "paper", count: 7 },
+	{
+		id: "screener",
+		label: "Screener",
+		icon: "screener",
+		tone: "screener",
+		count: 4,
+	},
+	{ id: "inbox", label: "Inbox", icon: "inbox", tone: "inbox", count: 3 },
+	{ id: "feed", label: "Feed", icon: "feed", tone: "feed", count: 2 },
+	{ id: "paper", label: "Paper Trail", icon: "paper", tone: "paper", count: 7 },
 ];
 
 export const SECONDARY_NAV: NavItem[] = [
-	{ id: "tasks", label: "Tasks & Dates", dot: "main", count: 5 },
-	{ id: "settings", label: "Settings", dot: "main" },
+	{
+		id: "tasks",
+		label: "Tasks & Dates",
+		icon: "tasks",
+		tone: "tasks",
+		count: 5,
+	},
+	{ id: "settings", label: "Settings", icon: "settings", tone: null },
 ];
 
 /** Human-friendly title + meta line for each category list header. */

@@ -22,11 +22,34 @@
 	--demo-surface: var(--color-secondary-background);
 	--demo-fg: var(--color-foreground);
 	--demo-muted: var(--color-muted);
-	--demo-main: var(--color-main);
+	/*
+	 * Accent presentation parity: the authoritative prototype boots with
+	 * `TWEAK_DEFAULTS.accent = "#FACC00"`, which its runtime tweak effect writes
+	 * onto `--main`. So the *live* prototype renders the HAY. chip, primary
+	 * controls, active nav, and selected mail-row in yellow — not the canonical
+	 * purple `--color-main`. We mirror that presentation locally (scoped to
+	 * `.hay-demo`) without mutating the global design token; `--color-main`
+	 * stays purple everywhere else in the app.
+	 */
+	--demo-main: var(--color-feed); /* #FACC00 — prototype's default accent */
+	/* Yellow needs black foreground text for contrast (prototype uses #000). */
+	--demo-main-fg: #000;
 	--demo-border: var(--color-border);
 	--demo-shadow: var(--shadow);
 	--demo-shadow-sm: var(--shadow-sm);
 	--demo-shadow-lg: var(--shadow-lg);
+	/*
+	 * Colored hard-shadow parity: the authoritative prototype's retro layer
+	 * (loaded after styles.css) sets `--shadow-color: var(--main)` for raised
+	 * containers in *light* mode, so cards / messages / the AI summary / the
+	 * onboarding + overlay cards / the active nav item all cast a YELLOW hard
+	 * shadow — not black. Buttons keep their black shadow. We mirror that here
+	 * with a demo-local container shadow built on the yellow accent. Offsets
+	 * stay token-driven (--shadow-x/-y) so they match the global scale.
+	 */
+	--demo-container-shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--demo-main);
+	--demo-container-shadow-sm: 2px 2px 0 0 var(--demo-main);
+	--demo-container-shadow-lg: 6px 6px 0 0 var(--demo-main);
 
 	position: relative;
 	min-height: 100dvh;
@@ -467,7 +490,8 @@
 	cursor: pointer;
 	white-space: nowrap;
 	user-select: none;
-	box-shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--demo-main);
+	/* Prototype shadows are flat solid black (--border), never accent-tinted. */
+	box-shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--demo-border);
 	transition:
 		transform var(--duration-fast) var(--ease-base),
 		box-shadow var(--duration-fast) var(--ease-base);
@@ -476,22 +500,36 @@
 .hay-demo .btn:hover {
 	transform: translate(-1px, -1px);
 	box-shadow: calc(var(--shadow-x) + 1px) calc(var(--shadow-y) + 1px) 0 0
-		var(--demo-main);
+		var(--demo-border);
 }
 
 .hay-demo .btn:active {
 	transform: translate(var(--shadow-x), var(--shadow-y));
-	box-shadow: 0 0 0 0 var(--demo-main);
+	box-shadow: 0 0 0 0 var(--demo-border);
 }
 
 .hay-demo .btn:focus-visible {
-	outline: 2px solid var(--demo-main);
+	outline: 2px solid var(--demo-border);
 	outline-offset: 2px;
 }
 
 .hay-demo .btn.primary {
+	position: relative;
 	background: var(--demo-main);
-	color: var(--color-main-foreground);
+	color: var(--demo-main-fg);
+}
+
+/* Retro layer: a tiny ✦ sticker rides the top-right corner of primary buttons. */
+.hay-demo .btn.primary::after {
+	content: "✦";
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	font-size: 8px;
+	line-height: 1;
+	color: var(--demo-main);
+	text-shadow: 0 0 4px var(--demo-main);
+	pointer-events: none;
 }
 
 .hay-demo .btn.ghost {
@@ -560,7 +598,6 @@
 	--demo-danger: var(--color-danger);
 	--demo-ai: var(--color-ai);
 	--demo-inbox: var(--color-inbox);
-	--demo-main-fg: var(--color-main-foreground);
 }
 
 /* ===== App grid ===== */
@@ -587,23 +624,50 @@
 	align-items: center;
 	gap: 12px;
 	padding: 0 16px;
-	border-bottom: var(--border-w) solid var(--demo-border);
+	/* Retro layer thickens the topbar rule to 3px. */
+	border-bottom: 3px solid var(--demo-border);
 	background: var(--demo-bg);
 	z-index: 2;
 }
 
+/*
+ * HAY. wordmark chip — the prototype's retro layer renders the logo in its
+ * chunky display face (Bungee), uppercase, with positive letter-spacing on a
+ * yellow chip. The repo ships Archivo as its only loaded face, so we use the
+ * heading face at its heaviest weight here (matching the global design system)
+ * while matching the prototype's chip geometry: 20px, +0.06em, uppercase,
+ * yellow fill, black ink, 2px border, small black offset shadow.
+ */
 .hay-demo .logo {
-	font-family: var(--font-sans);
-	font-weight: 900;
-	font-size: 22px;
-	letter-spacing: -0.02em;
+	font-family: var(--font-heading, var(--font-sans));
+	font-weight: var(--font-weight-heading);
+	font-size: 20px;
+	line-height: 1;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
 	background: var(--demo-main);
-	color: var(--demo-main-fg);
+	color: #000;
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius);
 	padding: 4px 10px;
 	box-shadow: var(--demo-shadow-sm);
 	user-select: none;
+}
+
+/* Version badge next to the wordmark (prototype "v0.1 · MVP"). */
+.hay-demo .topbar-version {
+	font-size: 11px;
+	color: var(--demo-muted);
+	margin-left: 4px;
+	white-space: nowrap;
+}
+
+/* Vertical divider before the avatar (prototype 1×24 black rule). */
+.hay-demo .topbar-divider {
+	width: 1px;
+	height: 24px;
+	background: var(--demo-border);
+	flex-shrink: 0;
 }
 
 /* Search / Ask Hay control — left-aligned label + trailing kbd hint. */
@@ -624,16 +688,22 @@
 	box-shadow: 1.5px 1.5px 0 0 var(--demo-border);
 }
 
-.hay-demo .search-control {
-	flex: 0 1 360px;
-	justify-content: flex-start;
-	gap: 8px;
-	color: var(--demo-muted);
-	font-weight: 600;
+/* Search / Ask control + Compose: small topbar buttons with a trailing kbd
+   hint, matching the prototype's right-aligned control group. */
+.hay-demo .search-control,
+.hay-demo .compose-control {
+	gap: 6px;
 }
 
-.hay-demo .search-control .kbd {
-	margin-left: auto;
+.hay-demo .search-control .kbd,
+.hay-demo .compose-control .kbd {
+	margin-left: 6px;
+}
+
+/* kbd hint sitting on the yellow primary Compose button: invert to the page
+   background so it stays legible against the accent (prototype parity). */
+.hay-demo .kbd-on-accent {
+	background: var(--demo-bg);
 }
 
 /* ===== Avatar chip ===== */
@@ -690,10 +760,13 @@
 	overflow-y: auto;
 }
 
+/* Sidebar section labels (Mail / Assist) — prototype renders these as wide
+   tracked mono caps; the retro layer pushes tracking to 0.12em. */
 .hay-demo .section-title {
-	font-size: 10px;
-	font-weight: 800;
-	letter-spacing: 0.08em;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
 	text-transform: uppercase;
 	color: var(--demo-muted);
 	padding: 12px 10px 4px;
@@ -725,7 +798,8 @@
 	background: var(--demo-main);
 	color: var(--demo-main-fg);
 	border-color: var(--demo-border);
-	box-shadow: var(--demo-shadow-sm);
+	/* Retro layer: active nav casts a 3px yellow hard shadow. */
+	box-shadow: 3px 3px 0 0 var(--demo-main);
 }
 
 .hay-demo .nav-item:focus-visible {
@@ -733,35 +807,48 @@
 	outline-offset: 2px;
 }
 
-.hay-demo .nav-item .dot {
-	width: 10px;
-	height: 10px;
-	border-radius: 999px;
-	border: 1.5px solid var(--demo-border);
-	justify-self: center;
-	background: var(--demo-surface);
+/* Bordered colored icon chip (prototype's 28×28 nav glyph tile). Each item
+   carries a tone fill; the active row swaps the fill to the page background so
+   the dark icon reads against the accent-highlighted row. */
+.hay-demo .nav-item .nav-chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	color: #000;
+	flex-shrink: 0;
 }
 
-.hay-demo .nav-item .dot.dot-inbox {
-	background: var(--demo-inbox);
+.hay-demo .nav-item .nav-chip.tone-screener {
+	background: var(--demo-danger);
 }
-.hay-demo .nav-item .dot.dot-feed {
-	background: var(--demo-feed);
-}
-.hay-demo .nav-item .dot.dot-paper {
-	background: var(--demo-paper);
-}
-.hay-demo .nav-item .dot.dot-main {
+.hay-demo .nav-item .nav-chip.tone-inbox {
 	background: var(--demo-main);
 }
+.hay-demo .nav-item .nav-chip.tone-feed {
+	background: var(--demo-feed);
+}
+.hay-demo .nav-item .nav-chip.tone-paper {
+	background: var(--demo-paper);
+}
+.hay-demo .nav-item .nav-chip.tone-tasks {
+	background: var(--demo-ai);
+	color: #fff;
+}
+.hay-demo .nav-item .nav-chip.tone-none {
+	background: var(--demo-surface);
+	color: var(--demo-fg);
+}
 
-/* Active rows render the dot solid black, matching the prototype. Placed
-   after the dot-* color classes so it wins on equal-specificity cascade. */
-.hay-demo .nav-item.active .dot.dot-inbox,
-.hay-demo .nav-item.active .dot.dot-feed,
-.hay-demo .nav-item.active .dot.dot-paper,
-.hay-demo .nav-item.active .dot.dot-main {
-	background: #000;
+/* Active row: chip fill becomes the page background and the icon goes black,
+   matching the prototype's `background: var(--background)` active treatment.
+   Placed after the tone-* classes so it wins the equal-specificity cascade. */
+.hay-demo .nav-item.active .nav-chip {
+	background: var(--demo-bg);
+	color: #000;
 }
 
 .hay-demo .nav-item .count {
@@ -780,14 +867,20 @@
 	background: var(--demo-bg);
 }
 
-/* ===== AI usage card ===== */
+/* ===== AI usage card =====
+ * Prototype parity: the usage card is an electric-blue AI surface with white
+ * text — a sparkle + "AI USAGE" caps label, a translucent-white meter, and a
+ * mono "34/100 monthly · Free tier" footer. (The prior surface/percentage
+ * treatment did not match the prototype's AI-keyed card.)
+ */
 .hay-demo .ai-usage {
 	margin-top: 12px;
-	padding: 12px;
+	padding: 10px;
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	background: var(--demo-surface);
+	gap: 4px;
+	background: var(--demo-ai);
+	color: #fff;
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius);
 	box-shadow: var(--demo-shadow-sm);
@@ -796,37 +889,56 @@
 .hay-demo .ai-usage-head {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 6px;
+	margin-bottom: 4px;
 	font-weight: 800;
-	font-size: 13px;
-	color: var(--demo-fg);
+	font-size: 10px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #fff;
+	white-space: nowrap;
 }
 
 .hay-demo .ai-usage-bar {
-	height: 10px;
-	border: 1.5px solid var(--demo-border);
-	border-radius: 999px;
-	background: var(--demo-bg);
+	height: 6px;
+	border-radius: 2px;
+	background: rgba(255, 255, 255, 0.3);
 	overflow: hidden;
+	margin-top: 4px;
 }
 
 .hay-demo .ai-usage-bar > span {
 	display: block;
 	height: 100%;
-	background: var(--demo-ai);
-	border-right: 1.5px solid var(--demo-border);
+	background: #fff;
 }
 
 .hay-demo .ai-usage-meta {
-	font-size: 11px;
+	font-family: var(--font-mono);
+	font-size: 10px;
+	margin-top: 4px;
+	opacity: 0.85;
+	color: #fff;
+	white-space: nowrap;
+}
+
+/* Replay onboarding — a borderless sidebar control (prototype parity): it
+   reuses the .nav-item grid (28px glyph | label | count) but stays transparent
+   with a muted label and an unbordered user glyph. */
+.hay-demo .replay-shell {
+	margin-top: 4px;
+	font-size: 13px;
 	color: var(--demo-muted);
 }
 
-.hay-demo .replay-shell {
-	margin-top: 8px;
-	justify-content: flex-start;
-	font-size: 13px;
+.hay-demo .replay-shell .replay-glyph {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
 	color: var(--demo-muted);
+	flex-shrink: 0;
 }
 
 /* ===== List column (Inbox / Feed / Paper Trail) ===== */
@@ -841,18 +953,22 @@
 
 .hay-demo .list-header {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 	justify-content: space-between;
 	padding: 14px 16px 10px;
 	border-bottom: var(--border-w) solid var(--demo-border);
 	gap: 8px;
 }
 
+/* Prototype retro layer renders list titles in the display face, uppercase,
+   18px with +0.04em tracking. */
 .hay-demo .list-header h2 {
+	font-family: var(--font-heading, var(--font-sans));
 	font-weight: var(--font-weight-heading);
-	font-size: 22px;
+	font-size: 18px;
 	color: var(--demo-fg);
-	letter-spacing: -0.01em;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
 }
 
 .hay-demo .list-header .meta {
@@ -867,6 +983,43 @@
 	min-height: 0;
 }
 
+/* ===== Inbox AI banner (prototype priority nudge) ===== */
+.hay-demo .ai-banner {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 16px;
+	background: var(--demo-ai);
+	color: #fff;
+	border-bottom: var(--border-w) solid var(--demo-border);
+	font-size: 12px;
+	font-weight: 700;
+}
+
+.hay-demo .ai-banner-action {
+	height: 22px;
+	padding: 0 8px;
+	border: 1.5px solid #000;
+	border-radius: var(--radius);
+	background: #fff;
+	color: #000;
+	font-family: var(--font-sans);
+	font-weight: 700;
+	font-size: 11px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: transform var(--duration-fast) var(--ease-base);
+}
+
+.hay-demo .ai-banner-action:hover {
+	transform: translate(-1px, -1px);
+}
+
+.hay-demo .ai-banner-action:focus-visible {
+	outline: 2px solid #000;
+	outline-offset: 2px;
+}
+
 /* ===== Mail row ===== */
 .hay-demo .mail-row {
 	display: grid;
@@ -874,7 +1027,8 @@
 	gap: 10px;
 	padding: 12px 16px;
 	border: 0;
-	border-bottom: var(--border-w) solid var(--demo-border);
+	/* Retro layer: dashed inter-row separators (forum vibe); last row solid. */
+	border-bottom: var(--border-w) dashed rgba(128, 128, 128, 0.3);
 	cursor: pointer;
 	background: var(--demo-bg);
 	color: var(--demo-fg);
@@ -882,6 +1036,11 @@
 	text-align: left;
 	width: 100%;
 	font: inherit;
+}
+
+.hay-demo .mail-row:last-child {
+	border-bottom-style: solid;
+	border-bottom-color: var(--demo-border);
 }
 
 .hay-demo .mail-row:hover {
@@ -1050,7 +1209,8 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 12px 20px;
-	border-bottom: var(--border-w) solid var(--demo-border);
+	/* Retro layer thickens the thread toolbar rule to 3px. */
+	border-bottom: 3px solid var(--demo-border);
 	gap: 8px;
 }
 
@@ -1078,69 +1238,38 @@
 	background: var(--demo-bg);
 }
 
-.hay-demo .thread-toolbar {
-	border-bottom-width: 3px;
-	align-items: flex-start;
+/* Vertical divider inside the thread toolbar (Archive·Trash | Set aside…). */
+.hay-demo .thread-toolbar-divider {
+	width: 1px;
+	height: 20px;
+	background: var(--demo-border);
+	flex-shrink: 0;
+}
+
+/* Subject heading + priority/tags row at the top of the thread body. */
+.hay-demo .thread-heading {
+	margin-bottom: 18px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
 }
 
 .hay-demo .thread-subject {
 	font-weight: var(--font-weight-heading);
-	font-size: 18px;
+	font-size: 26px;
+	line-height: 1.2;
 	color: var(--demo-fg);
 	letter-spacing: -0.01em;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
-.hay-demo .thread-actions {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	flex-shrink: 0;
+.hay-demo .thread-heading .row-tags {
+	flex-wrap: wrap;
 }
 
-.hay-demo .thread-act {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 6px;
-	height: 32px;
-	min-width: 32px;
-	padding: 0 8px;
-	border: var(--border-w) solid var(--demo-border);
-	border-radius: var(--radius);
-	background: var(--demo-surface);
-	color: var(--demo-fg);
-	font-family: var(--font-sans);
-	font-weight: 700;
-	font-size: 13px;
-	cursor: pointer;
-	box-shadow: var(--demo-shadow-sm);
-	transition:
-		transform var(--duration-fast) var(--ease-base),
-		box-shadow var(--duration-fast) var(--ease-base);
-}
-
-.hay-demo .thread-act:hover {
-	transform: translate(-1px, -1px);
-	box-shadow: 3px 3px 0 0 var(--demo-border);
-}
-
-.hay-demo .thread-act:active {
-	transform: translate(1px, 1px);
-	box-shadow: 0 0 0 0 var(--demo-border);
-}
-
-.hay-demo .thread-act:focus-visible {
-	outline: 2px solid var(--demo-main);
-	outline-offset: 2px;
-}
-
-.hay-demo .thread-act.primary {
-	background: var(--demo-main);
-	color: var(--demo-main-fg);
-	box-shadow: 2px 2px 0 0 var(--demo-border);
+/* Trailing reply action row under the message stack. */
+.hay-demo .thread-reply-row {
+	margin-top: 18px;
+	flex-wrap: wrap;
 }
 
 /* ===== AI summary block ===== */
@@ -1149,7 +1278,7 @@
 	color: #fff;
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius);
-	box-shadow: var(--demo-shadow);
+	box-shadow: var(--demo-container-shadow);
 	margin-bottom: 16px;
 	overflow: hidden;
 }
@@ -1173,6 +1302,17 @@
 	opacity: 0.8;
 }
 
+/* Right-aligned "N messages · N tasks · N date" count on the AI head. */
+.hay-demo .ai-summary .ai-summary-meta {
+	margin-left: auto;
+	font-weight: 600;
+	font-size: 11px;
+	letter-spacing: 0;
+	text-transform: none;
+	opacity: 0.85;
+	font-family: var(--font-mono);
+}
+
 .hay-demo .ai-summary .body {
 	padding: 14px 16px;
 	background: #fff;
@@ -1189,6 +1329,22 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+}
+
+/* "EXTRACTED" mono caption above the task/date list. */
+.hay-demo .ai-summary .extracted-label {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--demo-muted);
+}
+
+/* Confirm tasks / Add to Calendar affordances under the extracted list. */
+.hay-demo .ai-summary .extracted-actions {
+	margin-top: 4px;
+	flex-wrap: wrap;
 }
 
 .hay-demo .extract-item {
@@ -1235,7 +1391,7 @@
 	background: var(--demo-surface);
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius);
-	box-shadow: var(--demo-shadow);
+	box-shadow: var(--demo-container-shadow);
 	margin-bottom: 16px;
 }
 
@@ -1286,10 +1442,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.hay-demo .thread-act {
+	.hay-demo .ai-banner-action {
 		transition: none;
 	}
-	.hay-demo .thread-act:hover {
+	.hay-demo .ai-banner-action:hover {
 		transform: none;
 	}
 }
@@ -1350,7 +1506,7 @@
 	background: var(--demo-surface);
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius-lg);
-	box-shadow: var(--demo-shadow-lg);
+	box-shadow: var(--demo-container-shadow-lg);
 	margin-bottom: 18px;
 	overflow: hidden;
 }
@@ -1493,7 +1649,7 @@
 	background: var(--demo-surface);
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius);
-	box-shadow: var(--demo-shadow);
+	box-shadow: var(--demo-container-shadow);
 	padding: 12px 14px;
 	margin-bottom: 12px;
 	color: var(--demo-fg);
@@ -1522,7 +1678,7 @@
 	background: var(--demo-surface);
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius);
-	box-shadow: var(--demo-shadow);
+	box-shadow: var(--demo-container-shadow);
 	overflow: hidden;
 }
 
@@ -1588,11 +1744,11 @@
 }
 .hay-demo .btn.sm:hover {
 	transform: translate(-1px, -1px);
-	box-shadow: 3px 3px 0 0 var(--demo-main);
+	box-shadow: 3px 3px 0 0 var(--demo-border);
 }
 .hay-demo .btn.sm:active {
 	transform: translate(2px, 2px);
-	box-shadow: 0 0 0 0 var(--demo-main);
+	box-shadow: 0 0 0 0 var(--demo-border);
 }
 .hay-demo .btn.icon {
 	width: 36px;
@@ -1610,7 +1766,8 @@
 	background: var(--demo-surface);
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius);
-	box-shadow: var(--demo-shadow);
+	/* Retro layer: raised containers cast a yellow hard shadow in light mode. */
+	box-shadow: var(--demo-container-shadow);
 }
 
 /* ===== Badge (prototype .badge) ===== */
@@ -1703,7 +1860,7 @@
 	background: var(--demo-surface);
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius-lg);
-	box-shadow: var(--demo-shadow-lg);
+	box-shadow: var(--demo-container-shadow-lg);
 	width: 100%;
 	max-width: 720px;
 	max-height: 86vh;
@@ -1796,7 +1953,7 @@
 	background: var(--demo-bg);
 	border: var(--border-w) solid var(--demo-border);
 	border-radius: var(--radius-lg);
-	box-shadow: var(--demo-shadow-lg);
+	box-shadow: var(--demo-container-shadow-lg);
 	width: 100%;
 	max-width: 720px;
 	max-height: 90vh;

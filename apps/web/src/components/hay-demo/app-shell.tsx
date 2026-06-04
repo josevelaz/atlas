@@ -1,4 +1,16 @@
-import { PenLine, RotateCcw, Search } from "lucide-solid";
+import {
+	Inbox,
+	ListChecks,
+	ListFilter,
+	type LucideProps,
+	Newspaper,
+	PenLine,
+	Receipt,
+	Search,
+	Settings,
+	Sparkles,
+	User,
+} from "lucide-solid";
 import type { Component } from "solid-js";
 import {
 	createMemo,
@@ -18,6 +30,7 @@ import {
 	DATE_CARDS,
 	MAIL_ROWS,
 	type MailRow,
+	type NavIcon,
 	type NavItem,
 	PRIMARY_NAV,
 	SCREENER_ITEMS,
@@ -114,6 +127,20 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 	const [replyTo, setReplyTo] = createSignal<string | undefined>(undefined);
 	const [assistantOpen, setAssistantOpen] = createSignal(false);
 
+	// ===== Set aside / Reply later toggles — local/demo-only, keyed by row id
+	// so the toggle state persists per-thread across re-selection (prototype
+	// parity). No mail is actually moved or scheduled.
+	const [setAsideSet, setSetAsideSet] = createSignal<Record<string, boolean>>(
+		{},
+	);
+	const [replyLaterSet, setReplyLaterSet] = createSignal<
+		Record<string, boolean>
+	>({});
+	const toggleSetAside = (id: string) =>
+		setSetAsideSet((s) => ({ ...s, [id]: !s[id] }));
+	const toggleReplyLater = (id: string) =>
+		setReplyLaterSet((s) => ({ ...s, [id]: !s[id] }));
+
 	// Open the Compose overlay as a reply to the selected thread's sender.
 	const replyToSelected = () => {
 		setReplyTo(selectedRow()?.address);
@@ -194,22 +221,42 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 		}
 	};
 
+	// Map a nav icon name onto its lucide-solid component. The prototype hand-
+	// rolled equivalent stroke icons; these are the closest lucide matches:
+	// screener → Filter (magnifier + crosshair), feed → Newspaper, paper →
+	// Receipt, tasks → ListChecks.
+	const NAV_ICONS: Record<NavIcon, Component<LucideProps>> = {
+		screener: ListFilter,
+		inbox: Inbox,
+		feed: Newspaper,
+		paper: Receipt,
+		tasks: ListChecks,
+		settings: Settings,
+	};
+
 	const NavRow: Component<{ item: NavItem }> = (p) => {
 		const count = () => navCount(p.item.id);
+		const active = () => screen() === p.item.id;
+		const IconCmp = NAV_ICONS[p.item.icon];
 		return (
 			<button
 				type="button"
 				class="nav-item"
-				classList={{ active: screen() === p.item.id }}
+				classList={{ active: active() }}
 				data-testid={`nav-${p.item.id}`}
-				aria-current={screen() === p.item.id ? "page" : undefined}
+				aria-current={active() ? "page" : undefined}
 				onClick={() => setScreen(p.item.id)}
 			>
 				<span
-					class="dot"
-					classList={{ [`dot-${p.item.dot}`]: true }}
+					class="nav-chip"
+					classList={{
+						[`tone-${p.item.tone}`]: p.item.tone !== null,
+						"tone-none": p.item.tone === null,
+					}}
 					aria-hidden="true"
-				/>
+				>
+					<IconCmp size={15} stroke-width={2.5} />
+				</span>
 				<span>{p.item.label}</span>
 				<Show when={count() !== undefined && (count() as number) > 0}>
 					<span class="count tabular">{count()}</span>
@@ -228,29 +275,34 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 			{/* ===== Topbar ===== */}
 			<header class="topbar">
 				<span class="logo">HAY.</span>
-				<button
-					type="button"
-					class="btn search-control"
-					data-testid="search-ask"
-					onClick={() => setAssistantOpen(true)}
-				>
-					<Search size={16} stroke-width={2.5} />
-					<span>Search or ask Hay…</span>
-					<span class="kbd">/</span>
-				</button>
+				<span class="topbar-version mono" aria-hidden="true">
+					v0.1 · MVP
+				</span>
 				<span class="spacer" />
 				<button
 					type="button"
-					class="btn primary"
+					class="btn sm search-control"
+					data-testid="search-ask"
+					onClick={() => setAssistantOpen(true)}
+				>
+					<Search size={14} stroke-width={2.5} />
+					<span>Search or ask</span>
+					<span class="kbd">⌘K</span>
+				</button>
+				<button
+					type="button"
+					class="btn sm primary compose-control"
 					data-testid="compose"
 					onClick={() => {
 						setReplyTo(undefined);
 						setComposeOpen(true);
 					}}
 				>
-					<PenLine size={16} stroke-width={2.5} />
+					<PenLine size={14} stroke-width={2.5} />
 					<span>Compose</span>
+					<span class="kbd kbd-on-accent">C</span>
 				</button>
+				<span class="topbar-divider" aria-hidden="true" />
 				<button
 					type="button"
 					class="avatar avatar-btn"
@@ -263,19 +315,19 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 
 			{/* ===== Sidebar ===== */}
 			<aside class="sidebar" data-testid="sidebar">
-				<span class="section-title">Triage</span>
+				<span class="section-title">Mail</span>
 				<For each={PRIMARY_NAV}>{(item) => <NavRow item={item} />}</For>
 
-				<span class="section-title">Workspace</span>
+				<span class="section-title">Assist</span>
 				<For each={SECONDARY_NAV}>{(item) => <NavRow item={item} />}</For>
 
 				<span class="spacer" />
 
-				{/* AI usage card */}
-				<div class="ai-usage card" data-testid="ai-usage">
+				{/* AI usage card — electric-blue AI surface (prototype parity). */}
+				<div class="ai-usage" data-testid="ai-usage">
 					<div class="ai-usage-head">
+						<Sparkles size={12} stroke-width={2.5} aria-hidden="true" />
 						<span>AI usage</span>
-						<span class="mono tabular">{AI_USAGE.pct}%</span>
 					</div>
 					<div
 						class="ai-usage-bar"
@@ -287,19 +339,22 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 					>
 						<span style={{ width: `${AI_USAGE.pct}%` }} />
 					</div>
-					<span class="ai-usage-meta mono tabular">
+					<span class="ai-usage-meta tabular">
 						{AI_USAGE.used}/{AI_USAGE.limit} monthly · {AI_USAGE.tier}
 					</span>
 				</div>
 
-				{/* Replay onboarding affordance */}
+				{/* Replay onboarding affordance — rendered as a borderless nav-item
+				    with a user glyph, matching the prototype's sidebar control. */}
 				<button
 					type="button"
-					class="btn ghost replay-shell"
+					class="nav-item replay-shell"
 					data-testid="replay-onboarding"
 					onClick={() => props.onReplayOnboarding()}
 				>
-					<RotateCcw size={14} stroke-width={2.5} />
+					<span class="replay-glyph" aria-hidden="true">
+						<User size={15} stroke-width={2} />
+					</span>
 					<span>Replay onboarding</span>
 				</button>
 			</aside>
@@ -340,7 +395,16 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 									</div>
 								}
 							>
-								{(row) => <ThreadView row={row()} onReply={replyToSelected} />}
+								{(row) => (
+									<ThreadView
+										row={row()}
+										onReply={replyToSelected}
+										setAside={!!setAsideSet()[row().id]}
+										replyLater={!!replyLaterSet()[row().id]}
+										onToggleSetAside={() => toggleSetAside(row().id)}
+										onToggleReplyLater={() => toggleReplyLater(row().id)}
+									/>
+								)}
 							</Show>
 						</section>
 					</>
