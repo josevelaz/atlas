@@ -55,7 +55,15 @@ export async function startDesktopAuth(
 		// Step 2: Set up the deep-link listener BEFORE opening the browser to
 		// eliminate the race condition where a fast callback arrives before
 		// listen() is registered.
-		const { listen } = await import("@tauri-apps/api/event");
+		// The module specifier is built at runtime and marked @vite-ignore so
+		// Vite's dev-time import-analysis does not try to resolve this
+		// desktop-only dependency in the web build (it is externalized for
+		// production in vite.config.ts and never reached when isDesktop() is
+		// false).
+		const tauriEventModule = "@tauri-apps/api/event";
+		const { listen } = (await import(
+			/* @vite-ignore */ tauriEventModule
+		)) as typeof import("@tauri-apps/api/event");
 
 		await new Promise<void>((resolve, reject) => {
 			let unlisten: (() => void) | null = null;
@@ -112,8 +120,15 @@ export async function startDesktopAuth(
 				unlisten = fn;
 
 				// Step 3: Open the URL in the system browser AFTER listener is ready
-				// Externalized in vite.config.ts — only exists at runtime in Tauri
-				import("@tauri-apps/plugin-opener")
+				// Externalized in vite.config.ts — only exists at runtime in Tauri.
+				// Runtime specifier + @vite-ignore keeps dev import-analysis from
+				// resolving this desktop-only dependency in the web build.
+				const tauriOpenerModule = "@tauri-apps/plugin-opener";
+				(
+					import(/* @vite-ignore */ tauriOpenerModule) as Promise<
+						typeof import("@tauri-apps/plugin-opener")
+					>
+				)
 					.then(({ open }) => open(authUrl))
 					.catch(reject);
 			});
