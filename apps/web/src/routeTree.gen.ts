@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DevHayInboxRouteImport } from './routes/dev/hay-inbox'
 import { Route as AuthSignUpRouteImport } from './routes/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './routes/auth/sign-in'
 import { Route as AuthCompleteRouteImport } from './routes/auth/complete'
@@ -23,6 +24,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevHayInboxRoute = DevHayInboxRouteImport.update({
+  id: '/dev/hay-inbox',
+  path: '/dev/hay-inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthSignUpRoute = AuthSignUpRouteImport.update({
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/auth/complete': typeof AuthCompleteRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/dev/hay-inbox': typeof DevHayInboxRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/auth/complete': typeof AuthCompleteRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/dev/hay-inbox': typeof DevHayInboxRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   '/auth/complete': typeof AuthCompleteRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
+  '/dev/hay-inbox': typeof DevHayInboxRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,8 +80,15 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/dev/hay-inbox'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/onboarding' | '/auth/complete' | '/auth/sign-in' | '/auth/sign-up'
+  to:
+    | '/'
+    | '/onboarding'
+    | '/auth/complete'
+    | '/auth/sign-in'
+    | '/auth/sign-up'
+    | '/dev/hay-inbox'
   id:
     | '__root__'
     | '/'
@@ -80,6 +96,7 @@ export interface FileRouteTypes {
     | '/auth/complete'
     | '/auth/sign-in'
     | '/auth/sign-up'
+    | '/dev/hay-inbox'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +105,7 @@ export interface RootRouteChildren {
   AuthCompleteRoute: typeof AuthCompleteRoute
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
+  DevHayInboxRoute: typeof DevHayInboxRoute
 }
 
 declare module '@tanstack/solid-router' {
@@ -104,6 +122,13 @@ declare module '@tanstack/solid-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dev/hay-inbox': {
+      id: '/dev/hay-inbox'
+      path: '/dev/hay-inbox'
+      fullPath: '/dev/hay-inbox'
+      preLoaderRoute: typeof DevHayInboxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/sign-up': {
@@ -136,16 +161,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthCompleteRoute: AuthCompleteRoute,
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
+  DevHayInboxRoute: DevHayInboxRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/solid-start'
-declare module '@tanstack/solid-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

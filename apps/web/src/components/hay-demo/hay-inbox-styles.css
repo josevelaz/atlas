@@ -1,0 +1,304 @@
+/*
+ * hay-inbox-styles.css — Route-local fidelity styles for the /dev/hay-inbox demo.
+ *
+ * These styles recreate prototype-specific neobrutalist treatments from
+ * docs/prototype/hay-inbox-prototype.html. Everything is scoped under the
+ * `.hay-demo` root class so the prototype fidelity work CANNOT leak into the
+ * rest of apps/web. The global Hay design tokens in apps/web/src/styles.css
+ * stay the canonical source of truth; this file only consumes those tokens
+ * (--color-*, --shadow*, --border-w, --radius*, etc.) plus a few demo-local
+ * derived variables.
+ *
+ * Typography: the repo uses Archivo (DESIGN.md). The prototype used DM Sans /
+ * VT323. To preserve fidelity feel without changing the global design system,
+ * we keep Archivo as the base face and introduce a demo-local mono accent for
+ * the "pixel" labels the prototype rendered in VT323.
+ */
+
+.hay-demo {
+	/* Map demo-local aliases onto the global Hay tokens so the prototype CSS
+	   reads naturally while still being driven by the canonical token set. */
+	--demo-bg: var(--color-background);
+	--demo-surface: var(--color-secondary-background);
+	--demo-fg: var(--color-foreground);
+	--demo-muted: var(--color-muted);
+	--demo-main: var(--color-main);
+	--demo-border: var(--color-border);
+	--demo-shadow: var(--shadow);
+	--demo-shadow-sm: var(--shadow-sm);
+	--demo-shadow-lg: var(--shadow-lg);
+
+	position: relative;
+	min-height: 100dvh;
+	background: var(--demo-bg);
+	color: var(--demo-fg);
+	font-family: var(--font-sans);
+	font-weight: var(--font-weight-base);
+}
+
+/* ===== Onboarding overlay (recreated from prototype .onboarding) ===== */
+.hay-demo .onboarding {
+	position: fixed;
+	inset: 0;
+	z-index: 200;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	background-color: var(--demo-bg);
+	/* Prototype dotted backdrop */
+	background-image: radial-gradient(
+		circle,
+		rgba(128, 128, 128, 0.06) 1px,
+		transparent 1px
+	);
+	background-size: 24px 24px;
+}
+
+.hay-demo .onboarding-card {
+	width: 720px;
+	max-width: calc(100vw - 48px);
+	border: 3px solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	background: var(--demo-surface);
+	overflow: hidden;
+	box-shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--demo-main);
+}
+
+.hay-demo .onboarding-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 18px;
+	border-bottom: var(--border-w) solid var(--demo-border);
+}
+
+.hay-demo .onboarding-head .wordmark {
+	font-weight: var(--font-weight-heading);
+	font-size: 20px;
+	letter-spacing: 0.04em;
+	color: var(--demo-fg);
+}
+
+/* "Step N of M" pixel label — prototype rendered these in VT323 mono */
+.hay-demo .mono-label {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--demo-muted);
+}
+
+.hay-demo .onboarding-body {
+	padding: 28px;
+	min-height: 320px;
+}
+
+.hay-demo .onboarding-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 18px;
+	border-top: var(--border-w) solid var(--demo-border);
+	background: var(--demo-bg);
+}
+
+/* ===== Step indicator dots (prototype .step-dot) ===== */
+.hay-demo .step-dots {
+	display: flex;
+	gap: 6px;
+}
+
+.hay-demo .step-dot {
+	width: 28px;
+	height: 8px;
+	border: 1.5px solid var(--demo-border);
+	border-radius: 2px;
+	background: var(--demo-surface);
+	transition: background var(--duration-base) var(--ease-base);
+}
+
+.hay-demo .step-dot.active {
+	background: var(--demo-main);
+}
+
+/* ===== Onboarding step content ===== */
+.hay-demo .ob-step {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.hay-demo .ob-step .ob-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	box-shadow: var(--demo-shadow-sm);
+	background: var(--demo-surface);
+}
+
+.hay-demo .ob-step h2 {
+	font-weight: var(--font-weight-heading);
+	font-size: 26px;
+	line-height: 1.1;
+	color: var(--demo-fg);
+}
+
+.hay-demo .ob-step p {
+	font-size: 15px;
+	line-height: 1.5;
+	color: var(--demo-muted);
+	max-width: 56ch;
+}
+
+/* Preview visual frame inside an onboarding step */
+.hay-demo .ob-preview {
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	box-shadow: var(--demo-shadow-sm);
+	background: var(--demo-bg);
+	padding: 16px;
+}
+
+.hay-demo .ob-preview-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	background: var(--demo-surface);
+}
+
+.hay-demo .ob-preview-row + .ob-preview-row {
+	margin-top: 8px;
+}
+
+.hay-demo .ob-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	border: 1.5px solid var(--demo-border);
+	border-radius: 999px;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	background: var(--demo-surface);
+	color: var(--demo-fg);
+}
+
+/* ===== Neobrutalist buttons (prototype .btn) ===== */
+.hay-demo .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 36px;
+	padding: 0 14px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius);
+	background: var(--demo-surface);
+	color: var(--demo-fg);
+	font-family: var(--font-sans);
+	font-weight: 700;
+	font-size: 14px;
+	cursor: pointer;
+	white-space: nowrap;
+	user-select: none;
+	box-shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--demo-main);
+	transition:
+		transform var(--duration-fast) var(--ease-base),
+		box-shadow var(--duration-fast) var(--ease-base);
+}
+
+.hay-demo .btn:hover {
+	transform: translate(-1px, -1px);
+	box-shadow: calc(var(--shadow-x) + 1px) calc(var(--shadow-y) + 1px) 0 0
+		var(--demo-main);
+}
+
+.hay-demo .btn:active {
+	transform: translate(var(--shadow-x), var(--shadow-y));
+	box-shadow: 0 0 0 0 var(--demo-main);
+}
+
+.hay-demo .btn:focus-visible {
+	outline: 2px solid var(--demo-main);
+	outline-offset: 2px;
+}
+
+.hay-demo .btn.primary {
+	background: var(--demo-main);
+	color: var(--color-main-foreground);
+}
+
+.hay-demo .btn.ghost {
+	background: transparent;
+	border-color: transparent;
+	box-shadow: none;
+}
+
+.hay-demo .btn.ghost:hover {
+	background: rgba(0, 0, 0, 0.06);
+	transform: none;
+	box-shadow: none;
+}
+
+.hay-demo .btn[disabled] {
+	opacity: 0.5;
+	cursor: not-allowed;
+	pointer-events: none;
+}
+
+/* ===== Main shell handoff surface ===== */
+.hay-demo .shell-placeholder {
+	display: flex;
+	min-height: 100dvh;
+	align-items: center;
+	justify-content: center;
+	padding: 32px;
+}
+
+.hay-demo .shell-card {
+	width: 100%;
+	max-width: 560px;
+	border: var(--border-w) solid var(--demo-border);
+	border-radius: var(--radius-lg);
+	background: var(--demo-surface);
+	box-shadow: var(--demo-shadow-lg);
+	padding: 32px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.hay-demo .shell-card h1 {
+	font-weight: var(--font-weight-heading);
+	font-size: 28px;
+	color: var(--demo-fg);
+}
+
+.hay-demo .shell-card p {
+	font-size: 15px;
+	line-height: 1.5;
+	color: var(--demo-muted);
+}
+
+/* ===== Reduced motion: prototype-local animations are disabled.
+   The global styles.css already forces transition/animation durations to
+   ~0ms under prefers-reduced-motion; this scoped rule reinforces it for the
+   demo's interactive button/step affordances. ===== */
+@media (prefers-reduced-motion: reduce) {
+	.hay-demo .btn,
+	.hay-demo .step-dot {
+		transition: none;
+	}
+	.hay-demo .btn:hover {
+		transform: none;
+	}
+}
