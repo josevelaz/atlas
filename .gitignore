@@ -39,6 +39,10 @@ coverage/
 *.db
 *.db-shm
 *.db-wal
+# Local libSQL dev database artifacts (extensionless, created by `bun run dev`)
+apps/server/dev
+apps/server/dev-wal
+apps/server/dev-shm
 
 # Temporary files
 .tmp/

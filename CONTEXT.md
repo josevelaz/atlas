@@ -78,7 +78,7 @@ A person who authenticates to Atlas and owns the app-level data, preferences, an
 
 ### Connected Account
 
-A third-party email account that the user authorizes the product to access. A Connected Account is specifically an email/mailbox concept, not a generic integration record for every external service. The product is a sync-only email client: it organizes mail from connected accounts rather than issuing or hosting new email addresses. The user can send replies and compose new emails through a connected account, so outgoing mail appears to come from the user's existing email address.
+A third-party email account that the user authorizes the product to access. A Connected Account is specifically an email/mailbox concept, not a generic integration record for every external service. The product is a sync-only email client: it organizes mail from connected accounts rather than issuing or hosting new email addresses. The user can send replies and compose new emails through a connected account, so outgoing mail appears to come from the user's existing email address. A User may connect a mailbox whose email address differs from the email identity they used to sign in to Atlas, but a single external mailbox belongs to at most one Atlas User.
 
 ### Sync State
 

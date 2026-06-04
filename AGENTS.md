@@ -5,8 +5,10 @@ not error and meets the spec requirements.
 
 - Commit after each task
 - use conventional commits with a proper description
-- Once plan is finished, push commits to remote and create a pull request using
-  the github cli.
+- Once plan is finished, push commits to remote and create a pull request using the github cli.
+- Never commit on main/master for bigger features, only for trivial tasks and ask the
+  user before commiting on main/master. For non-trivial tasks utilize a git worktree.
+- Pull requests almost always have an issue linked to them, search for the appropriate one and link it when creating a pull request.
 
 ---
 
