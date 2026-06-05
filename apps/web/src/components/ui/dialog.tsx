@@ -17,13 +17,19 @@ export type DialogProps = {
 	closeOnBackdrop?: boolean;
 	/** Close when Escape is pressed (default true). */
 	closeOnEscape?: boolean;
+	/**
+	 * Render the overlay in place instead of through a Portal. Useful for
+	 * server-rendered showcases where Portal content is not emitted in the
+	 * SSR stream. Defaults to false (portal to document body).
+	 */
+	inline?: boolean;
 	class?: string;
 	children?: JSX.Element;
 } & Omit<JSX.HTMLAttributes<HTMLDivElement>, "onClose">;
 
 const Dialog: Component<DialogProps> = (raw_props) => {
 	const props = mergeProps(
-		{ closeOnBackdrop: true, closeOnEscape: true },
+		{ closeOnBackdrop: true, closeOnEscape: true, inline: false },
 		raw_props,
 	);
 	const [local, others] = splitProps(props, [
@@ -31,6 +37,7 @@ const Dialog: Component<DialogProps> = (raw_props) => {
 		"onClose",
 		"closeOnBackdrop",
 		"closeOnEscape",
+		"inline",
 		"class",
 		"children",
 	]);
@@ -44,29 +51,33 @@ const Dialog: Component<DialogProps> = (raw_props) => {
 		onCleanup(() => document.removeEventListener("keydown", handler));
 	});
 
+	const overlay = () => (
+		// biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss; Escape handled at document level
+		// biome-ignore lint/a11y/useKeyWithClickEvents: Escape handled at document level
+		<div
+			class="atlas-overlay"
+			onClick={(e) => {
+				if (local.closeOnBackdrop && e.target === e.currentTarget) {
+					local.onClose();
+				}
+			}}
+		>
+			<div
+				class={cn("atlas-overlay-card", local.class)}
+				role="dialog"
+				aria-modal="true"
+				{...others}
+			>
+				{local.children}
+			</div>
+		</div>
+	);
+
 	return (
 		<Show when={local.open}>
-			<Portal>
-				{/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss; Escape handled at document level */}
-				{/* biome-ignore lint/a11y/useKeyWithClickEvents: Escape handled at document level */}
-				<div
-					class="atlas-overlay"
-					onClick={(e) => {
-						if (local.closeOnBackdrop && e.target === e.currentTarget) {
-							local.onClose();
-						}
-					}}
-				>
-					<div
-						class={cn("atlas-overlay-card", local.class)}
-						role="dialog"
-						aria-modal="true"
-						{...others}
-					>
-						{local.children}
-					</div>
-				</div>
-			</Portal>
+			<Show when={local.inline} fallback={<Portal>{overlay()}</Portal>}>
+				{overlay()}
+			</Show>
 		</Show>
 	);
 };

@@ -16,7 +16,19 @@ import {
 	Toggle,
 } from "../../components/ui/index";
 
+type DesignSystemSearch = {
+	/**
+	 * When `overlay=open`, the Dialog renders open on the initial (server)
+	 * render. This makes the overlay capturable for visual proof without
+	 * depending on client-side hydration / interactivity.
+	 */
+	overlay?: "open";
+};
+
 export const Route = createFileRoute("/dev/design-system")({
+	validateSearch: (search: Record<string, unknown>): DesignSystemSearch => ({
+		overlay: search.overlay === "open" ? "open" : undefined,
+	}),
 	component: DesignSystemPage,
 });
 
@@ -55,9 +67,14 @@ function SectionHeading(props: { title: string }) {
 /* ------------------------------------------------------------------ */
 
 function DesignSystemPage() {
+	const search = Route.useSearch();
 	const [toggle_on, set_toggle_on] = createSignal(false);
 	const [toggle_off, set_toggle_off] = createSignal(true);
-	const [dialog_open, set_dialog_open] = createSignal(false);
+	// Initial open state is derived from the URL search param so the overlay
+	// renders server-side and is capturable without client hydration.
+	const [dialog_open, set_dialog_open] = createSignal(
+		search().overlay === "open",
+	);
 
 	return (
 		<main class="mx-auto flex min-h-screen max-w-3xl flex-col gap-12 bg-background p-8 text-foreground">
@@ -264,10 +281,19 @@ function DesignSystemPage() {
 			{/* ── Dialog / Overlay ─────────────────────────────────── */}
 			<section>
 				<SectionHeading title="Dialog / Overlay" />
+				<p class="mb-3 text-[12px] text-muted">
+					Visit <span class="atlas-kbd">/dev/design-system?overlay=open</span>{" "}
+					to render the overlay on initial load (server-rendered, no client
+					interaction required).
+				</p>
 				<Button variant="primary" onClick={() => set_dialog_open(true)}>
 					Open dialog
 				</Button>
-				<Dialog open={dialog_open()} onClose={() => set_dialog_open(false)}>
+				<Dialog
+					open={dialog_open()}
+					inline={search().overlay === "open"}
+					onClose={() => set_dialog_open(false)}
+				>
 					<DialogHeader>
 						<h3 class="text-[16px]">Compose</h3>
 						<Button

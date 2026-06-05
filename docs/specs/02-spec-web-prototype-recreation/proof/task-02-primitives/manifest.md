@@ -43,10 +43,10 @@ Mono baseline tokens with Atlas's warm-paper neobrutalist system:
 | `apps/web/src/components/ui/toggle.tsx` | Square-thumb `.atlas-toggle` matching prototype (52×28, 20px thumb slides 2→28px) |
 | `apps/web/src/components/ui/card.tsx` | **New** — `.atlas-card` (+ `size="lg"` for 8px/6px-shadow containers) |
 | `apps/web/src/components/ui/input.tsx` | **New** — `Input` + `Textarea` on `.atlas-input` / `.atlas-textarea` with focus lift |
-| `apps/web/src/components/ui/dialog.tsx` | **New** — SolidJS-native `Dialog`/`DialogHeader`/`DialogBody` via `Portal` + `Show`; backdrop + Escape dismiss; `.atlas-overlay*` |
+| `apps/web/src/components/ui/dialog.tsx` | **New** — SolidJS-native `Dialog`/`DialogHeader`/`DialogBody`; backdrop + Escape dismiss; `.atlas-overlay*`. Added `inline` prop (renders overlay in place instead of via `Portal`) so the overlay is emitted in the SSR stream for capture |
 | `apps/web/src/components/ui/kbd.tsx` | **New** — `.atlas-kbd` mono key cap with 1.5px border + 1.5px offset shadow |
 | `apps/web/src/components/ui/index.ts` | Export Card, Input, Textarea, Dialog (+Header/Body), Kbd |
-| `apps/web/src/routes/dev/design-system.tsx` | Rebuilt gallery: Atlas tokens, Bungee/Space Mono/VT323 specimens, buttons, cards, inputs, avatars, badges/priority/tags, kbd, toggles, dialog, icons |
+| `apps/web/src/routes/dev/design-system.tsx` | Rebuilt gallery: Atlas tokens, Bungee/Space Mono/VT323 specimens, buttons, cards, inputs, avatars, badges/priority/tags, kbd, toggles, dialog, icons. Added `validateSearch` `overlay` param: `?overlay=open` renders the Dialog open (inline) on the initial **server** render |
 
 No React imports. No runtime imports from `docs/prototype/**`. SolidJS-native
 primitives only.
@@ -60,9 +60,9 @@ bun run --cwd apps/web typecheck   # tsc --noEmit → PASS (0 errors)
 bun run --cwd apps/web lint        # biome lint ./src → PASS (Checked 26 files, no fixes)
 ```
 
-`aft_inspect` over `apps/web/src`: **0 errors, 0 warnings** (remaining items are
-biome assist `organizeImports` info hints, several pre-existing on `client.tsx` /
-`__root.tsx`; not lint failures).
+`aft_inspect` over `apps/web/src/components/ui/dialog.tsx`: **0 errors, 0
+warnings** (lone item is a biome assist `organizeImports` info hint, not a lint
+failure).
 
 ---
 
@@ -78,17 +78,56 @@ URL: `http://localhost:8765/Atlas.html` — verified HTTP 200.
 
 ---
 
+## Overlay proof method (SSR-rendered, hydration-independent)
+
+The dev server emits a **pre-existing** TanStack Start + Solid hydration warning
+(`template2 is not a function`) that disables client-side interactivity on
+`apps/web`. Verified pre-existing: it reproduces with this task's changes
+stashed, on the original `Toggle`, and on the `/` route which imports none of
+these primitives.
+
+To capture the overlay **without relying on client interaction**, the
+`/dev/design-system` route now reads an `overlay` search param
+(`validateSearch`) and initializes the dialog's `open` signal from it, while the
+`Dialog` component gained an `inline` prop that renders the overlay in place
+(skipping `Portal`, whose content is not emitted in this Start SSR stream).
+
+Result — server-rendered HTML for `?overlay=open` contains the live overlay
+(verified via `curl --compressed`):
+
+```
+1  atlas-overlay-card
+1  role="dialog"
+1  Recipient
+1  Send
+```
+
+…and the same request **without** the param emits **no** overlay markup
+(verified absent). The overlay is therefore rendered by the real `Dialog`
+primitive on the initial render and captured directly — no broken hydration in
+the loop. Browser confirmation:
+
+- Desktop: `[role=dialog]` present, card box-shadow `rgb(29,31,39) 6px 6px 0 0`
+  (hard offset, large container), backdrop `rgba(29,31,39,0.8)`.
+- Mobile (390): `[role=dialog]` present and visible, bounding box 342×361
+  (respects the 24px overlay padding).
+
+---
+
 ## Screenshots Captured
 
 Relative to this manifest, under `screenshots/`.
 
-### App — `/dev/design-system`
+### App
 
 | File | Viewport | Notes |
 |---|---|---|
 | `app/1440x900-design-system.png` | 1440×900 | Full primitive gallery (Atlas-styled) |
 | `app/390x844-design-system.png` | 390×844 | Mobile — primitives reflow, parity preserved |
-| `app/1440x900-dialog.png` | 1440×900 | Dialog section (see Interactivity note) |
+| `app/1440x900-overlay.png` | 1440×900 | **Dialog/overlay rendered open** (`?overlay=open`) |
+| `app/390x844-overlay.png` | 390×844 | **Dialog/overlay rendered open** at mobile |
+| `app/1440x900-root.png` | 1440×900 | `/` root route renders ("Hello from TanStack Start + SolidJS") |
+| `app/390x844-root.png` | 390×844 | `/` root route at mobile |
 
 ### Prototype reference (`docs/prototype/Atlas.html`)
 
@@ -97,6 +136,7 @@ Relative to this manifest, under `screenshots/`.
 | `prototype/1440x900-inbox.png` | 1440×900 | Buttons, cards, badges, priority chips, avatars, tags |
 | `prototype/1440x900-settings.png` | 1440×900 | Toggles, setting rows |
 | `prototype/1440x900-compose.png` | 1440×900 | Overlay/dialog shell, inputs, textarea |
+| `prototype/390x844-compose.png` | 390×844 | Overlay/dialog shell at mobile |
 
 ---
 
@@ -113,29 +153,13 @@ prototype:
 | Heading font | `Bungee` | Bungee (display) | ✅ |
 | Body background | `rgb(240,235,224)` (`#F0EBE0`) | `rgb(240,235,224)` | ✅ |
 | Badge radius | `9999px` (pill) | pill | ✅ |
+| Overlay card shadow | `rgb(29,31,39) 6px 6px 0 0` | hard ink offset (lg) | ✅ |
+| Overlay backdrop | `rgba(29,31,39,0.8)` | dim ink backdrop | ✅ |
 
 Primitive parity confirmed: buttons, badges, priority chips, tags, cards,
-inputs, overlays/dialog shell, avatars, kbd, and toggles all match the
+inputs, **overlays/dialog shell**, avatars, kbd, and toggles all match the
 prototype's token system (color, font, 2px border, 5px/8px radius, hard offset
-shadow).
-
----
-
-## Interactivity Note (pre-existing, out of scope)
-
-The dev server logs a **pre-existing** TanStack Start + Solid hydration warning
-(`template2 is not a function` / "error wasn't caught by any route") that breaks
-client-side reactivity on `apps/web`. This was verified to reproduce on the
-**original (pre-task) code** by stashing this task's changes — the original
-`Toggle` (using `solid-motionone`) was equally non-interactive, and the warning
-also appears on the `/` route which imports none of these primitives. It is
-therefore an environmental scaffold issue, **not introduced by this task**.
-
-Impact on proof: primitives are validated by **static render parity** +
-computed-style comparison (above). The dialog open-state could not be captured
-interactively for the same reason; `app/1440x900-dialog.png` shows the page with
-the dialog trigger. Static styling of the overlay/dialog shell is verified via
-the centralized `.atlas-overlay*` classes and the prototype compose reference.
+shadow) at both `1440x900` and `390x844`.
 
 ---
 
@@ -144,6 +168,6 @@ the centralized `.atlas-overlay*` classes and the prototype compose reference.
 - [x] `bun run --cwd apps/web typecheck` passes (0 errors)
 - [x] `bun run --cwd apps/web lint` passes (no fixes)
 - [x] `/dev/design-system` shows Atlas-styled primitives (warm paper, Bungee/Space Mono/VT323, 2px ink borders, hard offset shadows, kinetic buttons, badges/priority/tags, input focus lift, card surfaces, kbd, avatars, toggles, dialog shell)
-- [x] Screenshots at `1440x900` and `390x844` captured demonstrating primitive parity vs the served prototype (buttons, badges, cards, inputs, overlays, avatars, toggles)
-- [x] `/` route still renders (`HELLO FROM TANSTACK START + SOLIDJS`)
+- [x] Screenshots at `1440x900` **and** `390x844` demonstrate primitive parity vs the served prototype — including **overlays rendered open** (`app/{vp}-overlay.png` vs `prototype/{vp}-compose.png`), buttons, badges, cards, inputs, avatars, toggles
+- [x] `/` route still renders — verified in browser (`h1 = "Hello from TanStack Start + SolidJS"`) and captured at both viewports (`app/{vp}-root.png`)
 - [x] SolidJS-native only — no React imports, no runtime imports from `docs/prototype/**`
