@@ -1,7 +1,20 @@
 import { createFileRoute } from "@tanstack/solid-router";
+import { Archive, Bell, Mail, Reply, Search, Star, Zap } from "lucide-solid";
 import { For, createSignal } from "solid-js";
-import { Avatar, Badge, Button, Icon, Toggle } from "../../components/ui/index";
-import { Bell, Mail, Search, Star, Zap } from "lucide-solid";
+import {
+	Avatar,
+	Badge,
+	Button,
+	Card,
+	Dialog,
+	DialogBody,
+	DialogHeader,
+	Icon,
+	Input,
+	Kbd,
+	Textarea,
+	Toggle,
+} from "../../components/ui/index";
 
 export const Route = createFileRoute("/dev/design-system")({
 	component: DesignSystemPage,
@@ -12,38 +25,21 @@ export const Route = createFileRoute("/dev/design-system")({
 /* ------------------------------------------------------------------ */
 
 const color_tokens = [
-	{
-		name: "background",
-		var: "--color-background",
-		value: "oklch(92.13% 0.0388 282.36)",
-	},
+	{ name: "background", var: "--color-background", value: "#F0EBE0" },
 	{
 		name: "secondary-background",
 		var: "--color-secondary-background",
-		value: "oklch(100% 0 0)",
+		value: "#FFFDF7",
 	},
-	{
-		name: "foreground",
-		var: "--color-foreground",
-		value: "oklch(0% 0 0)",
-	},
-	{ name: "muted", var: "--color-muted", value: "oklch(40% 0.02 282)" },
-	{
-		name: "main",
-		var: "--color-main",
-		value: "oklch(66.34% 0.1806 277.2)",
-	},
-	{
-		name: "main-foreground",
-		var: "--color-main-foreground",
-		value: "oklch(0% 0 0)",
-	},
-	{ name: "border", var: "--color-border", value: "oklch(0% 0 0)" },
-	{ name: "feed", var: "--color-feed", value: "#FACC00" },
-	{ name: "paper", var: "--color-paper", value: "#00D696" },
+	{ name: "foreground", var: "--color-foreground", value: "#1D1F27" },
+	{ name: "muted", var: "--color-muted", value: "#6B6456" },
+	{ name: "main", var: "--color-main", value: "#FACC00" },
+	{ name: "border", var: "--color-border", value: "#1D1F27" },
+	{ name: "feed", var: "--color-feed", value: "#FFD600" },
+	{ name: "paper", var: "--color-paper", value: "#00E5A0" },
+	{ name: "ai", var: "--color-ai", value: "#3D7EFF" },
+	{ name: "inbox", var: "--color-inbox", value: "#A78BFA" },
 	{ name: "danger", var: "--color-danger", value: "#FF4D50" },
-	{ name: "ai", var: "--color-ai", value: "#0099FF" },
-	{ name: "inbox", var: "--color-inbox", value: "#7A83FF" },
 ] as const;
 
 /* ------------------------------------------------------------------ */
@@ -51,14 +47,7 @@ const color_tokens = [
 /* ------------------------------------------------------------------ */
 
 function SectionHeading(props: { title: string }) {
-	return (
-		<h2
-			class="mb-4 text-xl text-foreground"
-			style={{ "font-weight": "var(--font-weight-heading)" }}
-		>
-			{props.title}
-		</h2>
-	);
+	return <h2 class="mb-4 text-[16px] text-foreground">{props.title}</h2>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -67,18 +56,16 @@ function SectionHeading(props: { title: string }) {
 
 function DesignSystemPage() {
 	const [toggle_on, set_toggle_on] = createSignal(false);
+	const [toggle_off, set_toggle_off] = createSignal(true);
+	const [dialog_open, set_dialog_open] = createSignal(false);
 
 	return (
 		<main class="mx-auto flex min-h-screen max-w-3xl flex-col gap-12 bg-background p-8 text-foreground">
 			<header>
-				<h1
-					class="text-3xl text-foreground"
-					style={{ "font-weight": "var(--font-weight-heading)" }}
-				>
-					Hay Design System
-				</h1>
-				<p class="mt-1 text-sm text-muted" style={{ "font-weight": "400" }}>
-					Token showcase &amp; component gallery
+				<h1 class="text-[22px] text-foreground">Atlas Design System</h1>
+				<p class="mt-2 text-sm text-muted">
+					Retro neobrutalist primitive gallery — buttons, badges, cards, inputs,
+					overlays, avatars, toggles.
 				</p>
 			</header>
 
@@ -90,16 +77,11 @@ function DesignSystemPage() {
 						{(token) => (
 							<div class="flex flex-col items-center gap-1">
 								<div
-									class="h-12 w-12 border-[length:var(--border-w)] border-border rounded-[var(--radius)]"
+									class="h-12 w-12 border-[length:var(--border-w)] border-border rounded-[var(--radius)] shadow-[var(--shadow-sm)]"
 									style={{ "background-color": `var(${token.var})` }}
 								/>
-								<span
-									class="text-[11px] text-foreground"
-									style={{ "font-weight": "var(--font-weight-base)" }}
-								>
-									{token.name}
-								</span>
-								<span class="max-w-[80px] truncate text-[9px] text-muted">
+								<span class="text-[11px] text-foreground">{token.name}</span>
+								<span class="max-w-[80px] truncate text-[10px] text-muted">
 									{token.value}
 								</span>
 							</div>
@@ -112,20 +94,24 @@ function DesignSystemPage() {
 			<section>
 				<SectionHeading title="Typography" />
 				<div class="flex flex-col gap-3">
-					<p class="text-lg" style={{ "font-weight": "400" }}>
-						Archivo 400 — The quick brown fox jumps over the lazy dog
+					<p
+						style={{
+							"font-family": "var(--font-display)",
+							"font-size": "22px",
+						}}
+					>
+						Bungee — Atlas Display
 					</p>
-					<p class="text-lg" style={{ "font-weight": "600" }}>
-						Archivo 600 — The quick brown fox jumps over the lazy dog
+					<p style={{ "font-family": "var(--font-base)", "font-size": "14px" }}>
+						Space Mono — the quick brown fox jumps over the lazy dog
 					</p>
-					<p class="text-lg" style={{ "font-weight": "700" }}>
-						Archivo 700 — The quick brown fox jumps over the lazy dog
-					</p>
-					<p class="text-lg" style={{ "font-weight": "900" }}>
-						Archivo 900 — The quick brown fox jumps over the lazy dog
-					</p>
-					<p class="mt-2 font-mono text-sm text-muted">
-						JetBrains Mono — 0123456789 {"{}[]()!@#$%^&*"}
+					<p
+						style={{
+							"font-family": "var(--font-mono)",
+							"font-size": "16px",
+						}}
+					>
+						VT323 — 0123456789 {"{}[]()!@#$%^&*"}
 					</p>
 				</div>
 			</section>
@@ -136,13 +122,49 @@ function DesignSystemPage() {
 				<div class="flex flex-wrap items-center gap-3">
 					<Button variant="default">Default</Button>
 					<Button variant="primary">Primary</Button>
+					<Button variant="danger">Danger</Button>
 					<Button variant="ghost">Ghost</Button>
 					<Button variant="default" size="sm">
-						Small
+						<Icon icon={Archive} size={14} /> Archive
+					</Button>
+					<Button variant="primary" size="sm">
+						<Icon icon={Reply} size={14} strokeWidth={2.5} /> Reply
+					</Button>
+					<Button variant="default" size="sm" icon>
+						<Icon icon={Star} size={14} />
 					</Button>
 					<Button variant="default" disabled>
 						Disabled
 					</Button>
+				</div>
+			</section>
+
+			{/* ── Card ─────────────────────────────────────────────── */}
+			<section>
+				<SectionHeading title="Card" />
+				<div class="flex flex-wrap gap-4">
+					<Card class="w-[220px] p-4">
+						<p class="text-[13px]">Default card surface</p>
+						<p class="mt-2 text-[12px] text-muted">
+							2px ink border · 5px radius · 4px hard shadow.
+						</p>
+					</Card>
+					<Card size="lg" class="w-[220px] p-4">
+						<p class="text-[13px]">Large container</p>
+						<p class="mt-2 text-[12px] text-muted">
+							8px radius · 6px hard shadow.
+						</p>
+					</Card>
+				</div>
+			</section>
+
+			{/* ── Input ────────────────────────────────────────────── */}
+			<section>
+				<SectionHeading title="Input" />
+				<div class="flex max-w-md flex-col gap-3">
+					<Input placeholder="Search or ask…" />
+					<Input value="rob@atlas.co" disabled />
+					<Textarea placeholder="Write a reply…" />
 				</div>
 			</section>
 
@@ -163,11 +185,7 @@ function DesignSystemPage() {
 			<section>
 				<SectionHeading title="Badge" />
 
-				{/* All variants */}
-				<p
-					class="mb-2 text-xs text-muted"
-					style={{ "font-weight": "var(--font-weight-base)" }}
-				>
+				<p class="mb-2 text-[11px] uppercase tracking-wider text-muted">
 					Variants
 				</p>
 				<div class="flex flex-wrap items-center gap-2">
@@ -181,11 +199,7 @@ function DesignSystemPage() {
 					<Badge variant="muted">muted</Badge>
 				</div>
 
-				{/* Priority badges */}
-				<p
-					class="mb-2 mt-4 text-xs text-muted"
-					style={{ "font-weight": "var(--font-weight-base)" }}
-				>
+				<p class="mb-2 mt-4 text-[11px] uppercase tracking-wider text-muted">
 					Priority
 				</p>
 				<div class="flex flex-wrap items-center gap-2">
@@ -194,11 +208,7 @@ function DesignSystemPage() {
 					<Badge priority="P3" />
 				</div>
 
-				{/* Square badges */}
-				<p
-					class="mb-2 mt-4 text-xs text-muted"
-					style={{ "font-weight": "var(--font-weight-base)" }}
-				>
+				<p class="mb-2 mt-4 text-[11px] uppercase tracking-wider text-muted">
 					Square
 				</p>
 				<div class="flex flex-wrap items-center gap-2">
@@ -212,21 +222,83 @@ function DesignSystemPage() {
 						square
 					</Badge>
 				</div>
+
+				<p class="mb-2 mt-4 text-[11px] uppercase tracking-wider text-muted">
+					Tag (utility)
+				</p>
+				<div class="flex flex-wrap items-center gap-2">
+					<span class="atlas-tag">work</span>
+					<span class="atlas-tag">finance</span>
+					<span class="atlas-tag">urgent</span>
+				</div>
+			</section>
+
+			{/* ── Kbd ──────────────────────────────────────────────── */}
+			<section>
+				<SectionHeading title="Kbd" />
+				<div class="flex flex-wrap items-center gap-2">
+					<Kbd>⌘K</Kbd>
+					<Kbd>C</Kbd>
+					<Kbd>1</Kbd>
+					<Kbd>Esc</Kbd>
+				</div>
 			</section>
 
 			{/* ── Toggle ───────────────────────────────────────────── */}
 			<section>
 				<SectionHeading title="Toggle" />
-				<div class="flex items-center gap-4">
+				<div class="flex items-center gap-6">
 					<Toggle
 						checked={toggle_on()}
 						onChange={set_toggle_on}
-						label="Enable feature"
+						label={`Off → ${toggle_on() ? "ON" : "OFF"}`}
 					/>
-					<span class="text-sm text-muted">
-						State: {toggle_on() ? "ON" : "OFF"}
-					</span>
+					<Toggle
+						checked={toggle_off()}
+						onChange={set_toggle_off}
+						label={`On → ${toggle_off() ? "ON" : "OFF"}`}
+					/>
 				</div>
+			</section>
+
+			{/* ── Dialog / Overlay ─────────────────────────────────── */}
+			<section>
+				<SectionHeading title="Dialog / Overlay" />
+				<Button variant="primary" onClick={() => set_dialog_open(true)}>
+					Open dialog
+				</Button>
+				<Dialog open={dialog_open()} onClose={() => set_dialog_open(false)}>
+					<DialogHeader>
+						<h3 class="text-[16px]">Compose</h3>
+						<Button
+							variant="ghost"
+							size="sm"
+							icon
+							onClick={() => set_dialog_open(false)}
+						>
+							✕
+						</Button>
+					</DialogHeader>
+					<DialogBody>
+						<div class="flex flex-col gap-3">
+							<Input placeholder="Recipient" />
+							<Input placeholder="Subject" />
+							<Textarea placeholder="Message…" />
+							<div class="flex justify-end gap-2">
+								<Button size="sm" onClick={() => set_dialog_open(false)}>
+									Discard
+								</Button>
+								<Button
+									variant="primary"
+									size="sm"
+									onClick={() => set_dialog_open(false)}
+								>
+									Send
+								</Button>
+							</div>
+						</div>
+					</DialogBody>
+				</Dialog>
 			</section>
 
 			{/* ── Icon ─────────────────────────────────────────────── */}
@@ -257,26 +329,18 @@ function DesignSystemPage() {
 			</section>
 
 			{/* ── Reduced Motion ───────────────────────────────────── */}
-			<section class="rounded-[var(--radius-lg)] border-[length:var(--border-w)] border-border bg-secondary-background p-4">
-				<p
-					class="text-sm text-foreground"
-					style={{ "font-weight": "var(--font-weight-base)" }}
-				>
-					♿ Reduced Motion
-				</p>
-				<p class="mt-1 text-xs text-muted" style={{ "font-weight": "400" }}>
+			<section class="atlas-card p-4">
+				<p class="text-[13px] text-foreground">♿ Reduced Motion</p>
+				<p class="mt-2 text-[12px] text-muted">
 					This page respects{" "}
-					<code class="rounded bg-background px-1 py-0.5 font-mono text-[11px]">
-						prefers-reduced-motion
-					</code>
-					. Toggle it in your OS accessibility settings to disable animations.
-					All CSS transitions collapse to 0.01 ms and solid-motionone durations
-					drop to 0.
+					<span class="atlas-kbd">prefers-reduced-motion</span>. All CSS
+					transitions collapse to 0.01 ms and solid-motionone durations drop to
+					0.
 				</p>
 			</section>
 
-			<footer class="pb-8 text-xs text-muted" style={{ "font-weight": "400" }}>
-				Hay Design System · Spec 01 · Task 5.0
+			<footer class="pb-8 text-[11px] text-muted">
+				Atlas Design System · Spec 02 · Task 02
 			</footer>
 		</main>
 	);

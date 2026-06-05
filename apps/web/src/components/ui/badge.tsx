@@ -2,21 +2,21 @@ import type { Component, JSX } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
 import { cn } from "../../lib/utils";
 
-const variant_bg: Record<string, string> = {
-	default: "bg-secondary-background",
-	main: "bg-main",
-	feed: "bg-feed",
-	paper: "bg-paper",
-	ai: "bg-ai",
-	danger: "bg-danger",
-	inbox: "bg-inbox",
-	muted: "bg-muted",
+const variant_classes: Record<string, string> = {
+	default: "",
+	main: "is-main",
+	feed: "is-feed",
+	paper: "is-paper",
+	ai: "is-ai",
+	danger: "is-danger",
+	inbox: "is-inbox",
+	muted: "is-muted",
 };
 
-const priority_to_variant: Record<string, string> = {
-	P1: "danger",
-	P2: "feed",
-	P3: "default",
+const priority_classes: Record<string, string> = {
+	P1: "is-p1",
+	P2: "is-p2",
+	P3: "is-p3",
 };
 
 export type BadgeProps = {
@@ -45,26 +45,32 @@ const Badge: Component<BadgeProps> = (raw_props) => {
 		"children",
 	]);
 
-	const resolved_variant = (): string =>
-		local.priority
-			? (priority_to_variant[local.priority] ?? local.variant)
-			: local.variant;
+	if (local.priority) {
+		return (
+			<span
+				class={cn(
+					"atlas-priority",
+					priority_classes[local.priority],
+					local.class,
+				)}
+				{...others}
+			>
+				{local.priority}
+			</span>
+		);
+	}
 
 	return (
 		<span
 			class={cn(
-				"inline-flex items-center justify-center px-2 py-0.5 text-xs font-[var(--font-weight-base)]",
-				"border-[length:var(--border-w)] border-border min-h-[22px]",
-				"transition-transform duration-[var(--duration-base)] ease-[var(--ease-base)]",
-				"hover:scale-105",
-				local.square ? "rounded-[var(--radius)]" : "rounded-full",
-				variant_bg[resolved_variant()],
+				"atlas-badge",
+				variant_classes[local.variant],
+				local.square && "is-square",
 				local.class,
 			)}
-			style={{ transform: "rotate(-1.2deg)" }}
 			{...others}
 		>
-			{local.priority ? local.priority : local.children}
+			{local.children}
 		</span>
 	);
 };

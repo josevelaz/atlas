@@ -11,10 +11,10 @@ const palette = [
 	"var(--color-danger)",
 ] as const;
 
-const size_map = {
-	sm: "h-[28px] w-[28px] text-[10px]",
-	default: "h-[36px] w-[36px] text-xs",
-	lg: "h-[48px] w-[48px] text-sm",
+const size_classes = {
+	sm: "is-sm",
+	default: "",
+	lg: "is-lg",
 } as const;
 
 function hash_name(name: string): number {
@@ -22,7 +22,7 @@ function hash_name(name: string): number {
 	for (let i = 0; i < name.length; i++) {
 		sum += name.charCodeAt(i);
 	}
-	return sum % 6;
+	return sum % palette.length;
 }
 
 export type AvatarProps = {
@@ -39,17 +39,8 @@ const Avatar: Component<AvatarProps> = (raw_props) => {
 
 	return (
 		<div
-			class={cn(
-				"inline-flex items-center justify-center select-none",
-				"border-[length:var(--border-w)] border-border rounded-[var(--radius)]",
-				size_map[props.size],
-				props.class,
-			)}
-			style={{
-				"background-color": bg_color(),
-				transform: "rotate(-1deg)",
-				"font-weight": "var(--font-weight-base)",
-			}}
+			class={cn("atlas-avatar", size_classes[props.size], props.class)}
+			style={{ "background-color": bg_color() }}
 			role="img"
 			aria-label={props.name}
 		>

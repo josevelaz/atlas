@@ -6,6 +6,7 @@ export type ToggleProps = {
 	checked: boolean;
 	onChange: (checked: boolean) => void;
 	label?: string;
+	disabled?: boolean;
 };
 
 const Toggle: Component<ToggleProps> = (props) => {
@@ -19,33 +20,23 @@ const Toggle: Component<ToggleProps> = (props) => {
 
 	return (
 		<div class="inline-flex items-center gap-2">
-			<input
-				type="checkbox"
-				class="sr-only"
-				checked={props.checked}
-				onChange={() => props.onChange(!props.checked)}
-			/>
-			{/* Track */}
 			<button
 				type="button"
-				class={`relative flex h-[28px] w-[52px] cursor-pointer items-center rounded-full border-[length:var(--border-w)] border-border transition-colors duration-[var(--duration-base)] ease-[var(--ease-base)] ${
-					props.checked ? "bg-main" : "bg-secondary-background"
-				}`}
-				onClick={() => props.onChange(!props.checked)}
+				class="atlas-toggle"
+				data-on={props.checked}
+				disabled={props.disabled}
+				onClick={() => !props.disabled && props.onChange(!props.checked)}
 				role="switch"
 				aria-checked={props.checked}
 			>
-				{/* Thumb */}
-				<Motion.div
-					animate={{ x: props.checked ? "24px" : "2px" }}
+				<Motion.span
+					class="atlas-toggle-thumb"
+					animate={{ left: props.checked ? "28px" : "2px" }}
 					transition={{ duration: duration(), easing: "ease" }}
-					class="absolute top-[1px] h-[22px] w-[22px] rounded-[var(--radius)] bg-foreground"
 				/>
 			</button>
 			<Show when={props.label}>
-				<span class="text-sm font-[var(--font-weight-base)] text-foreground">
-					{props.label}
-				</span>
+				<span class="text-sm text-foreground">{props.label}</span>
 			</Show>
 		</div>
 	);
