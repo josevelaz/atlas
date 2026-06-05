@@ -1,5 +1,6 @@
 import { authClient } from "./auth";
 import { apiUrl } from "./api";
+import { awaitDeepLinkCallback } from "./desktop_deeplink";
 
 /**
  * Returns true when the app is running inside the Tauri desktop shell.
@@ -26,9 +27,10 @@ export function isDesktop(): boolean {
  *   6. On success: navigate to /auth/complete.
  *   7. On failure: navigate to the originating auth route with ?error=desktop_auth_failed.
  *
- * Dynamic imports for Tauri APIs ensure tree-shaking in web builds — the
- * @tauri-apps/* modules are externalized in vite.config.ts so the web build
- * succeeds. Type declarations are in src/tauri.d.ts.
+ * The deep-link orchestration (listener + timeout + browser-open + cleanup) is
+ * delegated to awaitDeepLinkCallback in desktop_deeplink.ts, which handles the
+ * Tauri dynamic imports (externalized in vite.config.ts) and the race-free
+ * listen-before-open sequencing. Type declarations are in src/tauri.d.ts.
  */
 export async function startDesktopAuth(
 	provider: string,
@@ -52,86 +54,39 @@ export async function startDesktopAuth(
 			throw new Error("No authorization URL returned from provider");
 		}
 
-		// Step 2: Set up the deep-link listener BEFORE opening the browser to
-		// eliminate the race condition where a fast callback arrives before
-		// listen() is registered.
-		// The module specifier is built at runtime and marked @vite-ignore so
-		// Vite's dev-time import-analysis does not try to resolve this
-		// desktop-only dependency in the web build (it is externalized for
-		// production in vite.config.ts and never reached when isDesktop() is
-		// false).
-		const tauriEventModule = "@tauri-apps/api/event";
-		const { listen } = (await import(
-			/* @vite-ignore */ tauriEventModule
-		)) as typeof import("@tauri-apps/api/event");
+		// Steps 2–4: Open the browser and wait for the deep-link callback. The
+		// callback handler extracts code/state and exchanges them for a session.
+		await awaitDeepLinkCallback<{ url: string }, void>({
+			eventName: "atlas://auth-callback",
+			authUrl,
+			onCallback: async (payload) => {
+				// Step 4: Extract code and state from the event payload URL
+				const callbackUrl = new URL(payload.url);
+				const code = callbackUrl.searchParams.get("code");
+				const state = callbackUrl.searchParams.get("state");
 
-		await new Promise<void>((resolve, reject) => {
-			let unlisten: (() => void) | null = null;
-
-			// Set a timeout to reject if no callback arrives within 5 minutes
-			const timeout = setTimeout(
-				() => {
-					unlisten?.();
-					reject(new Error("Desktop auth timeout"));
-				},
-				5 * 60 * 1000,
-			);
-
-			// Register the listener first, then open the browser once it's ready
-			listen<{ url: string }>("atlas://auth-callback", async (event) => {
-				clearTimeout(timeout);
-				unlisten?.();
-
-				try {
-					// Step 4: Extract code and state from the event payload URL
-					const callbackUrl = new URL(event.payload.url);
-					const code = callbackUrl.searchParams.get("code");
-					const state = callbackUrl.searchParams.get("state");
-
-					if (!code || !state) {
-						throw new Error("Missing code or state in callback URL");
-					}
-
-					// Step 5: Exchange the one-time code for a session
-					const exchangeRes = await fetch(
-						apiUrl("/api/auth/desktop/exchange"),
-						{
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							credentials: "include",
-							body: JSON.stringify({ code, state }),
-						},
-					);
-
-					if (!exchangeRes.ok) {
-						throw new Error(`Exchange failed: ${exchangeRes.status}`);
-					}
-
-					// Step 6: Navigate to /auth/complete on success, preserving redirect
-					const dest = redirect
-						? `/auth/complete?redirect=${encodeURIComponent(redirect)}`
-						: "/auth/complete";
-					window.location.href = dest;
-					resolve();
-				} catch (err) {
-					reject(err);
+				if (!code || !state) {
+					throw new Error("Missing code or state in callback URL");
 				}
-			}).then((fn) => {
-				unlisten = fn;
 
-				// Step 3: Open the URL in the system browser AFTER listener is ready
-				// Externalized in vite.config.ts — only exists at runtime in Tauri.
-				// Runtime specifier + @vite-ignore keeps dev import-analysis from
-				// resolving this desktop-only dependency in the web build.
-				const tauriOpenerModule = "@tauri-apps/plugin-opener";
-				(
-					import(/* @vite-ignore */ tauriOpenerModule) as Promise<
-						typeof import("@tauri-apps/plugin-opener")
-					>
-				)
-					.then(({ open }) => open(authUrl))
-					.catch(reject);
-			});
+				// Step 5: Exchange the one-time code for a session
+				const exchangeRes = await fetch(apiUrl("/api/auth/desktop/exchange"), {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					credentials: "include",
+					body: JSON.stringify({ code, state }),
+				});
+
+				if (!exchangeRes.ok) {
+					throw new Error(`Exchange failed: ${exchangeRes.status}`);
+				}
+
+				// Step 6: Navigate to /auth/complete on success, preserving redirect
+				const dest = redirect
+					? `/auth/complete?redirect=${encodeURIComponent(redirect)}`
+					: "/auth/complete";
+				window.location.href = dest;
+			},
 		});
 	} catch {
 		// Step 7: Navigate to originating route with error on failure

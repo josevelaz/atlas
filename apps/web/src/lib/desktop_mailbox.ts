@@ -1,4 +1,5 @@
 import { apiUrl } from "./api";
+import { awaitDeepLinkCallback } from "./desktop_deeplink";
 
 /**
  * Initiates the desktop mailbox-connect OAuth flow for Gmail.
@@ -19,10 +20,11 @@ import { apiUrl } from "./api";
  *   7. On failure: call onError(errorMessage) so the caller can show a clear
  *      failure path.
  *
- * Dynamic imports for Tauri APIs ensure tree-shaking in web builds — the
- * @tauri-apps/* modules are externalized in vite.config.ts so the web build
- * succeeds. The isDesktop() guard in the caller ensures this is never called
- * in web builds.
+ * The deep-link orchestration (listener + timeout + browser-open + cleanup) is
+ * delegated to awaitDeepLinkCallback in desktop_deeplink.ts, which handles the
+ * Tauri dynamic imports (externalized in vite.config.ts) and the race-free
+ * listen-before-open sequencing. The isDesktop() guard in the caller ensures
+ * this is never called in web builds.
  *
  * Security:
  * - The OAuth code is never forwarded to the webview — it stays server-side.
@@ -61,91 +63,59 @@ export async function startDesktopMailboxConnect(opts: {
 			throw new Error("Invalid connect start response from server");
 		}
 
-		// Step 2: Set up the deep-link listener BEFORE opening the browser to
-		// eliminate the race condition where a fast callback arrives before
-		// listen() is registered.
-		const { listen } = await import("@tauri-apps/api/event");
+		// Steps 2–4: Open the browser and wait for the deep-link callback. The
+		// Tauri bridge forwards only { state, error } — the OAuth code stays
+		// server-side. The callback handler validates state and completes the
+		// exchange server-side.
+		await awaitDeepLinkCallback<{ state?: string; error?: string }, void>({
+			eventName: "atlas://mailbox-connect-callback",
+			authUrl,
+			onCallback: async (payload) => {
+				const { state: callbackState, error: callbackError } = payload;
 
-		await new Promise<void>((resolve, reject) => {
-			let unlisten: (() => void) | null = null;
+				if (callbackError) {
+					throw new Error(`Mailbox connect denied: ${callbackError}`);
+				}
 
-			// Set a timeout to reject if no callback arrives within 5 minutes
-			const timeout = setTimeout(
-				() => {
-					unlisten?.();
-					reject(new Error("Mailbox connect timeout — no callback received"));
-				},
-				5 * 60 * 1000,
-			);
+				if (!callbackState || callbackState !== state) {
+					throw new Error(
+						"Mailbox connect state mismatch — possible replay attack",
+					);
+				}
 
-			// Register the listener first, then open the browser once it's ready
-			listen<{ state?: string; error?: string }>(
-				"atlas://mailbox-connect-callback",
-				async (event) => {
-					clearTimeout(timeout);
-					unlisten?.();
+				// Step 5: Complete the exchange server-side
+				const completeRes = await fetch(
+					apiUrl("/api/accounts/google/connect/desktop/complete"),
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						credentials: "include",
+						body: JSON.stringify({ state: callbackState }),
+					},
+				);
 
-					try {
-						const { state: callbackState, error: callbackError } =
-							event.payload;
+				if (!completeRes.ok) {
+					const body = (await completeRes.json().catch(() => ({}))) as {
+						error?: string;
+					};
+					throw new Error(
+						body.error ?? `Connect complete failed: ${completeRes.status}`,
+					);
+				}
 
-						if (callbackError) {
-							throw new Error(`Mailbox connect denied: ${callbackError}`);
-						}
+				const result = (await completeRes.json()) as {
+					ok: boolean;
+					accountId: string;
+					email: string;
+				};
 
-						if (!callbackState || callbackState !== state) {
-							throw new Error(
-								"Mailbox connect state mismatch — possible replay attack",
-							);
-						}
+				if (!result.ok) {
+					throw new Error("Mailbox connect complete returned not-ok");
+				}
 
-						// Step 5: Complete the exchange server-side
-						const completeRes = await fetch(
-							apiUrl("/api/accounts/google/connect/desktop/complete"),
-							{
-								method: "POST",
-								headers: { "Content-Type": "application/json" },
-								credentials: "include",
-								body: JSON.stringify({ state: callbackState }),
-							},
-						);
-
-						if (!completeRes.ok) {
-							const body = (await completeRes.json().catch(() => ({}))) as {
-								error?: string;
-							};
-							throw new Error(
-								body.error ?? `Connect complete failed: ${completeRes.status}`,
-							);
-						}
-
-						const result = (await completeRes.json()) as {
-							ok: boolean;
-							accountId: string;
-							email: string;
-						};
-
-						if (!result.ok) {
-							throw new Error("Mailbox connect complete returned not-ok");
-						}
-
-						// Step 6: Notify caller of success
-						onSuccess({ accountId: result.accountId, email: result.email });
-						resolve();
-					} catch (err) {
-						reject(err);
-					}
-				},
-			).then((fn) => {
-				unlisten = fn;
-
-				// Step 3: Open the authorization URL in the system browser AFTER
-				// the listener is registered. Externalized in vite.config.ts —
-				// only exists at runtime in Tauri.
-				import("@tauri-apps/plugin-opener")
-					.then(({ open }) => open(authUrl))
-					.catch(reject);
-			});
+				// Step 6: Notify caller of success
+				onSuccess({ accountId: result.accountId, email: result.email });
+			},
 		});
 	} catch (err) {
 		// Step 7: Notify caller of failure
