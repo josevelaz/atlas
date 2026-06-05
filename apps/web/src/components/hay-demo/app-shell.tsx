@@ -21,7 +21,7 @@ import {
 	Show,
 } from "solid-js";
 import { AssistantOverlay } from "./assistant-overlay";
-import { ComposeOverlay } from "./compose-overlay";
+import { ComposeOverlay, type ReplyContext } from "./compose-overlay";
 import {
 	AI_USAGE,
 	CATEGORY_META,
@@ -124,7 +124,9 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 
 	// ===== Overlays (Compose + Ask Hay) — local/demo-only visibility =====
 	const [composeOpen, setComposeOpen] = createSignal(false);
-	const [replyTo, setReplyTo] = createSignal<string | undefined>(undefined);
+	const [replyTo, setReplyTo] = createSignal<ReplyContext | undefined>(
+		undefined,
+	);
 	const [assistantOpen, setAssistantOpen] = createSignal(false);
 
 	// ===== Set aside / Reply later toggles — local/demo-only, keyed by row id
@@ -141,9 +143,16 @@ export const AppShell: Component<{ onReplayOnboarding: () => void }> = (
 	const toggleReplyLater = (id: string) =>
 		setReplyLaterSet((s) => ({ ...s, [id]: !s[id] }));
 
-	// Open the Compose overlay as a reply to the selected thread's sender.
+	// Open the Compose overlay as a reply to the selected thread, prefilling the
+	// recipient, subject, and greeting from the selected row's own data.
 	const replyToSelected = () => {
-		setReplyTo(selectedRow()?.address);
+		const row = selectedRow();
+		if (!row) return;
+		setReplyTo({
+			address: row.address,
+			subject: row.subject,
+			name: row.from,
+		});
 		setComposeOpen(true);
 	};
 

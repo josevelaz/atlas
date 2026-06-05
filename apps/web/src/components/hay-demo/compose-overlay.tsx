@@ -16,18 +16,37 @@ import type { Component } from "solid-js";
  * close / Discard controls dismisses it. The card stops click propagation so
  * interacting inside it never closes the overlay.
  */
+/** Details of the thread being replied to, used to prefill the Reply form. */
+export type ReplyContext = {
+	/** Recipient address (the selected thread's sender). */
+	address: string;
+	/** Subject of the thread being replied to (prefixed with "Re: "). */
+	subject: string;
+	/** Display name of the recipient, used to open the reply body. */
+	name: string;
+};
+
 export const ComposeOverlay: Component<{
 	onClose: () => void;
-	/** When set, the overlay renders as a Reply with a prefilled recipient. */
-	replyTo?: string;
+	/** When set, the overlay renders as a Reply prefilled from the thread. */
+	replyTo?: ReplyContext;
 }> = (props) => {
+	const isReply = () => props.replyTo !== undefined;
+	// Prefix the subject with "Re: " unless the thread is already a reply.
+	const replySubject = () => {
+		const subject = props.replyTo?.subject ?? "";
+		return /^re:\s/i.test(subject) ? subject : `Re: ${subject}`;
+	};
+	// A generic, non-sender-specific reply scaffold addressed to the recipient.
+	const replyBody = () => `${props.replyTo?.name ?? ""} —\n\n`;
+
 	return (
 		<div
 			class="overlay"
 			data-testid="compose-overlay"
 			role="dialog"
 			aria-modal="true"
-			aria-label={props.replyTo ? "Reply" : "New message"}
+			aria-label={isReply() ? "Reply" : "New message"}
 			onClick={() => props.onClose()}
 			onKeyDown={(e) => {
 				if (e.key === "Escape") props.onClose();
@@ -48,7 +67,7 @@ export const ComposeOverlay: Component<{
 				}}
 			>
 				<div class="compose-head">
-					<h3>{props.replyTo ? "Reply" : "New message"}</h3>
+					<h3>{isReply() ? "Reply" : "New message"}</h3>
 					<button
 						type="button"
 						class="btn icon ghost"
@@ -68,7 +87,7 @@ export const ComposeOverlay: Component<{
 					<label for="compose-to">To</label>
 					<input
 						id="compose-to"
-						value={props.replyTo ?? ""}
+						value={props.replyTo?.address ?? ""}
 						placeholder="Recipient"
 					/>
 				</div>
@@ -77,18 +96,14 @@ export const ComposeOverlay: Component<{
 					<input
 						id="compose-subject"
 						placeholder="Subject"
-						value={props.replyTo ? "Re: Q3 hiring plan — final review" : ""}
+						value={isReply() ? replySubject() : ""}
 					/>
 				</div>
 
 				<div class="compose-body">
 					<textarea
 						placeholder="Write your message…"
-						value={
-							props.replyTo
-								? "Priya — \n\nQuick replies inline:\n\n1. Pod A: the seventh req moved to pod C in March when we restructured. Will pull the doc and confirm before our 1:1.\n\n2. Moving design forward by six weeks works for me if recruiting can backfill the platform req we'd planned for that slot."
-								: ""
-						}
+						value={isReply() ? replyBody() : ""}
 					/>
 				</div>
 

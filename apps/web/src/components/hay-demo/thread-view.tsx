@@ -9,13 +9,29 @@ import {
 	CornerUpLeft,
 	Forward,
 	Inbox,
+	Newspaper,
+	Receipt,
 	ReplyAll,
 	SquareCheck,
 	Trash2,
 } from "lucide-solid";
 import type { Component } from "solid-js";
 import { createMemo, For, Show } from "solid-js";
-import type { MailRow } from "./hay-inbox-data";
+import { Dynamic } from "solid-js/web";
+import type { CategoryId, MailRow } from "./hay-inbox-data";
+
+/**
+ * Category → reading-pane tag, derived from the row's own category instead of
+ * being hardcoded. Mirrors the list-header titles in CATEGORY_META.
+ */
+const CATEGORY_TAG: Record<
+	CategoryId,
+	{ label: string; icon: Component<{ size?: number; "stroke-width"?: number }> }
+> = {
+	inbox: { label: "Inbox", icon: Inbox },
+	feed: { label: "Feed", icon: Newspaper },
+	paper: { label: "Paper Trail", icon: Receipt },
+};
 
 /**
  * ThreadView — prototype-faithful reading pane for a selected mail row.
@@ -139,7 +155,12 @@ export const ThreadView: Component<{
 							</span>
 						</Show>
 						<span class="tag">
-							<Inbox size={11} stroke-width={2.5} /> Inbox
+							<Dynamic
+								component={CATEGORY_TAG[props.row.category].icon}
+								size={11}
+								stroke-width={2.5}
+							/>{" "}
+							{CATEGORY_TAG[props.row.category].label}
 						</span>
 						<For each={props.row.tags}>
 							{(tag) => (

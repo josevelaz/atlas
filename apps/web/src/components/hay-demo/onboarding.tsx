@@ -217,8 +217,6 @@ const STEPS: OnboardingStep[] = [
 	},
 ];
 
-export const ONBOARDING_STEP_COUNT = STEPS.length;
-
 export const Onboarding: Component<{
 	onFinish: () => void;
 	/** Optional starting step index (clamped). Defaults to 0 (first run). */
