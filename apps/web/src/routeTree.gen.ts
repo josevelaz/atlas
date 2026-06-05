@@ -15,8 +15,10 @@ import { Route as AtlasIndexRouteImport } from './routes/atlas/index'
 import { Route as DevTanstack_librariesRouteImport } from './routes/dev/tanstack_libraries'
 import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
 import { Route as AtlasScreenerRouteImport } from './routes/atlas/screener'
+import { Route as AtlasPaperTrailRouteImport } from './routes/atlas/paper-trail'
 import { Route as AtlasOnboardingRouteImport } from './routes/atlas/onboarding'
 import { Route as AtlasInboxRouteImport } from './routes/atlas/inbox'
+import { Route as AtlasFeedRouteImport } from './routes/atlas/feed'
 
 const AtlasRoute = AtlasRouteImport.update({
   id: '/atlas',
@@ -48,6 +50,11 @@ const AtlasScreenerRoute = AtlasScreenerRouteImport.update({
   path: '/screener',
   getParentRoute: () => AtlasRoute,
 } as any)
+const AtlasPaperTrailRoute = AtlasPaperTrailRouteImport.update({
+  id: '/paper-trail',
+  path: '/paper-trail',
+  getParentRoute: () => AtlasRoute,
+} as any)
 const AtlasOnboardingRoute = AtlasOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -58,12 +65,19 @@ const AtlasInboxRoute = AtlasInboxRouteImport.update({
   path: '/inbox',
   getParentRoute: () => AtlasRoute,
 } as any)
+const AtlasFeedRoute = AtlasFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => AtlasRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/atlas': typeof AtlasRouteWithChildren
+  '/atlas/feed': typeof AtlasFeedRoute
   '/atlas/inbox': typeof AtlasInboxRoute
   '/atlas/onboarding': typeof AtlasOnboardingRoute
+  '/atlas/paper-trail': typeof AtlasPaperTrailRoute
   '/atlas/screener': typeof AtlasScreenerRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -71,8 +85,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/atlas/feed': typeof AtlasFeedRoute
   '/atlas/inbox': typeof AtlasInboxRoute
   '/atlas/onboarding': typeof AtlasOnboardingRoute
+  '/atlas/paper-trail': typeof AtlasPaperTrailRoute
   '/atlas/screener': typeof AtlasScreenerRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -82,8 +98,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/atlas': typeof AtlasRouteWithChildren
+  '/atlas/feed': typeof AtlasFeedRoute
   '/atlas/inbox': typeof AtlasInboxRoute
   '/atlas/onboarding': typeof AtlasOnboardingRoute
+  '/atlas/paper-trail': typeof AtlasPaperTrailRoute
   '/atlas/screener': typeof AtlasScreenerRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -94,8 +112,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/atlas'
+    | '/atlas/feed'
     | '/atlas/inbox'
     | '/atlas/onboarding'
+    | '/atlas/paper-trail'
     | '/atlas/screener'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -103,8 +123,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/atlas/feed'
     | '/atlas/inbox'
     | '/atlas/onboarding'
+    | '/atlas/paper-trail'
     | '/atlas/screener'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -113,8 +135,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/atlas'
+    | '/atlas/feed'
     | '/atlas/inbox'
     | '/atlas/onboarding'
+    | '/atlas/paper-trail'
     | '/atlas/screener'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -172,6 +196,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AtlasScreenerRouteImport
       parentRoute: typeof AtlasRoute
     }
+    '/atlas/paper-trail': {
+      id: '/atlas/paper-trail'
+      path: '/paper-trail'
+      fullPath: '/atlas/paper-trail'
+      preLoaderRoute: typeof AtlasPaperTrailRouteImport
+      parentRoute: typeof AtlasRoute
+    }
     '/atlas/onboarding': {
       id: '/atlas/onboarding'
       path: '/onboarding'
@@ -186,19 +217,30 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AtlasInboxRouteImport
       parentRoute: typeof AtlasRoute
     }
+    '/atlas/feed': {
+      id: '/atlas/feed'
+      path: '/feed'
+      fullPath: '/atlas/feed'
+      preLoaderRoute: typeof AtlasFeedRouteImport
+      parentRoute: typeof AtlasRoute
+    }
   }
 }
 
 interface AtlasRouteChildren {
+  AtlasFeedRoute: typeof AtlasFeedRoute
   AtlasInboxRoute: typeof AtlasInboxRoute
   AtlasOnboardingRoute: typeof AtlasOnboardingRoute
+  AtlasPaperTrailRoute: typeof AtlasPaperTrailRoute
   AtlasScreenerRoute: typeof AtlasScreenerRoute
   AtlasIndexRoute: typeof AtlasIndexRoute
 }
 
 const AtlasRouteChildren: AtlasRouteChildren = {
+  AtlasFeedRoute: AtlasFeedRoute,
   AtlasInboxRoute: AtlasInboxRoute,
   AtlasOnboardingRoute: AtlasOnboardingRoute,
+  AtlasPaperTrailRoute: AtlasPaperTrailRoute,
   AtlasScreenerRoute: AtlasScreenerRoute,
   AtlasIndexRoute: AtlasIndexRoute,
 }

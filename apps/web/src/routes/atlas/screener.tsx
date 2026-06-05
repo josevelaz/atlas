@@ -18,7 +18,7 @@ import { ScreenerScreen } from "../../components/atlas/screener_screen";
 import { SidebarNav } from "../../components/atlas/sidebar_nav";
 import { TopBar } from "../../components/atlas/top_bar";
 import { decodeDecisions } from "../../lib/atlas/app_state";
-import type { Screen } from "../../lib/atlas/types";
+import { atlasMailLinkFor } from "../../lib/atlas/nav_links";
 
 type ScreenerSearch = {
 	d?: string;
@@ -36,14 +36,8 @@ function ScreenerRoute() {
 	const decisions = () => decodeDecisions(search().d);
 	const noop = () => {};
 
-	// SSR-proof nav: keep the current decisions when moving Screener ↔ Inbox.
-	const linkFor = (id: Screen) => {
-		const d = search().d;
-		const passD = d ? { d } : undefined;
-		if (id === "inbox") return { to: "/atlas/inbox", search: passD };
-		if (id === "screener") return { to: "/atlas/screener", search: passD };
-		return undefined;
-	};
+	// SSR-proof nav: keep the current decisions when moving between mail screens.
+	const linkFor = () => atlasMailLinkFor(search().d);
 
 	return (
 		<AppShell
@@ -52,7 +46,7 @@ function ScreenerRoute() {
 				<SidebarNav
 					activeView="screener"
 					decisions={decisions()}
-					linkFor={linkFor}
+					linkFor={linkFor()}
 				/>
 			}
 		>

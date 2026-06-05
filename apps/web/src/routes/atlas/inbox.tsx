@@ -16,7 +16,8 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { AtlasApp } from "../../components/atlas/atlas_app";
 import { decodeDecisions } from "../../lib/atlas/app_state";
-import type { Screen, ToggleSet } from "../../lib/atlas/types";
+import { atlasMailLinkFor } from "../../lib/atlas/nav_links";
+import type { ToggleSet } from "../../lib/atlas/types";
 
 type InboxSearch = {
 	sel?: string;
@@ -49,20 +50,14 @@ function InboxScreen() {
 	const replyLaterMap = (): ToggleSet =>
 		search().replyLater ? { [selectedId()]: true } : {};
 
-	// SSR-proof nav: keep the current decisions when moving Screener ↔ Inbox.
-	const linkFor = (id: Screen) => {
-		const d = search().d;
-		const passD = d ? { d } : undefined;
-		if (id === "inbox") return { to: "/atlas/inbox", search: passD };
-		if (id === "screener") return { to: "/atlas/screener", search: passD };
-		return undefined;
-	};
+	// SSR-proof nav: keep the current decisions when moving between mail screens.
+	const linkFor = () => atlasMailLinkFor(search().d);
 
 	return (
 		<AtlasApp
 			view="inbox"
 			decisions={decisions()}
-			linkFor={linkFor}
+			linkFor={linkFor()}
 			initialSelectedId={search().sel}
 			initialSetAside={setAsideMap()}
 			initialReplyLater={replyLaterMap()}
