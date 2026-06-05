@@ -266,6 +266,12 @@ export interface ScreenerDecisions {
 /** Per-mail boolean toggle map (set-aside / reply-later). */
 export type ToggleSet = Record<string, boolean>;
 
+/**
+ * Compose overlay mode: closed, a blank "New message", or a "Reply" prefilled
+ * from the selected thread's sender.
+ */
+export type ComposeMode = "closed" | "new" | "reply";
+
 /** Visibility of the overlay surfaces. */
 export interface OverlayState {
 	composeOpen: boolean;

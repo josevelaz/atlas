@@ -11,6 +11,7 @@ import { SAMPLE } from "./sample_data";
 import type {
 	AiCategory,
 	AtlasState,
+	ComposeMode,
 	MailItem,
 	NavItem,
 	OnboardingStep,
@@ -223,6 +224,23 @@ export function encodeDecisions(decisions: ScreenerDecisions): string {
 		}
 	}
 	return parts.join(",");
+}
+
+// ---------------------------------------------------------------------------
+// Compose overlay mode (search-param driven, SSR-proof)
+//
+// Client hydration is disabled by a pre-existing TanStack Start/Solid error, so
+// the compose overlay's open state is carried in a `?compose=` search param so
+// the New-message / Reply states are server-rendered and observable. `new`
+// opens a blank compose; `reply` opens a reply prefilled from the selected
+// thread's sender. Any other value (or absent) means closed.
+// ---------------------------------------------------------------------------
+
+/** Parse a `?compose=` value into a {@link ComposeMode}. */
+export function decodeComposeMode(raw: string | undefined): ComposeMode {
+	if (raw === "new") return "new";
+	if (raw === "reply") return "reply";
+	return "closed";
 }
 
 /** Resolve which screen a citation/thread id belongs to (for deep-linking). */

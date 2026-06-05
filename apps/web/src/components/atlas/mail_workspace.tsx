@@ -28,8 +28,8 @@ import { ThreadView } from "./thread_view";
 export interface MailWorkspaceProps {
 	view: Screen;
 	decisions: ScreenerDecisions;
-	/** Open the compose overlay (reply action). */
-	onCompose: () => void;
+	/** Open the compose overlay as a reply, carrying the sender's address. */
+	onCompose: (replyTo?: string) => void;
 	/**
 	 * Optional initial selected mail id for the active list. Lets the route seed
 	 * the selection server-side (proof variants) so "selecting a row updates the

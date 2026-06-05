@@ -24,7 +24,8 @@ export interface ThreadViewProps {
 	thread: Thread | null;
 	setAside: boolean;
 	replyLater: boolean;
-	onReplyClick: () => void;
+	/** Open the reply overlay, carrying the open thread's sender address. */
+	onReplyClick: (replyTo?: string) => void;
 	onArchive: () => void;
 	onTrash: () => void;
 	onSetAside: () => void;
@@ -132,7 +133,10 @@ const ThreadView: Component<ThreadViewProps> = (props) => {
 							class={cn("atlas-row", "atlas-gap-8")}
 							style={{ "margin-top": "18px", "flex-wrap": "wrap" }}
 						>
-							<Button variant="primary" onClick={props.onReplyClick}>
+							<Button
+								variant="primary"
+								onClick={() => props.onReplyClick(thread().addr)}
+							>
 								<AtlasIcon name="reply" size={14} stroke={2.5} /> Reply
 							</Button>
 							<Button>

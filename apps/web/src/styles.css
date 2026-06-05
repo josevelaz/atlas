@@ -520,6 +520,87 @@ body::after {
 	overflow-y: auto;
 }
 
+/* ---- Compose overlay ---- */
+.atlas-compose-card {
+	background: var(--color-secondary-background);
+	max-width: 720px;
+	max-height: 86vh;
+}
+.atlas-compose-head {
+	padding: 12px 16px;
+	border-bottom: var(--border-w) solid var(--color-border);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.atlas-compose-title {
+	font-family: var(--font-display);
+	font-size: 16px;
+	margin: 0;
+}
+.atlas-compose-field {
+	display: grid;
+	grid-template-columns: 60px 1fr;
+	align-items: center;
+	padding: 8px 16px;
+	border-bottom: var(--border-w) solid var(--color-border);
+	gap: 10px;
+}
+.atlas-compose-field label {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--color-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-weight: 700;
+}
+.atlas-compose-field .atlas-input {
+	/* biome-ignore lint/complexity/noImportantStyles: override the bordered Input primitive for the borderless compose-row treatment */
+	border: 0 !important;
+	background: transparent;
+	/* biome-ignore lint/complexity/noImportantStyles: compose-rows have no focus lift/shadow, unlike the standalone Input */
+	box-shadow: none !important;
+	/* biome-ignore lint/complexity/noImportantStyles: keep the borderless field flush in the grid cell */
+	transform: none !important;
+	padding: 0;
+	font-weight: 600;
+	width: 100%;
+}
+.atlas-compose-body {
+	padding: 16px;
+	min-height: 240px;
+	flex: 1;
+	overflow-y: auto;
+}
+.atlas-compose-body .atlas-textarea {
+	width: 100%;
+	height: 100%;
+	min-height: 240px;
+	/* biome-ignore lint/complexity/noImportantStyles: override the bordered Textarea primitive for the borderless compose body */
+	border: 0 !important;
+	/* biome-ignore lint/complexity/noImportantStyles: no focus lift/shadow inside the compose body */
+	box-shadow: none !important;
+	/* biome-ignore lint/complexity/noImportantStyles: keep the borderless body flush */
+	transform: none !important;
+	resize: none;
+	background: transparent;
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.5;
+	font-weight: 600;
+	padding: 0;
+}
+.atlas-compose-foot {
+	padding: 12px 16px;
+	border-top: var(--border-w) solid var(--color-border);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: var(--color-background);
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
 /* ============================================================
    Accessibility / view transitions
    ============================================================ */

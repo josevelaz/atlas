@@ -12,10 +12,13 @@
 //                          items appear here, and the nav counts reflect it
 //                          (shared with `/atlas/screener` so navigation is
 //                          stateful under broken hydration).
+//   ?compose=new|reply   — open the compose overlay server-side (proof variant):
+//                          `new` opens a blank "New message"; `reply` opens a
+//                          "Reply" prefilled from the selected row's sender.
 
 import { createFileRoute } from "@tanstack/solid-router";
 import { AtlasApp } from "../../components/atlas/atlas_app";
-import { decodeDecisions } from "../../lib/atlas/app_state";
+import { decodeComposeMode, decodeDecisions } from "../../lib/atlas/app_state";
 import { atlasMailLinkFor } from "../../lib/atlas/nav_links";
 import type { ToggleSet } from "../../lib/atlas/types";
 
@@ -24,6 +27,7 @@ type InboxSearch = {
 	setAside?: boolean;
 	replyLater?: boolean;
 	d?: string;
+	compose?: string;
 };
 
 /** Coerce a query value (string/number/boolean) to a boolean flag. */
@@ -37,6 +41,7 @@ export const Route = createFileRoute("/atlas/inbox")({
 		setAside: asFlag(search.setAside),
 		replyLater: asFlag(search.replyLater),
 		d: typeof search.d === "string" ? search.d : undefined,
+		compose: typeof search.compose === "string" ? search.compose : undefined,
 	}),
 	component: InboxScreen,
 });
@@ -50,6 +55,8 @@ function InboxScreen() {
 	const replyLaterMap = (): ToggleSet =>
 		search().replyLater ? { [selectedId()]: true } : {};
 
+	const composeMode = () => decodeComposeMode(search().compose);
+
 	// SSR-proof nav: keep the current decisions when moving between mail screens.
 	const linkFor = () => atlasMailLinkFor(search().d);
 
@@ -61,6 +68,7 @@ function InboxScreen() {
 			initialSelectedId={search().sel}
 			initialSetAside={setAsideMap()}
 			initialReplyLater={replyLaterMap()}
+			initialCompose={composeMode()}
 		/>
 	);
 }
