@@ -1043,6 +1043,157 @@ body::after {
 	background: var(--color-feed);
 }
 
+/* ---- Screener ---- */
+/* The screener fills the list+pane span (`is-wide`) with a calm canvas; the
+   card column is centered and scrolls. Mirrors the prototype's ScreenerScreen. */
+.atlas-screener-scroll {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	background: var(--color-background);
+}
+.atlas-screener-inner {
+	max-width: 720px;
+	width: 100%;
+	margin: 0 auto;
+	padding: 20px 24px 60px;
+}
+.atlas-screener-intro {
+	margin-bottom: 20px;
+}
+.atlas-screener-title {
+	font-family: var(--font-display);
+	font-size: 28px;
+	/* No explicit line-height — match the prototype h2's inherited `normal`
+	   line box so the card column starts at the same y as the prototype. */
+	line-height: normal;
+	margin-bottom: 4px;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+.atlas-screener-sub {
+	color: var(--color-muted);
+	font-size: 13px;
+	line-height: 1.5;
+}
+.atlas-screener-card {
+	background: var(--color-secondary-background);
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-lg);
+	margin-bottom: 18px;
+	overflow: hidden;
+}
+.atlas-screener-head {
+	display: flex;
+	gap: 14px;
+	padding: 16px 18px;
+	border-bottom: var(--border-w) solid var(--color-border);
+	align-items: center;
+}
+.atlas-screener-name {
+	font-weight: 900;
+	font-size: 18px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.atlas-screener-addr {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--color-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.atlas-screener-time {
+	font-family: var(--font-mono);
+	color: var(--color-muted);
+	font-size: 12px;
+	flex-shrink: 0;
+}
+.atlas-screener-preview {
+	padding: 14px 18px;
+	font-size: 13px;
+	line-height: 1.5;
+	max-height: 110px;
+	overflow: hidden;
+	position: relative;
+}
+.atlas-screener-subject {
+	font-weight: 800;
+	margin-bottom: 6px;
+}
+.atlas-screener-preview::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 40px;
+	background: linear-gradient(
+		to bottom,
+		transparent,
+		var(--color-secondary-background)
+	);
+}
+.atlas-screener-ai {
+	background: var(--color-ai);
+	color: #fff;
+	padding: 8px 16px;
+	font-size: 12px;
+	font-weight: 700;
+	border-top: var(--border-w) solid var(--color-border);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.atlas-screener-pill {
+	background: #fff;
+	color: #000;
+	padding: 2px 8px;
+	border-radius: 999px;
+	border: 1.5px solid #000;
+	font-size: 11px;
+	font-weight: 800;
+}
+.atlas-screener-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0;
+	border-top: var(--border-w) solid var(--color-border);
+}
+.atlas-screener-accept,
+.atlas-screener-reject {
+	height: 56px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	font-weight: 900;
+	font-size: 15px;
+	user-select: none;
+	border-right: var(--border-w) solid var(--color-border);
+	text-decoration: none;
+	color: #000;
+}
+.atlas-screener-accept {
+	background: var(--color-paper);
+}
+.atlas-screener-reject {
+	background: var(--color-danger);
+	border-right: 0;
+}
+.atlas-screener-accept:hover,
+.atlas-screener-reject:hover {
+	filter: brightness(0.92);
+}
+.atlas-screener-accept:focus-visible,
+.atlas-screener-reject:focus-visible {
+	outline: 2px solid var(--color-ring);
+	outline-offset: -4px;
+}
+
 /* ---- Empty state ---- */
 .atlas-empty {
 	display: flex;
@@ -1100,6 +1251,22 @@ body::after {
 /* Decorative star on the empty-state icon box. */
 .atlas-app .atlas-empty-box {
 	transform: rotate(-3deg);
+}
+/* Screener: bolder Bungee action bars + VT323 pill + colored card shadow,
+   matching retro.css (.screener-actions / .screener-ai .pill / colored shadows). */
+.atlas-app .atlas-screener-accept,
+.atlas-app .atlas-screener-reject {
+	font-family: var(--font-display);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	font-size: 13px;
+}
+.atlas-app .atlas-screener-pill {
+	font-family: "VT323", var(--font-mono);
+	font-size: 1.15em;
+}
+.atlas-app .atlas-screener-card {
+	box-shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--color-main);
 }
 /* Star tick on primary buttons, matching retro.css `.btn.primary::after`. */
 .atlas-app .atlas-btn.is-primary {
@@ -1476,11 +1643,15 @@ body::after {
    list, selected thread, and all controls remain reachable. */
 @media (max-width: 860px) {
 	.atlas-app {
-		grid-template-columns: 1fr;
+		/* minmax(0, 1fr) lets the single column shrink below its content's
+		   min-content width so wide rows (long mono addresses, the screener
+		   action bar) stay inside the viewport instead of forcing horizontal
+		   overflow. */
+		grid-template-columns: minmax(0, 1fr);
 		grid-template-rows: 56px auto auto auto;
 		height: auto;
 		min-height: 100dvh;
-		overflow: visible;
+		overflow-x: hidden;
 	}
 	.atlas-sidebar,
 	.atlas-list,
@@ -1539,5 +1710,25 @@ body::after {
 	}
 	.atlas-onb-connect-grid {
 		flex-direction: column;
+	}
+
+	/* Screener: the prototype has no breakpoints and its action bar
+	   ("ACCEPT INTO <CATEGORY>") forces the fixed-width card to overflow narrow
+	   viewports. Constrain the column to the viewport, shrink intro padding, and
+	   stack the Accept / Reject bars so every control stays reachable in-bounds
+	   (acceptance-allowed small-screen functional adaptation). */
+	.atlas-screener-inner {
+		max-width: 100%;
+		padding: 16px 12px 48px;
+	}
+	.atlas-screener-title {
+		font-size: 24px;
+	}
+	.atlas-screener-actions {
+		grid-template-columns: 1fr;
+	}
+	.atlas-screener-accept {
+		border-right: 0;
+		border-bottom: var(--border-w) solid var(--color-border);
 	}
 }

@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AtlasIndexRouteImport } from './routes/atlas/index'
 import { Route as DevTanstack_librariesRouteImport } from './routes/dev/tanstack_libraries'
 import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
+import { Route as AtlasScreenerRouteImport } from './routes/atlas/screener'
 import { Route as AtlasOnboardingRouteImport } from './routes/atlas/onboarding'
 import { Route as AtlasInboxRouteImport } from './routes/atlas/inbox'
 
@@ -42,6 +43,11 @@ const DevDesignSystemRoute = DevDesignSystemRouteImport.update({
   path: '/dev/design-system',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtlasScreenerRoute = AtlasScreenerRouteImport.update({
+  id: '/screener',
+  path: '/screener',
+  getParentRoute: () => AtlasRoute,
+} as any)
 const AtlasOnboardingRoute = AtlasOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/atlas': typeof AtlasRouteWithChildren
   '/atlas/inbox': typeof AtlasInboxRoute
   '/atlas/onboarding': typeof AtlasOnboardingRoute
+  '/atlas/screener': typeof AtlasScreenerRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
   '/atlas/': typeof AtlasIndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/atlas/inbox': typeof AtlasInboxRoute
   '/atlas/onboarding': typeof AtlasOnboardingRoute
+  '/atlas/screener': typeof AtlasScreenerRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
   '/atlas': typeof AtlasIndexRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/atlas': typeof AtlasRouteWithChildren
   '/atlas/inbox': typeof AtlasInboxRoute
   '/atlas/onboarding': typeof AtlasOnboardingRoute
+  '/atlas/screener': typeof AtlasScreenerRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
   '/atlas/': typeof AtlasIndexRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/atlas'
     | '/atlas/inbox'
     | '/atlas/onboarding'
+    | '/atlas/screener'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
     | '/atlas/'
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/atlas/inbox'
     | '/atlas/onboarding'
+    | '/atlas/screener'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
     | '/atlas'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/atlas'
     | '/atlas/inbox'
     | '/atlas/onboarding'
+    | '/atlas/screener'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
     | '/atlas/'
@@ -153,6 +165,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof DevDesignSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/atlas/screener': {
+      id: '/atlas/screener'
+      path: '/screener'
+      fullPath: '/atlas/screener'
+      preLoaderRoute: typeof AtlasScreenerRouteImport
+      parentRoute: typeof AtlasRoute
+    }
     '/atlas/onboarding': {
       id: '/atlas/onboarding'
       path: '/onboarding'
@@ -173,12 +192,14 @@ declare module '@tanstack/solid-router' {
 interface AtlasRouteChildren {
   AtlasInboxRoute: typeof AtlasInboxRoute
   AtlasOnboardingRoute: typeof AtlasOnboardingRoute
+  AtlasScreenerRoute: typeof AtlasScreenerRoute
   AtlasIndexRoute: typeof AtlasIndexRoute
 }
 
 const AtlasRouteChildren: AtlasRouteChildren = {
   AtlasInboxRoute: AtlasInboxRoute,
   AtlasOnboardingRoute: AtlasOnboardingRoute,
+  AtlasScreenerRoute: AtlasScreenerRoute,
   AtlasIndexRoute: AtlasIndexRoute,
 }
 
@@ -193,3 +214,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/solid-start'
+declare module '@tanstack/solid-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

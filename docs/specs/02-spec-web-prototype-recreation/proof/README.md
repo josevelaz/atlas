@@ -92,6 +92,7 @@ Workflow per task:
 |---|---|---|
 | Task 01 — Baseline | `task-01-baseline/` | ✅ complete |
 | Task 05 — Onboarding entry & replay | `task-05-onboarding/` | ✅ complete |
+| Task 06 — Screener route & accept/reject | `task-06-screener/` | ✅ complete |
 
 ---
 

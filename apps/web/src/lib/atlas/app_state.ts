@@ -178,6 +178,53 @@ export function rejectScreener(
 	};
 }
 
+// ---------------------------------------------------------------------------
+// Decisions ⇄ search-param serialization (SSR-proof links)
+//
+// Client hydration is disabled by a pre-existing TanStack Start/Solid error, so
+// screener accept/reject is driven by links that carry the cumulative decision
+// set in a `?d=` search param. Encoding: `accepted` items as `id:category`,
+// rejected items as `id:x`, joined by commas — e.g. `s1:inbox,s2:feed,s3:x`.
+// ---------------------------------------------------------------------------
+
+const REJECT_TOKEN = "x";
+
+function isAiCategory(value: string): value is AiCategory {
+	return value === "inbox" || value === "feed" || value === "paper";
+}
+
+/** Parse a `?d=` token string into {@link ScreenerDecisions}. */
+export function decodeDecisions(raw: string | undefined): ScreenerDecisions {
+	const decisions: ScreenerDecisions = { accepted: {}, rejected: {} };
+	if (!raw) return decisions;
+	for (const part of raw.split(",")) {
+		const [id, value] = part.split(":");
+		if (!id || !value) continue;
+		// Only honor tokens for known screener ids.
+		if (!SAMPLE.screener.some((s) => s.id === id)) continue;
+		if (value === REJECT_TOKEN) {
+			decisions.rejected[id] = true;
+		} else if (isAiCategory(value)) {
+			decisions.accepted[id] = value;
+		}
+	}
+	return decisions;
+}
+
+/** Serialize {@link ScreenerDecisions} back into a `?d=` token string. */
+export function encodeDecisions(decisions: ScreenerDecisions): string {
+	const parts: string[] = [];
+	for (const item of SAMPLE.screener) {
+		const cat = decisions.accepted[item.id];
+		if (cat) {
+			parts.push(`${item.id}:${cat}`);
+		} else if (decisions.rejected[item.id]) {
+			parts.push(`${item.id}:${REJECT_TOKEN}`);
+		}
+	}
+	return parts.join(",");
+}
+
 /** Resolve which screen a citation/thread id belongs to (for deep-linking). */
 export function viewForMailId(id: string): Screen | null {
 	if (SAMPLE.inbox.some((x) => x.id === id)) return "inbox";

@@ -4,9 +4,11 @@
 // (Tasks & Dates / Settings), the AI usage card, and a "Replay onboarding"
 // link. Mirrors the prototype's `.sidebar`.
 //
-// For the inbox vertical slice only the Inbox destination is wired to a real
-// route; the other entries stay visually present (for inbox parity) but are
-// inert — we don't route users to incomplete placeholder screens.
+// Routed destinations (Screener, Inbox) render as `<Link>`s so navigation works
+// server-side under the pre-existing broken-hydration constraint; each link
+// carries the current `?d=` screener-decision token-string so accepted items
+// stay reflected across Screener ↔ Inbox. Other entries stay visually present
+// (for parity) but inert — we don't route users to incomplete screens.
 
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
@@ -30,24 +32,15 @@ function tileColor(item: NavItem, active: boolean): string {
 	return item.id === "tasks" ? "#fff" : "#000";
 }
 
-interface NavRowProps {
+interface NavTileProps {
 	item: NavItem;
 	active: boolean;
-	enabled: boolean;
-	onSelect: (id: Screen) => void;
 }
 
-function NavRow(props: NavRowProps) {
+/** Shared inner content (tile + label + count) for button and link rows. */
+function NavRowInner(props: NavTileProps) {
 	return (
-		<button
-			type="button"
-			class={cn("atlas-nav-item", props.active && "is-active")}
-			aria-current={props.active ? "page" : undefined}
-			aria-disabled={props.enabled ? undefined : "true"}
-			onClick={() => {
-				if (props.enabled) props.onSelect(props.item.id);
-			}}
-		>
+		<>
 			<span
 				class="atlas-nav-tile"
 				style={{
@@ -66,20 +59,67 @@ function NavRow(props: NavRowProps) {
 			<Show when={props.item.count !== null && props.item.count > 0}>
 				<span class="atlas-count">{props.item.count}</span>
 			</Show>
-		</button>
+		</>
+	);
+}
+
+/** A route mapping for a navigable nav id (Link target + search). */
+interface NavLinkTarget {
+	to: string;
+	search?: Record<string, unknown>;
+}
+
+interface NavRowProps {
+	item: NavItem;
+	active: boolean;
+	/** When present, the row renders as a `<Link>`; otherwise an inert button. */
+	link?: NavLinkTarget;
+}
+
+function NavRow(props: NavRowProps) {
+	return (
+		<Show
+			when={props.link}
+			fallback={
+				<button
+					type="button"
+					class={cn("atlas-nav-item", props.active && "is-active")}
+					aria-current={props.active ? "page" : undefined}
+					aria-disabled="true"
+				>
+					<NavRowInner item={props.item} active={props.active} />
+				</button>
+			}
+		>
+			{(link) => (
+				<Link
+					to={link().to}
+					search={link().search}
+					class={cn("atlas-nav-item", props.active && "is-active")}
+					aria-current={props.active ? "page" : undefined}
+					data-nav={props.item.id}
+				>
+					<NavRowInner item={props.item} active={props.active} />
+				</Link>
+			)}
+		</Show>
 	);
 }
 
 export interface SidebarNavProps {
 	activeView: Screen;
 	decisions: ScreenerDecisions;
-	/** Invoked when a navigable destination is chosen. */
-	onSelect: (id: Screen) => void;
+	/**
+	 * Resolve a routed `<Link>` target for a nav id. Return `undefined` to keep
+	 * the entry inert. Lets routes wire SSR-proof navigation (carrying the
+	 * current `?d=` decisions) without coupling the sidebar to any one route.
+	 */
+	linkFor?: (id: Screen) => NavLinkTarget | undefined;
 }
 
 const SidebarNav: Component<SidebarNavProps> = (props) => {
-	// Only Inbox routes in this slice; others remain visible but inert.
-	const isEnabled = (id: Screen) => id === "inbox";
+	const linkFor = (id: Screen): NavLinkTarget | undefined =>
+		props.linkFor?.(id);
 
 	return (
 		<div class="atlas-sidebar">
@@ -89,8 +129,7 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 					<NavRow
 						item={item}
 						active={props.activeView === item.id}
-						enabled={isEnabled(item.id)}
-						onSelect={props.onSelect}
+						link={linkFor(item.id)}
 					/>
 				)}
 			</For>
@@ -101,8 +140,7 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 					<NavRow
 						item={item}
 						active={props.activeView === item.id}
-						enabled={isEnabled(item.id)}
-						onSelect={props.onSelect}
+						link={linkFor(item.id)}
 					/>
 				)}
 			</For>
