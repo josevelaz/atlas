@@ -4,9 +4,11 @@ import { apiUrl } from "../../lib/api";
 import { authClient } from "../../lib/auth";
 
 export const Route = createFileRoute("/auth/sign-in")({
-	validateSearch: (search: Record<string, unknown>) => ({
-		redirect: (search.redirect as string) ?? undefined,
-		error: (search.error as string) ?? undefined,
+	validateSearch: (
+		search: Record<string, unknown>,
+	): { redirect?: string; error?: string } => ({
+		redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+		error: typeof search.error === "string" ? search.error : undefined,
 	}),
 	beforeLoad: async ({ search }) => {
 		// Skip auth check during SSR — only enforce on the client

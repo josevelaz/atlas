@@ -1040,10 +1040,10 @@ export function assistantReply(text: string): AssistantMessage {
 			cites: [
 				{
 					num: 1,
-					from: "Maya Chen",
-					subject: "Intro — angel check for your seed round",
-					time: "9:14 AM",
-					threadId: "s1",
+					from: "Calendly",
+					subject: "New event: Maya Chen on Friday at 2:30 PM",
+					time: "Tue",
+					threadId: "i8",
 				},
 			],
 		};

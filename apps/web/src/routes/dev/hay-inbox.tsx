@@ -27,17 +27,20 @@ export const Route = createFileRoute("/dev/hay-inbox")({
 		// Skip auth check during SSR — only enforce on the client.
 		if (import.meta.env.SSR) return;
 
-		const redirectTo = "/auth/sign-in?redirect=%2Fdev%2Fhay-inbox" as "/";
+		const signInRedirect = redirect({
+			to: "/auth/sign-in",
+			search: { redirect: "/dev/hay-inbox" },
+		});
 		try {
 			const session = await authClient.getSession();
 			if (!session?.data?.session) {
-				throw redirect({ to: redirectTo });
+				throw signInRedirect;
 			}
 		} catch (err) {
 			if (err && typeof err === "object" && "to" in err) {
 				throw err;
 			}
-			throw redirect({ to: redirectTo });
+			throw signInRedirect;
 		}
 	},
 	component: RouteComponent,
