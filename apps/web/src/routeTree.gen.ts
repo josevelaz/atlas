@@ -9,10 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AtlasRouteImport } from './routes/atlas'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DevTanstack_librariesRouteImport } from './routes/dev/tanstack_libraries'
 import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
+import { Route as AtlasInboxRouteImport } from './routes/atlas/inbox'
 
+const AtlasRoute = AtlasRouteImport.update({
+  id: '/atlas',
+  path: '/atlas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -28,39 +35,74 @@ const DevDesignSystemRoute = DevDesignSystemRouteImport.update({
   path: '/dev/design-system',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtlasInboxRoute = AtlasInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AtlasRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/atlas': typeof AtlasRouteWithChildren
+  '/atlas/inbox': typeof AtlasInboxRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/atlas': typeof AtlasRouteWithChildren
+  '/atlas/inbox': typeof AtlasInboxRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/atlas': typeof AtlasRouteWithChildren
+  '/atlas/inbox': typeof AtlasInboxRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dev/design-system' | '/dev/tanstack_libraries'
+  fullPaths:
+    | '/'
+    | '/atlas'
+    | '/atlas/inbox'
+    | '/dev/design-system'
+    | '/dev/tanstack_libraries'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dev/design-system' | '/dev/tanstack_libraries'
-  id: '__root__' | '/' | '/dev/design-system' | '/dev/tanstack_libraries'
+  to:
+    | '/'
+    | '/atlas'
+    | '/atlas/inbox'
+    | '/dev/design-system'
+    | '/dev/tanstack_libraries'
+  id:
+    | '__root__'
+    | '/'
+    | '/atlas'
+    | '/atlas/inbox'
+    | '/dev/design-system'
+    | '/dev/tanstack_libraries'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AtlasRoute: typeof AtlasRouteWithChildren
   DevDesignSystemRoute: typeof DevDesignSystemRoute
   DevTanstack_librariesRoute: typeof DevTanstack_librariesRoute
 }
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
+    '/atlas': {
+      id: '/atlas'
+      path: '/atlas'
+      fullPath: '/atlas'
+      preLoaderRoute: typeof AtlasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -82,23 +124,32 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof DevDesignSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/atlas/inbox': {
+      id: '/atlas/inbox'
+      path: '/inbox'
+      fullPath: '/atlas/inbox'
+      preLoaderRoute: typeof AtlasInboxRouteImport
+      parentRoute: typeof AtlasRoute
+    }
   }
 }
 
+interface AtlasRouteChildren {
+  AtlasInboxRoute: typeof AtlasInboxRoute
+}
+
+const AtlasRouteChildren: AtlasRouteChildren = {
+  AtlasInboxRoute: AtlasInboxRoute,
+}
+
+const AtlasRouteWithChildren = AtlasRoute._addFileChildren(AtlasRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AtlasRoute: AtlasRouteWithChildren,
   DevDesignSystemRoute: DevDesignSystemRoute,
   DevTanstack_librariesRoute: DevTanstack_librariesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/solid-start'
-declare module '@tanstack/solid-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

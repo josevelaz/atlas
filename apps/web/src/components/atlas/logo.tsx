@@ -102,15 +102,23 @@ const Logo: Component<LogoProps> = (raw_props) => {
 			<span
 				style={{
 					"font-family": "var(--font-display)",
-					"font-weight": 900,
-					"font-size": props.wordSize ? `${props.wordSize}px` : "20px",
-					"letter-spacing": "-0.01em",
+					"font-weight": 400,
+					"font-size": props.wordSize ? `${props.wordSize}px` : "18px",
+					"letter-spacing": "0.01em",
 					"line-height": 1,
+					"text-transform": "uppercase",
 					color: "var(--color-foreground)",
 				}}
 			>
 				ATLAS
-				<span style={{ color: "var(--color-main)" }}>.</span>
+				<span
+					style={{
+						color: "var(--color-main)",
+						"-webkit-text-stroke": "1.5px var(--color-border)",
+					}}
+				>
+					.
+				</span>
 			</span>
 		</div>
 	);
