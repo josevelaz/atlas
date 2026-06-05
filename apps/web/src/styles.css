@@ -1194,6 +1194,114 @@ body::after {
 	outline-offset: -4px;
 }
 
+/* ---- Tasks & Dates screen ---- */
+.atlas-tasks-title {
+	font-family: var(--font-display);
+	font-size: 22px;
+	line-height: 1.1;
+	text-transform: uppercase;
+	letter-spacing: -0.01em;
+}
+.atlas-tasks-subtitle {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--color-muted);
+	margin-top: 2px;
+}
+.atlas-tasks-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	padding: 20px;
+	overflow-y: auto;
+	flex: 1;
+	min-height: 0;
+}
+.atlas-tasks-col-head {
+	font-size: 16px;
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.atlas-tasks-col-count {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 700;
+	color: var(--color-muted);
+}
+.atlas-task-card {
+	background: var(--color-secondary-background);
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius);
+	/* Colored hard shadow keyed to the yellow accent — matches the prototype's
+	   retro.css `.task-card` (light + dark) and the app's own screener / message
+	   cards, which all glow with `--color-main` rather than ink. */
+	box-shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--color-main);
+	padding: 12px 14px;
+	margin-bottom: 12px;
+}
+.atlas-task-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+}
+.atlas-task-check {
+	width: 18px;
+	height: 18px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: 4px;
+	margin-top: 2px;
+	flex-shrink: 0;
+}
+.atlas-date-tile {
+	width: 36px;
+	height: 36px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: 4px;
+	margin-top: 2px;
+	flex-shrink: 0;
+	background: var(--color-feed);
+	color: #1d1f27;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	line-height: 1;
+}
+.atlas-date-tile-month {
+	font-family: var(--font-mono);
+	font-size: 9px;
+	font-weight: 800;
+}
+.atlas-date-tile-day {
+	font-size: 14px;
+	font-weight: 900;
+}
+.atlas-task-main {
+	flex: 1;
+	min-width: 0;
+}
+.atlas-task-label {
+	font-size: 13px;
+	font-weight: 700;
+	line-height: 1.4;
+}
+.atlas-task-due {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--color-muted);
+	margin-top: 4px;
+}
+.atlas-task-src {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--color-muted);
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1.5px dashed var(--color-border);
+}
+
 /* ---- Empty state ---- */
 .atlas-empty {
 	display: flex;
@@ -1267,6 +1375,14 @@ body::after {
 }
 .atlas-app .atlas-screener-card {
 	box-shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--color-main);
+}
+/* Tasks & Dates retro treatment, mirroring retro.css: the column-head badges
+   get the sticker rotation. The `Due:` / `From:` lines stay at the app's
+   metadata token size (VT323 11px) for consistency with the rest of the mail
+   UI — the prototype's `.task-card .src` 1.15em upscale is the same documented,
+   accepted divergence as the Task-6/7 metadata sizing. */
+.atlas-app .atlas-tasks-col-head .atlas-badge {
+	transform: rotate(-1.2deg);
 }
 /* Star tick on primary buttons, matching retro.css `.btn.primary::after`. */
 .atlas-app .atlas-btn.is-primary {
@@ -1688,6 +1804,14 @@ body::after {
 	.atlas-thread,
 	.atlas-pane {
 		min-height: 60vh;
+	}
+	/* Tasks & Dates: the prototype keeps a fixed two-column grid (no
+	   breakpoints) which crushes the cards at narrow widths. Stack the Tasks
+	   and Dates columns so every card stays readable and in-bounds — the same
+	   acceptance-allowed small-screen functional adaptation used elsewhere. */
+	.atlas-tasks-grid {
+		grid-template-columns: minmax(0, 1fr);
+		overflow: visible;
 	}
 }
 

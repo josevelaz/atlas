@@ -94,6 +94,7 @@ Workflow per task:
 | Task 05 — Onboarding entry & replay | `task-05-onboarding/` | ✅ complete |
 | Task 06 — Screener route & accept/reject | `task-06-screener/` | ✅ complete |
 | Task 07 — Feed & Paper Trail routes | `task-07-feed-paper/` | ✅ complete |
+| Task 08 — Tasks & Dates route | `task-08-tasks/` | ✅ complete |
 
 ---
 
