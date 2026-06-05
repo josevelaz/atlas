@@ -37,7 +37,15 @@ export const ComposeOverlay: Component<{
 			<div
 				class="compose-card"
 				onClick={(e) => e.stopPropagation()}
-				onKeyDown={(e) => e.stopPropagation()}
+				onKeyDown={(e) => {
+					// Escape must still close the overlay even when focus is inside a
+					// compose field; handle it here before swallowing other keys.
+					if (e.key === "Escape") {
+						props.onClose();
+						return;
+					}
+					e.stopPropagation();
+				}}
 			>
 				<div class="compose-head">
 					<h3>{props.replyTo ? "Reply" : "New message"}</h3>

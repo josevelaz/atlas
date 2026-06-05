@@ -224,7 +224,12 @@ export const Onboarding: Component<{
 	/** Optional starting step index (clamped). Defaults to 0 (first run). */
 	initialStep?: number;
 }> = (props) => {
-	const clampStep = (n: number) => Math.max(0, Math.min(n, STEPS.length - 1));
+	const clampStep = (n: number) => {
+		// Coerce to a safe integer index: non-finite/NaN values fall back to 0,
+		// fractional values are truncated, then clamped to [0, STEPS.length - 1].
+		const i = Number.isFinite(n) ? Math.trunc(n) : 0;
+		return Math.max(0, Math.min(i, STEPS.length - 1));
+	};
 	const [index, setIndex] = createSignal(clampStep(props.initialStep ?? 0));
 
 	// index() is always clamped to [0, STEPS.length - 1], so the lookup is safe.
