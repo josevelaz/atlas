@@ -15,6 +15,7 @@ import { Route as AtlasIndexRouteImport } from './routes/atlas/index'
 import { Route as DevTanstack_librariesRouteImport } from './routes/dev/tanstack_libraries'
 import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
 import { Route as AtlasTasksRouteImport } from './routes/atlas/tasks'
+import { Route as AtlasSettingsRouteImport } from './routes/atlas/settings'
 import { Route as AtlasScreenerRouteImport } from './routes/atlas/screener'
 import { Route as AtlasPaperTrailRouteImport } from './routes/atlas/paper-trail'
 import { Route as AtlasOnboardingRouteImport } from './routes/atlas/onboarding'
@@ -51,6 +52,11 @@ const AtlasTasksRoute = AtlasTasksRouteImport.update({
   path: '/tasks',
   getParentRoute: () => AtlasRoute,
 } as any)
+const AtlasSettingsRoute = AtlasSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AtlasRoute,
+} as any)
 const AtlasScreenerRoute = AtlasScreenerRouteImport.update({
   id: '/screener',
   path: '/screener',
@@ -85,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/atlas/onboarding': typeof AtlasOnboardingRoute
   '/atlas/paper-trail': typeof AtlasPaperTrailRoute
   '/atlas/screener': typeof AtlasScreenerRoute
+  '/atlas/settings': typeof AtlasSettingsRoute
   '/atlas/tasks': typeof AtlasTasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -97,6 +104,7 @@ export interface FileRoutesByTo {
   '/atlas/onboarding': typeof AtlasOnboardingRoute
   '/atlas/paper-trail': typeof AtlasPaperTrailRoute
   '/atlas/screener': typeof AtlasScreenerRoute
+  '/atlas/settings': typeof AtlasSettingsRoute
   '/atlas/tasks': typeof AtlasTasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -111,6 +119,7 @@ export interface FileRoutesById {
   '/atlas/onboarding': typeof AtlasOnboardingRoute
   '/atlas/paper-trail': typeof AtlasPaperTrailRoute
   '/atlas/screener': typeof AtlasScreenerRoute
+  '/atlas/settings': typeof AtlasSettingsRoute
   '/atlas/tasks': typeof AtlasTasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/atlas/onboarding'
     | '/atlas/paper-trail'
     | '/atlas/screener'
+    | '/atlas/settings'
     | '/atlas/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/atlas/onboarding'
     | '/atlas/paper-trail'
     | '/atlas/screener'
+    | '/atlas/settings'
     | '/atlas/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/atlas/onboarding'
     | '/atlas/paper-trail'
     | '/atlas/screener'
+    | '/atlas/settings'
     | '/atlas/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -208,6 +220,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof AtlasTasksRouteImport
       parentRoute: typeof AtlasRoute
     }
+    '/atlas/settings': {
+      id: '/atlas/settings'
+      path: '/settings'
+      fullPath: '/atlas/settings'
+      preLoaderRoute: typeof AtlasSettingsRouteImport
+      parentRoute: typeof AtlasRoute
+    }
     '/atlas/screener': {
       id: '/atlas/screener'
       path: '/screener'
@@ -252,6 +271,7 @@ interface AtlasRouteChildren {
   AtlasOnboardingRoute: typeof AtlasOnboardingRoute
   AtlasPaperTrailRoute: typeof AtlasPaperTrailRoute
   AtlasScreenerRoute: typeof AtlasScreenerRoute
+  AtlasSettingsRoute: typeof AtlasSettingsRoute
   AtlasTasksRoute: typeof AtlasTasksRoute
   AtlasIndexRoute: typeof AtlasIndexRoute
 }
@@ -262,6 +282,7 @@ const AtlasRouteChildren: AtlasRouteChildren = {
   AtlasOnboardingRoute: AtlasOnboardingRoute,
   AtlasPaperTrailRoute: AtlasPaperTrailRoute,
   AtlasScreenerRoute: AtlasScreenerRoute,
+  AtlasSettingsRoute: AtlasSettingsRoute,
   AtlasTasksRoute: AtlasTasksRoute,
   AtlasIndexRoute: AtlasIndexRoute,
 }

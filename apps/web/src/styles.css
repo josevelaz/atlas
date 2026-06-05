@@ -475,10 +475,14 @@ body::after {
 .atlas-toggle .atlas-toggle-thumb {
 	position: absolute;
 	top: 2px;
+	left: 2px;
 	width: 20px;
 	height: 20px;
 	border-radius: 3px;
 	background: var(--color-foreground);
+}
+.atlas-toggle[data-on="true"] .atlas-toggle-thumb {
+	left: 28px;
 }
 
 /* ---- Dialog / overlay ---- */
@@ -902,6 +906,79 @@ body::after {
 }
 .atlas-gap-8 {
 	gap: 8px;
+}
+
+/* ---- Settings ---- */
+/* Mirrors docs/prototype/styles.css `.settings-row` + screens.jsx inline
+   styling, using Atlas tokens. The body is centered to a 760px column (proto
+   `maxWidth: 760, margin: 0 auto`); each carded section groups rows divided by
+   2px ink rules (no inner elevation). */
+.atlas-settings-title {
+	font-family: var(--font-display);
+	font-size: 22px;
+	line-height: 1.1;
+	text-transform: uppercase;
+	letter-spacing: -0.01em;
+}
+.atlas-settings-inner {
+	width: 100%;
+	max-width: 760px;
+	margin: 0 auto;
+}
+.atlas-settings-section {
+	font-family: var(--font-mono);
+	font-size: 14px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--color-muted);
+	margin-bottom: 8px;
+}
+.atlas-settings-card {
+	margin-bottom: 24px;
+}
+.atlas-settings-row {
+	display: grid;
+	grid-template-columns: 48px 1fr auto;
+	gap: 14px;
+	align-items: center;
+	padding: 14px 16px;
+	border-bottom: var(--border-w) solid var(--color-border);
+}
+.atlas-settings-row:last-child {
+	border-bottom: 0;
+}
+.atlas-settings-ic {
+	width: 48px;
+	height: 48px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius);
+	background: var(--color-secondary-background);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 900;
+}
+.atlas-settings-text {
+	min-width: 0;
+}
+.atlas-settings-row-title {
+	font-weight: 800;
+	font-size: 15px;
+}
+.atlas-settings-row-sub {
+	color: var(--color-muted);
+	font-size: 12px;
+	margin-top: 2px;
+}
+.atlas-settings-row-sub.is-mono {
+	font-family: var(--font-mono);
+	font-size: 11px;
+}
+.atlas-settings-control {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
 }
 
 /* ---- Message card ---- */
@@ -1854,5 +1931,20 @@ body::after {
 	.atlas-screener-accept {
 		border-right: 0;
 		border-bottom: var(--border-w) solid var(--color-border);
+	}
+
+	/* Settings: the prototype keeps a fixed `48px 1fr auto` row grid (no
+	   breakpoints), so the trailing control (toggle / button) gets crushed or
+	   clipped against the title at narrow widths. Drop the icon tile to the
+	   leading column and let the text + control stack so every switch and
+	   button stays fully visible and reachable in-bounds (acceptance-allowed
+	   small-screen functional adaptation). */
+	.atlas-settings-row {
+		grid-template-columns: 48px minmax(0, 1fr);
+		row-gap: 12px;
+	}
+	.atlas-settings-control {
+		grid-column: 1 / -1;
+		justify-content: flex-start;
 	}
 }
