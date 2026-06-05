@@ -8,8 +8,10 @@
 // route; the other entries stay visually present (for inbox parity) but are
 // inert — we don't route users to incomplete placeholder screens.
 
+import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
+
 import { ASSIST_NAV_ITEMS, mailNavItems } from "../../lib/atlas/app_state";
 import type { NavItem, Screen, ScreenerDecisions } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
@@ -73,8 +75,6 @@ export interface SidebarNavProps {
 	decisions: ScreenerDecisions;
 	/** Invoked when a navigable destination is chosen. */
 	onSelect: (id: Screen) => void;
-	/** Replay the onboarding walkthrough. */
-	onReplayOnboarding?: () => void;
 }
 
 const SidebarNav: Component<SidebarNavProps> = (props) => {
@@ -111,11 +111,12 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 
 			<AiUsageCard />
 
-			<button
-				type="button"
+			<Link
+				to="/atlas/onboarding"
+				search={{ step: 0 }}
 				class="atlas-nav-item"
 				style={{ "margin-top": "4px" }}
-				onClick={() => props.onReplayOnboarding?.()}
+				data-action="replay-onboarding"
 			>
 				<span
 					class="atlas-nav-tile"
@@ -126,7 +127,7 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 				<span style={{ "font-size": "13px", "font-weight": 400 }}>
 					Replay onboarding
 				</span>
-			</button>
+			</Link>
 		</div>
 	);
 };

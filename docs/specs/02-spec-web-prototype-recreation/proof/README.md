@@ -91,6 +91,7 @@ Workflow per task:
 | Task | Directory | Status |
 |---|---|---|
 | Task 01 — Baseline | `task-01-baseline/` | ✅ complete |
+| Task 05 — Onboarding entry & replay | `task-05-onboarding/` | ✅ complete |
 
 ---
 

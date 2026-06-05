@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AtlasRouteImport } from './routes/atlas'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AtlasIndexRouteImport } from './routes/atlas/index'
 import { Route as DevTanstack_librariesRouteImport } from './routes/dev/tanstack_libraries'
 import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
+import { Route as AtlasOnboardingRouteImport } from './routes/atlas/onboarding'
 import { Route as AtlasInboxRouteImport } from './routes/atlas/inbox'
 
 const AtlasRoute = AtlasRouteImport.update({
@@ -25,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtlasIndexRoute = AtlasIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AtlasRoute,
+} as any)
 const DevTanstack_librariesRoute = DevTanstack_librariesRouteImport.update({
   id: '/dev/tanstack_libraries',
   path: '/dev/tanstack_libraries',
@@ -34,6 +41,11 @@ const DevDesignSystemRoute = DevDesignSystemRouteImport.update({
   id: '/dev/design-system',
   path: '/dev/design-system',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AtlasOnboardingRoute = AtlasOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AtlasRoute,
 } as any)
 const AtlasInboxRoute = AtlasInboxRouteImport.update({
   id: '/inbox',
@@ -45,23 +57,28 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/atlas': typeof AtlasRouteWithChildren
   '/atlas/inbox': typeof AtlasInboxRoute
+  '/atlas/onboarding': typeof AtlasOnboardingRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
+  '/atlas/': typeof AtlasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/atlas': typeof AtlasRouteWithChildren
   '/atlas/inbox': typeof AtlasInboxRoute
+  '/atlas/onboarding': typeof AtlasOnboardingRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
+  '/atlas': typeof AtlasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/atlas': typeof AtlasRouteWithChildren
   '/atlas/inbox': typeof AtlasInboxRoute
+  '/atlas/onboarding': typeof AtlasOnboardingRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
+  '/atlas/': typeof AtlasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -69,22 +86,27 @@ export interface FileRouteTypes {
     | '/'
     | '/atlas'
     | '/atlas/inbox'
+    | '/atlas/onboarding'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
+    | '/atlas/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/atlas'
     | '/atlas/inbox'
+    | '/atlas/onboarding'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
+    | '/atlas'
   id:
     | '__root__'
     | '/'
     | '/atlas'
     | '/atlas/inbox'
+    | '/atlas/onboarding'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
+    | '/atlas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -110,6 +132,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/atlas/': {
+      id: '/atlas/'
+      path: '/'
+      fullPath: '/atlas/'
+      preLoaderRoute: typeof AtlasIndexRouteImport
+      parentRoute: typeof AtlasRoute
+    }
     '/dev/tanstack_libraries': {
       id: '/dev/tanstack_libraries'
       path: '/dev/tanstack_libraries'
@@ -124,6 +153,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof DevDesignSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/atlas/onboarding': {
+      id: '/atlas/onboarding'
+      path: '/onboarding'
+      fullPath: '/atlas/onboarding'
+      preLoaderRoute: typeof AtlasOnboardingRouteImport
+      parentRoute: typeof AtlasRoute
+    }
     '/atlas/inbox': {
       id: '/atlas/inbox'
       path: '/inbox'
@@ -136,10 +172,14 @@ declare module '@tanstack/solid-router' {
 
 interface AtlasRouteChildren {
   AtlasInboxRoute: typeof AtlasInboxRoute
+  AtlasOnboardingRoute: typeof AtlasOnboardingRoute
+  AtlasIndexRoute: typeof AtlasIndexRoute
 }
 
 const AtlasRouteChildren: AtlasRouteChildren = {
   AtlasInboxRoute: AtlasInboxRoute,
+  AtlasOnboardingRoute: AtlasOnboardingRoute,
+  AtlasIndexRoute: AtlasIndexRoute,
 }
 
 const AtlasRouteWithChildren = AtlasRoute._addFileChildren(AtlasRouteChildren)

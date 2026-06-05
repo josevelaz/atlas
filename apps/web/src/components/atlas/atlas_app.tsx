@@ -50,7 +50,6 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 					activeView={view()}
 					decisions={decisions()}
 					onSelect={noop}
-					onReplayOnboarding={noop}
 				/>
 			}
 		>

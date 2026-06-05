@@ -1117,6 +1117,348 @@ body::after {
 }
 
 /* ============================================================
+   Atlas onboarding — first-run / replay walkthrough
+   Scoped under .atlas-onboarding so it never leaks onto `/`.
+   Mirrors docs/prototype/styles.css (.onboarding* / .step-dot*)
+   and onboarding.jsx inline styling, using Atlas tokens.
+   ============================================================ */
+
+.atlas-onboarding {
+	position: fixed;
+	inset: 0;
+	background: var(--color-background);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 200;
+	padding: 24px;
+	overflow-y: auto;
+}
+.atlas-onboarding-card {
+	width: 720px;
+	max-width: calc(100vw - 48px);
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-lg);
+	background: var(--color-secondary-background);
+	overflow: hidden;
+}
+.atlas-onboarding-head {
+	padding: 14px 18px;
+	border-bottom: var(--border-w) solid var(--color-border);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+.atlas-onboarding-head .atlas-onb-progress {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--color-muted);
+	white-space: nowrap;
+}
+.atlas-onboarding-body {
+	padding: 28px;
+	min-height: 320px;
+}
+.atlas-onb-title {
+	font-family: var(--font-display);
+	font-size: 32px;
+	line-height: 1.1;
+	letter-spacing: -0.01em;
+	text-transform: none;
+	margin-bottom: 8px;
+}
+.atlas-onb-sub {
+	color: var(--color-muted);
+	font-size: 14px;
+	line-height: 1.5;
+	max-width: 540px;
+	margin-bottom: 24px;
+}
+.atlas-onboarding-foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 14px 18px;
+	border-top: var(--border-w) solid var(--color-border);
+	background: var(--color-background);
+}
+/* Footer links share .atlas-btn — keep anchors looking like buttons. */
+.atlas-onboarding-foot a.atlas-btn,
+.atlas-onboarding-head a.atlas-btn {
+	text-decoration: none;
+}
+
+.atlas-step-dots {
+	display: flex;
+	gap: 6px;
+}
+.atlas-step-dot {
+	width: 28px;
+	height: 8px;
+	border: 1.5px solid var(--color-border);
+	border-radius: 4px;
+	background: var(--color-secondary-background);
+}
+.atlas-step-dot.is-active {
+	background: var(--color-main);
+}
+
+/* ---- Step 1: connect provider cards ---- */
+.atlas-onb-connect-grid {
+	display: flex;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+.atlas-onb-connect {
+	flex: 1;
+	min-width: 200px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius-lg);
+	padding: 16px;
+	background: var(--color-secondary-background);
+	box-shadow: var(--shadow);
+}
+.atlas-onb-connect-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+.atlas-onb-connect-tile {
+	width: 36px;
+	height: 36px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+.atlas-onb-connect-text {
+	min-width: 0;
+	flex: 1;
+}
+.atlas-onb-connect-name {
+	font-family: var(--font-display);
+	font-weight: 400;
+	font-size: 15px;
+	line-height: 1.2;
+}
+.atlas-onb-connect-sub {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	color: var(--color-muted);
+	margin-top: 4px;
+}
+.atlas-onb-connect-btn {
+	width: 100%;
+}
+
+/* ---- Step 2: screener card ---- */
+.atlas-onb-screener {
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	box-shadow: var(--shadow);
+	background: var(--color-secondary-background);
+}
+.atlas-onb-screener-head {
+	padding: 14px;
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	border-bottom: var(--border-w) solid var(--color-border);
+}
+.atlas-onb-screener-avatar {
+	width: 38px;
+	height: 38px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius);
+	background: #facc00;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 900;
+	font-size: 13px;
+	flex-shrink: 0;
+}
+.atlas-onb-screener-name {
+	font-weight: 900;
+}
+.atlas-onb-screener-addr {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--color-muted);
+}
+.atlas-onb-screener-body {
+	padding: 14px;
+	font-size: 13px;
+}
+.atlas-onb-screener-subject {
+	font-weight: 800;
+	margin-bottom: 6px;
+}
+.atlas-onb-screener-preview {
+	color: var(--color-muted);
+}
+.atlas-onb-screener-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	border-top: var(--border-w) solid var(--color-border);
+}
+.atlas-onb-screener-accept,
+.atlas-onb-screener-reject {
+	padding: 16px 0;
+	text-align: center;
+	font-weight: 900;
+}
+.atlas-onb-screener-accept {
+	background: #00d696;
+	color: #000;
+	border-right: var(--border-w) solid var(--color-border);
+}
+.atlas-onb-screener-reject {
+	background: #ff4d50;
+	color: #000;
+}
+
+/* ---- Step 3: category rows ---- */
+.atlas-onb-cats {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+.atlas-onb-cat {
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius);
+	padding: 12px;
+	background: var(--color-secondary-background);
+	box-shadow: var(--shadow-sm);
+	display: grid;
+	grid-template-columns: 44px 1fr;
+	gap: 12px;
+	align-items: center;
+}
+.atlas-onb-cat-tile {
+	width: 44px;
+	height: 44px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.atlas-onb-cat-name {
+	font-family: var(--font-display);
+	font-weight: 400;
+	font-size: 15px;
+}
+.atlas-onb-cat-desc {
+	color: var(--color-muted);
+	font-size: 12px;
+	margin-top: 2px;
+}
+
+/* ---- Step 4: AI summary ---- */
+.atlas-onb-ai {
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow);
+	background: var(--color-ai);
+	color: #fff;
+	overflow: hidden;
+}
+.atlas-onb-ai-head {
+	padding: 10px 14px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-bottom: var(--border-w) solid var(--color-border);
+	font-weight: 800;
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+.atlas-onb-ai-body {
+	background: #fff;
+	color: #000;
+	padding: 14px 16px;
+	font-size: 13px;
+	line-height: 1.5;
+}
+.atlas-onb-ai-extracted {
+	background: #fff;
+	color: #000;
+	padding: 10px 14px;
+	border-top: var(--border-w) solid var(--color-border);
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+.atlas-onb-extract {
+	display: grid;
+	grid-template-columns: 20px 1fr auto;
+	gap: 10px;
+	align-items: center;
+	padding: 6px 8px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius-sm);
+	background: var(--color-background);
+}
+.atlas-onb-extract-dot {
+	width: 20px;
+	height: 20px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: 3px;
+}
+.atlas-onb-extract-label {
+	font-size: 12px;
+	font-weight: 700;
+}
+.atlas-onb-extract-due {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	color: var(--color-muted);
+}
+
+/* ---- Step 5: empty inbox ---- */
+.atlas-onb-empty {
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow);
+	background: var(--color-secondary-background);
+	padding: 36px;
+	text-align: center;
+}
+.atlas-onb-empty-box {
+	display: inline-flex;
+	width: 64px;
+	height: 64px;
+	border: var(--border-w) solid var(--color-border);
+	border-radius: var(--radius-lg);
+	background: var(--color-main);
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 12px;
+	box-shadow: var(--shadow-sm);
+}
+.atlas-onb-empty-heading {
+	font-family: var(--font-display);
+	font-size: 20px;
+	text-transform: none;
+	letter-spacing: -0.01em;
+	margin-bottom: 4px;
+}
+.atlas-onb-empty-body {
+	color: var(--color-muted);
+	font-size: 13px;
+	line-height: 1.5;
+	max-width: 360px;
+	margin: 0 auto;
+}
+
+/* ============================================================
    Responsive — preserve all inbox functionality on smaller
    viewports. The fixed 3-column grid collapses to a single
    scrollable column stack so nothing is clipped off-canvas.
@@ -1175,5 +1517,27 @@ body::after {
 	.atlas-thread,
 	.atlas-pane {
 		min-height: 60vh;
+	}
+}
+
+/* Onboarding card: shrink padding / min-height so all five steps fit small
+   viewports without clipping (the prototype card overflows at mobile sizes). */
+@media (max-width: 560px) {
+	.atlas-onboarding {
+		padding: 12px;
+		align-items: flex-start;
+	}
+	.atlas-onboarding-card {
+		max-width: 100%;
+	}
+	.atlas-onboarding-body {
+		padding: 18px;
+		min-height: 0;
+	}
+	.atlas-onb-title {
+		font-size: 24px;
+	}
+	.atlas-onb-connect-grid {
+		flex-direction: column;
 	}
 }
