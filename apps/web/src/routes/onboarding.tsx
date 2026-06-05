@@ -20,16 +20,20 @@ export const Route = createFileRoute("/onboarding")({
 		// Skip auth check during SSR — only enforce on the client
 		if (import.meta.env.SSR) return;
 
+		const signInRedirect = redirect({
+			to: "/auth/sign-in",
+			search: { redirect: "/onboarding" },
+		});
 		try {
 			const session = await authClient.getSession();
 			if (!session?.data?.session) {
-				throw redirect({ to: "/auth/sign-in?redirect=%2Fonboarding" as "/" });
+				throw signInRedirect;
 			}
 		} catch (err) {
 			if (err && typeof err === "object" && "to" in err) {
 				throw err;
 			}
-			throw redirect({ to: "/auth/sign-in?redirect=%2Fonboarding" as "/" });
+			throw signInRedirect;
 		}
 	},
 	component: OnboardingPage,

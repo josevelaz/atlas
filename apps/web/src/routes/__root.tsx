@@ -62,12 +62,15 @@ export const Route = createRootRoute({
 		if (import.meta.env.SSR) return;
 
 		if (!location.pathname.startsWith("/auth")) {
+			const fullPath = location.pathname + location.search + location.hash;
+			const signInRedirect = redirect({
+				to: "/auth/sign-in",
+				search: { redirect: fullPath },
+			});
 			try {
 				const session = await authClient.getSession();
 				if (!session?.data?.session) {
-					const fullPath = location.pathname + location.search + location.hash;
-					const redirectUrl = `/auth/sign-in?redirect=${encodeURIComponent(fullPath)}`;
-					throw redirect({ to: redirectUrl as "/" });
+					throw signInRedirect;
 				}
 			} catch (err) {
 				// If it's a redirect, re-throw it
@@ -75,9 +78,7 @@ export const Route = createRootRoute({
 					throw err;
 				}
 				// API server down — redirect to sign-in
-				const fullPath = location.pathname + location.search + location.hash;
-				const redirectUrl = `/auth/sign-in?redirect=${encodeURIComponent(fullPath)}`;
-				throw redirect({ to: redirectUrl as "/" });
+				throw signInRedirect;
 			}
 		}
 	},
