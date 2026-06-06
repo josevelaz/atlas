@@ -7,8 +7,13 @@
 // Compose / assistant overlays land in later tasks, so their triggers are inert.
 
 import type { Component } from "solid-js";
-import { createMemo, createSignal } from "solid-js";
-import { createInitialState, currentThread } from "../../lib/atlas/app_state";
+import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import {
+	createInitialState,
+	currentThread,
+	encodeDecisions,
+	resolveShortcut,
+} from "../../lib/atlas/app_state";
 import type {
 	ComposeMode,
 	Screen,
@@ -17,6 +22,7 @@ import type {
 	ToggleSet,
 } from "../../lib/atlas/types";
 import { AppShell } from "./app_shell";
+import { AssistantDialog } from "./assistant_dialog";
 import { ComposeDialog } from "./compose_dialog";
 import { MailWorkspace } from "./mail_workspace";
 import { SidebarNav, type SidebarNavProps } from "./sidebar_nav";
@@ -45,6 +51,19 @@ export interface AtlasAppProps {
 	 * the overlay renders inline (in the SSR stream) when this is not closed.
 	 */
 	initialCompose?: ComposeMode;
+	/**
+	 * Optional initial Ask Atlas query (proof variant). When set, the assistant
+	 * overlay opens server-side with the intro bubble, the seeded question, and
+	 * the canned AI reply (plus citations) rendered inline in the SSR stream so
+	 * the chat-response and citation states are observable without hydration.
+	 */
+	initialAsk?: string;
+	/**
+	 * Open the assistant overlay server-side in its initial state (intro bubble
+	 * + example prompt chips), without a seeded query (proof variant). Implied
+	 * when `initialAsk` is set.
+	 */
+	initialAssistantOpen?: boolean;
 }
 
 const AtlasApp: Component<AtlasAppProps> = (props) => {
@@ -68,6 +87,36 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 	};
 	const closeCompose = () => setCompose("closed");
 
+	// Assistant (Ask Atlas) overlay state. Seeded from the route's `?ask=` (proof
+	// variant) so the chat-response state is server-rendered; the topbar "Search
+	// or ask" button, `/`, and ⌘K/Ctrl-K also drive it live once hydration works.
+	const [assistantOpen, setAssistantOpen] = createSignal<boolean>(
+		Boolean(props.initialAsk) || Boolean(props.initialAssistantOpen),
+	);
+	const openAssistant = () => setAssistantOpen(true);
+	const closeAssistant = () => setAssistantOpen(false);
+
+	// Keyboard shortcuts (live path). `/` and ⌘K/Ctrl-K open the assistant; `c`
+	// composes; Escape dismisses overlays. Bound at the document level via the
+	// shared `resolveShortcut` map; inert under broken hydration but ready.
+	createEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			const action = resolveShortcut(e);
+			if (!action) return;
+			if (action.kind === "assistant") {
+				e.preventDefault();
+				openAssistant();
+			} else if (action.kind === "compose") {
+				openNew();
+			} else if (action.kind === "dismiss-overlays") {
+				closeCompose();
+				closeAssistant();
+			}
+		};
+		document.addEventListener("keydown", handler);
+		onCleanup(() => document.removeEventListener("keydown", handler));
+	});
+
 	// Resolve the selected thread's sender for the SSR-proof reply prefill.
 	// Mirrors the prototype's `replyTo={currentMail ? currentMail.addr : ""}`.
 	const seededSelection = (): SelectionState => {
@@ -87,12 +136,18 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 
 	// SSR-proof: when a compose mode is seeded, render the overlay inline so it
 	// is emitted in the server stream (Portal content is not). Live (hydrated)
-	// opens use the default Portal path.
+	// opens use the default Portal path. The assistant follows the same rule.
 	const composeInline = () => Boolean(props.initialCompose);
+	const assistantInline = () =>
+		Boolean(props.initialAsk) || Boolean(props.initialAssistantOpen);
+
+	// Serialize the current decisions so citation deep-links stay consistent
+	// with the rest of the session (carries the `?d=` token-string through).
+	const decisionsToken = createMemo(() => encodeDecisions(decisions()));
 
 	return (
 		<AppShell
-			topBar={<TopBar onSearch={() => {}} onCompose={openNew} />}
+			topBar={<TopBar onSearch={openAssistant} onCompose={openNew} />}
 			sidebar={
 				<SidebarNav
 					activeView={view()}
@@ -114,6 +169,13 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 				onClose={closeCompose}
 				replyTo={compose() === "reply" ? replyAddr() : undefined}
 				inline={composeInline()}
+			/>
+			<AssistantDialog
+				open={assistantOpen()}
+				onClose={closeAssistant}
+				inline={assistantInline()}
+				seededQuery={props.initialAsk}
+				decisions={decisionsToken() || undefined}
 			/>
 		</AppShell>
 	);

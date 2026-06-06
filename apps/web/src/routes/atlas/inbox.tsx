@@ -15,6 +15,13 @@
 //   ?compose=new|reply   — open the compose overlay server-side (proof variant):
 //                          `new` opens a blank "New message"; `reply` opens a
 //                          "Reply" prefilled from the selected row's sender.
+//   ?assistant=1         — open the Ask Atlas assistant server-side in its
+//                          initial state (intro bubble + example chips), no
+//                          seeded query (proof variant).
+//   ?ask=<query>         — open the Ask Atlas assistant server-side (proof
+//                          variant), seeded with a submitted query so the chat
+//                          response + citations render inline (e.g. a Priya /
+//                          Stripe / screener / Marcus example prompt).
 
 import { createFileRoute } from "@tanstack/solid-router";
 import { AtlasApp } from "../../components/atlas/atlas_app";
@@ -28,6 +35,8 @@ type InboxSearch = {
 	replyLater?: boolean;
 	d?: string;
 	compose?: string;
+	ask?: string;
+	assistant?: boolean;
 };
 
 /** Coerce a query value (string/number/boolean) to a boolean flag. */
@@ -42,6 +51,8 @@ export const Route = createFileRoute("/atlas/inbox")({
 		replyLater: asFlag(search.replyLater),
 		d: typeof search.d === "string" ? search.d : undefined,
 		compose: typeof search.compose === "string" ? search.compose : undefined,
+		ask: typeof search.ask === "string" ? search.ask : undefined,
+		assistant: asFlag(search.assistant),
 	}),
 	component: InboxScreen,
 });
@@ -69,6 +80,8 @@ function InboxScreen() {
 			initialSetAside={setAsideMap()}
 			initialReplyLater={replyLaterMap()}
 			initialCompose={composeMode()}
+			initialAsk={search().ask}
+			initialAssistantOpen={search().assistant}
 		/>
 	);
 }

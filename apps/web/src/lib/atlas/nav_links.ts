@@ -8,6 +8,7 @@
 // resolver is shared by every Atlas route so the linking behavior is identical
 // (and stays DRY) regardless of which screen is active.
 
+import { viewForMailId } from "./app_state";
 import type { Screen } from "./types";
 
 /** A route mapping for a navigable nav id (Link target + search). */
@@ -47,4 +48,31 @@ export function atlasMailLinkFor(
 		if (!to) return undefined;
 		return { to, search: passD };
 	};
+}
+
+/**
+ * Resolve the route a citation's mail id opens. Inbox / Feed / Paper Trail
+ * citations deep-link to their category list with the row pre-selected via
+ * `?sel=`; Screener citations open the Screener. Returns `undefined` when the
+ * id has no shipped destination so the citation stays inert.
+ *
+ * The current `?d=` screener decisions are carried through so the destination
+ * stays consistent with the rest of the session under broken hydration.
+ */
+export function atlasCiteLinkFor(
+	id: string,
+	d: string | undefined,
+): NavLinkTarget | undefined {
+	const view = viewForMailId(id);
+	if (!view) return undefined;
+	const to = ROUTES[view];
+	if (!to) return undefined;
+	// Category lists support row pre-selection; the Screener has no per-row
+	// selection, so it just routes (still carrying any decisions).
+	const search: Record<string, unknown> = {};
+	if (d) search.d = d;
+	if (view === "inbox" || view === "feed" || view === "paper") {
+		search.sel = id;
+	}
+	return { to, search: Object.keys(search).length ? search : undefined };
 }
