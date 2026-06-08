@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="darkreader-lock" />
+  <title>Atlas — Logo exploration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Mono:wght@400;700&family=VT323&display=swap" />
+  <style>
+    :root{
+      --cream:#F0EBE0; --surface:#FFFDF7; --ink:#1D1F27; --muted:#6B6456;
+      --yellow:#FACC00; --navy:#1D1F27; --navy-surface:#282A35; --ai:#3D7EFF;
+      --border-w:2px; --radius:5px; --radius-lg:8px;
+      --display:"Bungee", sans-serif; --mono:"Space Mono", monospace; --pixel:"VT323", monospace;
+    }
+    *{box-sizing:border-box;}
+    html,body,#root{height:100%;margin:0;}
+    body{font-family:var(--mono);background:var(--cream);color:var(--ink);}
+
+    /* ---- logo primitives ---- */
+    .chip{
+      display:inline-flex;align-items:center;justify-content:center;
+      background:var(--yellow);border:var(--border-w) solid var(--ink);
+      border-radius:var(--radius);box-shadow:3px 3px 0 0 var(--ink);
+    }
+    .chip svg{display:block;}
+    .lockup{display:inline-flex;align-items:center;gap:14px;}
+    .word{
+      font-family:var(--display);font-size:34px;line-height:1;
+      letter-spacing:-0.01em;color:var(--ink);
+    }
+    .word .dot{color:var(--yellow);-webkit-text-stroke:1.5px var(--ink);}
+    .on-dark{background:var(--navy);color:var(--cream);}
+    .on-dark .word{color:var(--cream);}
+    .on-dark .chip{box-shadow:3px 3px 0 0 #000;}
+
+    /* artboard internals */
+    .ab-pad{padding:30px 28px;display:flex;flex-direction:column;gap:22px;height:100%;}
+    .hero{
+      flex:1;display:flex;align-items:center;justify-content:center;
+      background:var(--surface);border:var(--border-w) solid var(--ink);
+      border-radius:var(--radius-lg);box-shadow:4px 4px 0 0 var(--ink);
+      min-height:150px;
+    }
+    .hero.dark{background:var(--navy);}
+    .strip{display:flex;gap:14px;align-items:stretch;}
+    .cell{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+      background:var(--surface);border:var(--border-w) solid var(--ink);
+      border-radius:var(--radius);padding:16px 10px;min-height:92px;
+    }
+    .cell.dark{background:var(--navy);}
+    .cell-label{font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);}
+    .cell.dark .cell-label{color:#9A9184;}
+    .desc{font-size:11.5px;line-height:1.55;color:var(--muted);}
+    .desc b{color:var(--ink);font-weight:700;}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    /* ============ MARKS ============ *
+     * Each mark is a chip-wrapped SVG. size = chip side length. */
+
+    // 1 — Globe / meridian. Circle + equator + meridian ellipse.
+    function GlobeMark({ size = 56, sw = 2.6 }) {
+      const p = size, r = p * 0.28, c = p / 2;
+      return (
+        <span className="chip" style={{ width: p, height: p }}>
+          <svg width={p} height={p} viewBox={`0 0 ${p} ${p}`}>
+            <g fill="none" stroke="#1D1F27" strokeWidth={sw}>
+              <circle cx={c} cy={c} r={r} />
+              <line x1={c - r} y1={c} x2={c + r} y2={c} />
+              <ellipse cx={c} cy={c} rx={r * 0.42} ry={r} />
+            </g>
+          </svg>
+        </span>
+      );
+    }
+
+    // 2 — Compass star. Two crossed needles (filled + outline).
+    function CompassMark({ size = 56, sw = 2.4 }) {
+      const p = size, c = p / 2, o = p * 0.30, i = p * 0.11;
+      const vNeedle = `${c},${c - o} ${c + i},${c} ${c},${c + o} ${c - i},${c}`;
+      const hNeedle = `${c - o},${c} ${c},${c - i} ${c + o},${c} ${c},${c + i}`;
+      return (
+        <span className="chip" style={{ width: p, height: p }}>
+          <svg width={p} height={p} viewBox={`0 0 ${p} ${p}`}>
+            <polygon points={hNeedle} fill="none" stroke="#1D1F27" strokeWidth={sw} strokeLinejoin="round" />
+            <polygon points={vNeedle} fill="#1D1F27" stroke="#1D1F27" strokeWidth={sw} strokeLinejoin="round" />
+          </svg>
+        </span>
+      );
+    }
+
+    // 3 — Monogram. Bungee "A" in the chip.
+    function MonogramMark({ size = 56 }) {
+      return (
+        <span className="chip" style={{ width: size, height: size }}>
+          <span style={{ fontFamily: "var(--display)", fontSize: size * 0.52, lineHeight: 1, color: "#1D1F27", transform: "translateY(1px)" }}>A</span>
+        </span>
+      );
+    }
+
+    // 4 — Pixel "A". 5x5 CRT grid.
+    function PixelMark({ size = 56 }) {
+      const grid = [
+        [0,1,1,1,0],
+        [1,0,0,0,1],
+        [1,1,1,1,1],
+        [1,0,0,0,1],
+        [1,0,0,0,1],
+      ];
+      const pad = size * 0.16, cell = (size - pad * 2) / 5;
+      return (
+        <span className="chip" style={{ width: size, height: size }}>
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+            {grid.flatMap((row, y) => row.map((v, x) => v ? (
+              <rect key={`${x}-${y}`} x={pad + x * cell + 0.5} y={pad + y * cell + 0.5}
+                    width={cell - 1} height={cell - 1} fill="#1D1F27" />
+            ) : null))}
+          </svg>
+        </span>
+      );
+    }
+
+    const MARKS = {
+      globe:    { Comp: GlobeMark,    title: "A · Globe",    blurb: <>A meridian globe — <b>the atlas, literally</b>. Strokes only, so it stays crisp at favicon size. Most meaningful to the name and the most distinctive of the set.</> },
+      compass:  { Comp: CompassMark,  title: "B · Compass",  blurb: <>A crossed-needle compass star. Says <b>navigation &amp; direction</b> — triage as wayfinding. Solid+outline reads well small.</> },
+      monogram: { Comp: MonogramMark, title: "C · Monogram", blurb: <>The Bungee <b>“A”</b> in the accent chip. Closest to today's wordmark-only mark; safest, most neutral, least ownable.</> },
+      pixel:    { Comp: PixelMark,    title: "D · Pixel A",  blurb: <>A CRT-grid <b>“A”</b>, leaning into the VT323 arcade voice. Most playful; best for app icon / loading states.</> },
+    };
+
+    function Lockup({ Comp, dark, size = 56, word = 34 }) {
+      return (
+        <span className={"lockup" + (dark ? " on-dark" : "")}>
+          <Comp size={size} />
+          <span className="word" style={{ fontSize: word }}>ATLAS<span className="dot">.</span></span>
+        </span>
+      );
+    }
+
+    function board(id, mark) {
+      const { Comp, title, blurb } = MARKS[mark];
+      return (
+        <DCArtboard id={id} label={title} width={400} height={486}>
+          <div className="ab-pad">
+            <div className="hero"><Lockup Comp={Comp} /></div>
+            <div className="strip">
+              <div className="cell">
+                <Comp size={48} />
+                <span className="cell-label">Icon</span>
+              </div>
+              <div className="cell">
+                <Comp size={24} />
+                <span className="cell-label">Favicon 24</span>
+              </div>
+              <div className="cell dark">
+                <span className="on-dark" style={{ background: "transparent" }}><Comp size={48} /></span>
+                <span className="cell-label">On dark</span>
+              </div>
+            </div>
+            <div className="hero dark" style={{ flex: "0 0 auto", minHeight: 0, padding: "20px 0" }}>
+              <Lockup Comp={Comp} dark size={44} word={28} />
+            </div>
+            <div className="desc">{blurb}</div>
+          </div>
+        </DCArtboard>
+      );
+    }
+
+    function App() {
+      return (
+        <DesignCanvas>
+          <DCSection id="logos" title="Atlas — Logo directions" subtitle="Mark + ATLAS wordmark (Bungee). All in the neobrutalist idiom: 2px ink, hard shadow, yellow accent chip.">
+            {board("globe", "globe")}
+            {board("compass", "compass")}
+            {board("monogram", "monogram")}
+            {board("pixel", "pixel")}
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
