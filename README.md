@@ -20,15 +20,14 @@ A monorepo containing the Hay application stack.
 ### Prerequisites
 
 ```sh
-# Turso CLI (local libSQL server for development)
-brew install tursodatabase/tap/turso
-
 # Rust toolchain (required for Tauri desktop builds only)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Docker (required for production container builds only — not needed for local dev)
 # https://docs.docker.com/get-docker/
 ```
+
+> **Local database**: `bun run dev:db` uses [`sqld`](https://github.com/tursodatabase/libsql) (the libSQL server) via `bunx sqld` — no separate install required. It starts a local HTTP server on `127.0.0.1:8080` and persists data to `apps/server/local.db`.
 
 ### 1. Install dependencies
 
@@ -70,9 +69,9 @@ bun run dev:db
 bun run --cwd apps/server dev:db
 ```
 
-This starts a local Turso server and persists data to `apps/server/local.db`.
+This starts a local libSQL server (`sqld`) on `http://127.0.0.1:8080` and persists data to `apps/server/local.db`.
 
-No `DATABASE_AUTH_TOKEN` is needed for the local Turso CLI server.
+No `DATABASE_AUTH_TOKEN` is needed for the local server.
 
 For Turso Cloud, set both in `apps/server/.env`:
 
