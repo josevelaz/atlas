@@ -2056,6 +2056,16 @@ body::after {
 	.atlas-app {
 		grid-template-columns: 200px 320px 1fr;
 	}
+	/* The thread toolbar packs two button groups (archive / trash / set-aside /
+	   reply-later · prev / next) onto one row. In the narrowed `1fr` pane that
+	   row exceeds the column width and — because `.atlas-pane` clips overflow —
+	   the prev/next group gets cut off-screen and becomes unreachable. Let the
+	   toolbar wrap so every control stays in-bounds at tablet widths. The
+	   desktop grid (≥1101px) keeps the single-row layout unchanged. */
+	.atlas-thread-toolbar {
+		flex-wrap: wrap;
+		row-gap: 8px;
+	}
 }
 
 /* Tablet portrait & mobile: stack regions vertically, each
