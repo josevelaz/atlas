@@ -203,6 +203,6 @@ All three render correctly and are unchanged by the recreation work.
 
 ## Handoff
 
-- **Branch:** `feat/spec-02-web-prototype-recreation`
-- **PR:** `__PR_URL__` (recorded after `gh pr create`)
-- **Final-proof commit:** `__PROOF_COMMIT__` (this commit; updated in the PR-link follow-up)
+- **Branch:** `feat/spec-02-web-prototype-recreation` (pushed to `origin`)
+- **PR:** https://github.com/josevelaz/atlas/pull/28
+- **Final-proof commit:** `04be59b` (manifest + screenshots); PR-link update follows in `08a`-style chore commit on the same branch.
