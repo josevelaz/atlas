@@ -117,17 +117,17 @@ Ship a dedicated, interactive, responsive, pixel-exact SolidJS recreation of the
   **Files**: `apps/web/src/styles.css`, `apps/web/src/components/atlas/app_shell.tsx`, `apps/web/src/components/atlas/top_bar.tsx`, `apps/web/src/components/atlas/sidebar_nav.tsx`, `apps/web/src/components/atlas/mail_workspace.tsx`, `apps/web/src/components/atlas/thread_view.tsx`, `apps/web/src/components/atlas/screener_screen.tsx`, `apps/web/src/components/atlas/tasks_screen.tsx`, `apps/web/src/components/atlas/settings_screen.tsx`, `apps/web/src/components/atlas/compose_dialog.tsx`, `apps/web/src/components/atlas/assistant_dialog.tsx`, `docs/specs/02-spec-web-prototype-recreation/proof/task-12-responsive/manifest.md`
   **Acceptance**: Screenshot matrix covers `/atlas/onboarding`, `/atlas/inbox`, `/atlas/screener`, `/atlas/feed`, `/atlas/paper-trail`, `/atlas/tasks`, `/atlas/settings`, compose, and assistant at `1440x900`, `1024x768`, `768x1024`, and `390x844`; every required control remains reachable; no horizontal body overflow appears on mobile; resizing between breakpoints produces no runtime errors; any desktop divergence introduced by responsive changes is fixed before commit.
 
-- [ ] 13. Run final verification, proof index, and PR handoff
+- [x] 13. Run final verification, proof index, and PR handoff
   **What**: Execute the complete engineering and UI verification sweep, update the proof index, ensure generated route tree behavior is healthy, confirm no React/backend leakage, create the final implementation commit if needed, push the branch, and open a PR using the GitHub CLI per repository instructions.
   **Files**: `docs/specs/02-spec-web-prototype-recreation/proof/final/manifest.md`
   **Acceptance**: `bun run --cwd apps/web typecheck`, `bun run --cwd apps/web lint`, and `bun run --cwd apps/web build` pass; final `npx agent-browser` smoke covers onboarding, all nav destinations, screener accept/reject, compose, assistant, keyboard shortcuts, and responsive resize; grep verification finds no React imports/dependencies in `apps/web`; `/` and `/dev/*` routes still work; `git status --short` is clean after focused commits; a remote branch is pushed and a PR link is recorded in the final proof manifest.
 
 ## Verification
-- [ ] `bun run --cwd apps/web typecheck` passes after every implementation task that touches `apps/web` source.
-- [ ] `bun run --cwd apps/web lint` passes before each task commit.
-- [ ] `bun run --cwd apps/web build` passes after route changes and at final verification.
-- [ ] `npx agent-browser` captures browser screenshots and interaction evidence after each visible UI task.
-- [ ] `docs/specs/02-spec-web-prototype-recreation/proof/**/manifest.md` records exact commands, URLs, viewport sizes, screenshots, and unresolved differences for each task.
-- [ ] `/` remains the existing root route and `/atlas/**` contains the recreated Atlas experience.
-- [ ] All final Atlas route screenshots have zero unresolved visual parity defects against the corresponding prototype states.
-- [ ] The final implementation contains no React imports, no runtime `docs/prototype/**` imports, no backend/email/auth integration, and no manual edits to `apps/web/src/routeTree.gen.ts`.
+- [x] `bun run --cwd apps/web typecheck` passes after every implementation task that touches `apps/web` source.
+- [x] `bun run --cwd apps/web lint` passes before each task commit.
+- [x] `bun run --cwd apps/web build` passes after route changes and at final verification.
+- [x] `npx agent-browser` captures browser screenshots and interaction evidence after each visible UI task.
+- [x] `docs/specs/02-spec-web-prototype-recreation/proof/**/manifest.md` records exact commands, URLs, viewport sizes, screenshots, and unresolved differences for each task.
+- [x] `/` remains the existing root route and `/atlas/**` contains the recreated Atlas experience.
+- [x] All final Atlas route screenshots have zero unresolved visual parity defects against the corresponding prototype states.
+- [x] The final implementation contains no React imports, no runtime `docs/prototype/**` imports, no backend/email/auth integration, and no manual edits to `apps/web/src/routeTree.gen.ts`.
