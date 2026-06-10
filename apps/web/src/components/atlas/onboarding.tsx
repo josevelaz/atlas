@@ -5,9 +5,8 @@
 // visual panel), and a footer (Back, step dots, Next / Open Atlas). Mirrors the
 // prototype's `Onboarding` component in `docs/prototype/onboarding.jsx`.
 //
-// Navigation is link-driven so the flow works without client hydration (the app
-// has a documented pre-existing TanStack Start/Solid hydration error). Each
-// control is a `<Link>` that renders a real `<a href>` server-side:
+// Navigation is link-driven. Each control is a `<Link>` that renders a real
+// `<a href>` server-side:
 //   • Back / Next  → same onboarding route with `?step=N`
 //   • Skip / Open Atlas → `/atlas/inbox`
 // The current step is owned by the route (driven by the `step` search param), so
@@ -63,11 +62,7 @@ const Onboarding: Component<OnboardingProps> = (props) => {
 	}
 
 	return (
-		<div
-			class="atlas-onboarding"
-			data-screen-label="Onboarding"
-			data-onb-dir={direction()}
-		>
+		<div class="atlas-onboarding" data-screen-label="Onboarding">
 			<div class="atlas-onboarding-card">
 				<div class="atlas-onboarding-head">
 					<div class="atlas-row atlas-gap-8">
