@@ -163,6 +163,22 @@ textarea {
 /* ============================================================
    Grain / scanline retro texture (subtle, on top of everything)
    ============================================================ */
+/* Scanlines — very subtle CRT feel */
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background: repeating-linear-gradient(
+		to bottom,
+		transparent 0,
+		transparent 3px,
+		rgba(0, 0, 0, 0.012) 3px,
+		rgba(0, 0, 0, 0.012) 6px
+	);
+	pointer-events: none;
+	z-index: 99998;
+}
+
 body::after {
 	content: "";
 	position: fixed;
@@ -761,6 +777,59 @@ body::after {
 
 @view-transition {
 	navigation: auto;
+}
+
+/* ---- Onboarding step slide (directional) ----
+   The onboarding card animates its step changes as a horizontal slide whose
+   direction is driven by cached client state (the `data-onb-dir` attribute set
+   by startOnboardingTransition), NOT by the URL. forward → next step slides in from the
+   right while the old slides out to the left; backward → the reverse. The card
+   is given a dedicated `view-transition-name` so only it slides; the rest of
+   the page cross-fades via the default `::view-transition-group`.
+   `prefers-reduced-motion` is already neutralised by the rule above. */
+.atlas-onboarding-card {
+	view-transition-name: atlas-onb-card;
+}
+
+@keyframes atlas-onb-slide-out-left {
+	to {
+		transform: translateX(-100%);
+		opacity: 0;
+	}
+}
+@keyframes atlas-onb-slide-in-right {
+	from {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+}
+@keyframes atlas-onb-slide-out-right {
+	to {
+		transform: translateX(100%);
+		opacity: 0;
+	}
+}
+@keyframes atlas-onb-slide-in-left {
+	from {
+		transform: translateX(-100%);
+		opacity: 0;
+	}
+}
+
+/* Forward: old → left, new ← right. */
+[data-onb-dir="forward"]::view-transition-old(atlas-onb-card) {
+	animation: atlas-onb-slide-out-left 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+[data-onb-dir="forward"]::view-transition-new(atlas-onb-card) {
+	animation: atlas-onb-slide-in-right 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Backward: old → right, new ← left. */
+[data-onb-dir="backward"]::view-transition-old(atlas-onb-card) {
+	animation: atlas-onb-slide-out-right 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+[data-onb-dir="backward"]::view-transition-new(atlas-onb-card) {
+	animation: atlas-onb-slide-in-left 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 /* ============================================================

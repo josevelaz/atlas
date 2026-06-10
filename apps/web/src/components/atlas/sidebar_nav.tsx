@@ -4,11 +4,11 @@
 // (Tasks & Dates / Settings), the AI usage card, and a "Replay onboarding"
 // link. Mirrors the prototype's `.sidebar`.
 //
-// Routed destinations (Screener, Inbox) render as `<Link>`s so navigation works
-// server-side under the pre-existing broken-hydration constraint; each link
-// carries the current `?d=` screener-decision token-string so accepted items
-// stay reflected across Screener ↔ Inbox. Other entries stay visually present
-// (for parity) but inert — we don't route users to incomplete screens.
+// Routed destinations (Screener, Inbox, Feed, Paper Trail, …) render as
+// `<Link>`s and navigate client-side via the router; each link carries the
+// current `?d=` screener-decision token-string so accepted items stay reflected
+// across Screener ↔ Inbox. Other entries stay visually present (for parity) but
+// inert — we don't route users to incomplete screens.
 
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
@@ -150,8 +150,7 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 			<AiUsageCard />
 
 			<Link
-				to="/atlas/onboarding"
-				search={{ step: 0 }}
+				to="/onboarding"
 				class="atlas-nav-item"
 				style={{ "margin-top": "4px" }}
 				data-action="replay-onboarding"

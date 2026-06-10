@@ -1,0 +1,459 @@
+/* ============================================================
+   Retro 90s/2000s layer — PostHog-inspired aesthetic
+   Loaded AFTER styles.css to override the default neobrutalist theme
+   ============================================================ */
+
+/* === Retro light palette (warm cream instead of cool lavender) === */
+:root {
+  --background: #F0EBE0;
+  --secondary-background: #FFFDF7;
+  --foreground: #1D1F27;
+  --muted: #6B6456;
+  --muted-2: #9A9184;
+  --border: #1D1F27;
+  --ring: #1D1F27;
+  --main: #FACC00;
+  --main-foreground: #000;
+
+  --feed: #FFD600;
+  --paper: #00E5A0;
+  --danger: #FF4D50;
+  --ai: #3D7EFF;
+  --inbox: #A78BFA;
+
+  /* retro shadow color — glows with accent */
+  --shadow-color: var(--border);
+  --shadow: var(--shadow-x) var(--shadow-y) 0 0 var(--shadow-color);
+  --shadow-sm: 2px 2px 0 0 var(--shadow-color);
+  --shadow-lg: 6px 6px 0 0 var(--shadow-color);
+
+  --font-heading: "Bungee", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-base: "Space Mono", "JetBrains Mono", ui-monospace, monospace;
+  --font-mono: "VT323", "Space Mono", ui-monospace, monospace;
+  --font-weight-base: 400;
+  --font-weight-heading: 400;
+}
+
+/* === Retro dark palette (PostHog-like deep navy) === */
+.dark {
+  --background: #1D1F27;
+  --secondary-background: #282A35;
+  --foreground: #EEEFE9;
+  --muted: #9BA0AE;
+  --muted-2: #6B7080;
+  --border: #000;
+  --ring: #FACC00;
+  --main-foreground: #000;
+  --overlay: rgba(0, 0, 0, 0.88);
+}
+
+/* ===== Grain / noise texture ===== */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  opacity: 0.032;
+  pointer-events: none;
+  z-index: 99999;
+  mix-blend-mode: overlay;
+}
+
+/* ===== Scanlines — very subtle CRT feel ===== */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgba(0, 0, 0, 0.012) 3px,
+    rgba(0, 0, 0, 0.012) 6px
+  );
+  pointer-events: none;
+  z-index: 99998;
+}
+
+/* ===== Typography overrides ===== */
+body {
+  font-family: var(--font-base);
+  font-weight: var(--font-weight-base);
+  letter-spacing: 0.01em;
+  font-size: 13px;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-heading);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Logo — chunky Bungee treatment */
+.logo {
+  background: transparent !important;
+  color: var(--foreground) !important;
+}
+.logo .logo-word {
+  font-family: "Bungee", cursive !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.01em !important;
+  font-size: 18px !important;
+  color: var(--foreground) !important;
+  text-transform: uppercase;
+}
+.logo .logo-dot {
+  color: var(--main) !important;
+  -webkit-text-stroke: 1.5px var(--border);
+}
+
+/* Mono elements — pixel font VT323 */
+.mono,
+.count,
+.meta-text,
+.addr,
+.message-head .addr,
+.message-head .date,
+.onboarding-head span,
+.settings-row .mono,
+.compose-field label,
+.section-title,
+.list-header .meta,
+.extract-item .mono,
+.extract-item > span:last-child,
+.task-card .src,
+.task-card .mono,
+.screener-ai .pill,
+.chat-bubble.ai .cite,
+.priority,
+.tag {
+  font-family: "VT323", monospace !important;
+  font-size: 1.15em;
+}
+.kbd {
+  font-family: "VT323", monospace;
+  font-size: 13px;
+}
+.section-title {
+  font-family: "VT323", monospace !important;
+  font-size: 14px !important;
+  letter-spacing: 0.12em;
+}
+
+/* ===== Colored hard shadows (key PostHog retro vibe) ===== */
+.dark .card,
+.dark .message,
+.dark .screener-card,
+.dark .task-card,
+.dark .compose-card,
+.dark .overlay-card,
+.dark .onboarding-card,
+.dark .btn:not(.ghost):not(.no-shadow) {
+  border-color: var(--foreground);
+  --shadow-color: var(--main);
+}
+.dark .btn:not(.ghost):not(.no-shadow) {
+  box-shadow: var(--shadow-x, 4px) var(--shadow-y, 4px) 0 0 var(--main);
+}
+.dark .btn:not(.ghost):not(.no-shadow):hover {
+  box-shadow: calc(var(--shadow-x, 4px) + 1px) calc(var(--shadow-y, 4px) + 1px) 0 0 var(--main);
+}
+.dark .btn:not(.ghost):not(.no-shadow):active {
+  box-shadow: 0 0 0 0 var(--main);
+}
+.dark .btn.sm:not(.ghost):not(.no-shadow) {
+  box-shadow: 2px 2px 0 0 var(--main);
+}
+.dark .btn.sm:not(.ghost):not(.no-shadow):hover {
+  box-shadow: 3px 3px 0 0 var(--main);
+}
+.dark .btn.sm:not(.ghost):not(.no-shadow):active {
+  box-shadow: 0 0 0 0 var(--main);
+}
+
+/* Light mode colored shadows */
+.card,
+.message,
+.screener-card,
+.task-card,
+.compose-card,
+.overlay-card,
+.onboarding-card {
+  --shadow-color: var(--main);
+  box-shadow: var(--shadow-x, 4px) var(--shadow-y, 4px) 0 0 var(--shadow-color);
+}
+
+/* ===== Sidebar dot pattern ===== */
+.sidebar {
+  background-image: radial-gradient(
+    circle,
+    rgba(128, 128, 128, 0.06) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+}
+.dark .sidebar {
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.04) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+}
+
+/* ===== Sticker-like badge treatment ===== */
+.badge {
+  transform: rotate(-1.2deg);
+  transition: transform 0.12s ease;
+}
+.badge:nth-child(2n) { transform: rotate(1.5deg); }
+.badge:nth-child(3n) { transform: rotate(-0.5deg); }
+.badge:hover { transform: rotate(0deg) scale(1.08); }
+
+.priority {
+  transform: rotate(-1deg);
+}
+.tag {
+  transform: rotate(0.8deg);
+}
+.tag:nth-child(2n) { transform: rotate(-1deg); }
+
+/* ===== AI elements — neon glow ===== */
+.dark .ai-summary {
+  box-shadow:
+    var(--shadow-x, 4px) var(--shadow-y, 4px) 0 0 #000,
+    0 0 24px rgba(61, 126, 255, 0.15);
+}
+.dark .ai-rail-head,
+.dark .screener-ai {
+  text-shadow: 0 0 8px rgba(61, 126, 255, 0.4);
+}
+
+/* ===== Topbar retro treatment ===== */
+.topbar {
+  border-bottom-width: 3px;
+}
+.dark .topbar {
+  background: #15161D;
+}
+
+/* ===== Sidebar nav items ===== */
+.nav-item {
+  font-family: var(--font-base);
+  letter-spacing: 0.02em;
+}
+.nav-item.active {
+  box-shadow: 3px 3px 0 0 var(--main);
+}
+
+/* ===== List styling ===== */
+.list-header h2 {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 18px;
+}
+
+/* Dashed separators between mail rows (retro forum vibe) */
+.mail-row {
+  border-bottom-style: dashed;
+  border-bottom-color: rgba(128, 128, 128, 0.3);
+}
+.dark .mail-row {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.mail-row:last-child {
+  border-bottom-style: solid;
+}
+
+/* ===== Thread view ===== */
+.thread-toolbar {
+  border-bottom-width: 3px;
+}
+
+/* ===== Compose overlay ===== */
+.dark .compose-card {
+  border-color: var(--foreground);
+}
+
+/* ===== Onboarding ===== */
+.onboarding {
+  background-image: radial-gradient(
+    circle,
+    rgba(128, 128, 128, 0.04) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+.dark .onboarding {
+  background-color: #15161D;
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.025) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+.onboarding-card {
+  border-width: 3px;
+}
+
+/* ===== Retro scrollbar ===== */
+.list-scroll::-webkit-scrollbar { width: 14px; }
+.list-scroll::-webkit-scrollbar-track {
+  background: var(--background);
+  border-left: 3px solid var(--border);
+}
+.dark .list-scroll::-webkit-scrollbar-thumb {
+  background: var(--main);
+  border: 2px solid var(--background);
+}
+.thread-body::-webkit-scrollbar { width: 14px; }
+.thread-body::-webkit-scrollbar-track {
+  background: var(--background);
+  border-left: 3px solid var(--border);
+}
+.dark .thread-body::-webkit-scrollbar-thumb {
+  background: var(--main);
+  border: 2px solid var(--background);
+}
+
+/* ===== Input retro styling ===== */
+.input, .textarea {
+  font-family: var(--font-base);
+  border-width: 2.5px;
+}
+.dark .input:focus, .dark .textarea:focus {
+  box-shadow: var(--shadow-x, 4px) var(--shadow-y, 4px) 0 0 var(--main);
+  border-color: var(--main);
+}
+
+/* ===== Toggle retro ===== */
+.dark .btn[style*="width: 52px"] {
+  border-color: var(--foreground);
+}
+
+/* ===== Settings icons — brighter on dark ===== */
+.dark .settings-row .ic {
+  border-width: 2.5px;
+}
+
+/* ===== Star cursor decoration on primary buttons ===== */
+.btn.primary {
+  position: relative;
+}
+.btn.primary::after {
+  content: "✦";
+  font-size: 8px;
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  color: var(--main);
+  text-shadow: 0 0 4px var(--main);
+  pointer-events: none;
+}
+
+/* ===== Decorative star in AI summary header ===== */
+.ai-summary .head::before {
+  content: "★";
+  font-size: 10px;
+  margin-right: 2px;
+  opacity: 0.7;
+}
+
+/* ===== Blinking cursor on search button ===== */
+@keyframes retro-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ===== AI usage bar — animated stripes ===== */
+@keyframes retro-stripes {
+  0% { background-position: 0 0; }
+  100% { background-position: 20px 0; }
+}
+
+/* ===== Subtle hover glow on cards (dark mode) ===== */
+.dark .mail-row:hover {
+  background: rgba(250, 204, 0, 0.04);
+}
+.dark .mail-row.selected {
+  background: var(--main);
+}
+
+/* ===== Step dots — more pixel-like ===== */
+.step-dot {
+  border-radius: 2px;
+}
+
+/* ===== Avatar — slightly rotated for playfulness ===== */
+.avatar {
+  transform: rotate(-1deg);
+}
+.avatar:nth-child(2n) { transform: rotate(1.5deg); }
+
+/* ===== Screener actions — bolder ===== */
+.screener-actions .accept,
+.screener-actions .reject {
+  font-family: var(--font-heading);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+/* ===== Extract items — retro border ===== */
+.extract-item {
+  border-style: dashed;
+}
+
+/* ===== Chat bubbles ===== */
+.dark .chat-bubble {
+  border-color: var(--foreground);
+}
+.dark .chat-bubble.user {
+  box-shadow: 2px 2px 0 0 var(--main);
+}
+.dark .chat-bubble.ai {
+  box-shadow: 2px 2px 0 0 rgba(61, 126, 255, 0.4);
+}
+
+/* ===== Overlay backdrop — crosshatch on dark ===== */
+.dark .overlay {
+  background:
+    linear-gradient(45deg, rgba(0,0,0,0.03) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0,0,0,0.03) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0,0,0,0.03) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0,0,0,0.03) 75%),
+    rgba(0, 0, 0, 0.88);
+  background-size: 8px 8px, 8px 8px, 8px 8px, 8px 8px;
+  background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+}
+
+/* ===== Empty state icon box ===== */
+.empty .ic-box {
+  transform: rotate(-3deg);
+}
+
+/* ===== Keyboard shortcut badges ===== */
+.kbd {
+  font-family: "VT323", monospace;
+  font-size: 14px;
+  background: var(--background);
+  box-shadow: 2px 2px 0 0 var(--border);
+}
+
+/* ===== Selection color ===== */
+::selection {
+  background: var(--main);
+  color: #000;
+}
+
+/* ===== Dividers — dashed ===== */
+hr, .divider {
+  border-style: dashed;
+  border-color: rgba(128, 128, 128, 0.3);
+}
+.dark hr, .dark .divider {
+  border-color: rgba(255, 255, 255, 0.1);
+}

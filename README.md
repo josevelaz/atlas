@@ -20,15 +20,14 @@ A monorepo containing the Hay application stack.
 ### Prerequisites
 
 ```sh
-# Turso CLI (local libSQL server for development)
-brew install tursodatabase/tap/turso
-
 # Rust toolchain (required for Tauri desktop builds only)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Docker (required for production container builds only — not needed for local dev)
 # https://docs.docker.com/get-docker/
 ```
+
+> **Local database**: `bun run dev:db` uses [`sqld`](https://github.com/tursodatabase/libsql) (the libSQL server) via `bunx sqld` — no separate install required. It starts a local HTTP server on `127.0.0.1:8080` and persists data to `apps/server/local.db`.
 
 ### 1. Install dependencies
 
@@ -60,7 +59,7 @@ cp apps/web/.env.example apps/web/.env
 
 ### 3. Start the local database
 
-The server uses the Turso CLI's local libSQL server for development:
+The server uses `sqld` (the libSQL server) for local development:
 
 ```sh
 # From repo root (delegates to @hay/server via Turbo)
@@ -70,15 +69,15 @@ bun run dev:db
 bun run --cwd apps/server dev:db
 ```
 
-This starts a local Turso server and persists data to `apps/server/local.db`.
+This starts a local libSQL server (`sqld`) on `http://127.0.0.1:8080` and persists data to `apps/server/local.db`.
 
-No `DATABASE_AUTH_TOKEN` is needed for the local Turso CLI server.
+No `TURSO_AUTH_TOKEN` is needed for the local server.
 
 For Turso Cloud, set both in `apps/server/.env`:
 
 ```sh
-DATABASE_URL="libsql://your-db.turso.io"
-DATABASE_AUTH_TOKEN="your-turso-auth-token"
+TURSO_DATABASE_URL="libsql://your-db.turso.io"
+TURSO_AUTH_TOKEN="your-turso-auth-token"
 ```
 
 ### 4. Run database migrations
@@ -143,7 +142,7 @@ All commands run from the repo root via Turborepo:
 | `bun run dev:server` | Start API server only |
 | `bun run dev:web` | Start web dev server only |
 | `bun run dev:desktop` | Start Tauri desktop app (auto-starts web dev server) |
-| `bun run dev:db` | Start local Turso libSQL server |
+| `bun run dev:db` | Start local libSQL server (`sqld`) |
 | `bun run build` | Build all packages |
 | `bun run start` | Start production server |
 | `bun run lint` | Lint all packages |

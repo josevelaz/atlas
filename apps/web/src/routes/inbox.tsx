@@ -1,7 +1,6 @@
-// Atlas — Inbox route (`/atlas/inbox`).
+// Atlas — Inbox route (`/inbox`).
 //
 // The mail workspace screen: top bar, sidebar, inbox list, selected thread.
-// Lives under the `/atlas` layout segment and does not touch `/`.
 //
 // Optional search params seed server-rendered proof variants so the
 // interaction model is observable even when client hydration is unavailable:
@@ -10,7 +9,7 @@
 //   ?replyLater=1        — render the selected row's "reply later" toggle active
 //   ?d=<decisions>       — screener accept/reject token-string; accepted Inbox
 //                          items appear here, and the nav counts reflect it
-//                          (shared with `/atlas/screener` so navigation is
+//                          (shared with `/screener` so navigation is
 //                          stateful under broken hydration).
 //   ?compose=new|reply   — open the compose overlay server-side (proof variant):
 //                          `new` opens a blank "New message"; `reply` opens a
@@ -24,10 +23,10 @@
 //                          Stripe / screener / Marcus example prompt).
 
 import { createFileRoute } from "@tanstack/solid-router";
-import { AtlasApp } from "../../components/atlas/atlas_app";
-import { decodeComposeMode, decodeDecisions } from "../../lib/atlas/app_state";
-import { atlasMailLinkFor } from "../../lib/atlas/nav_links";
-import type { ToggleSet } from "../../lib/atlas/types";
+import { AtlasApp } from "../components/atlas/atlas_app";
+import { decodeComposeMode, decodeDecisions } from "../lib/atlas/app_state";
+import { atlasMailLinkFor } from "../lib/atlas/nav_links";
+import type { ToggleSet } from "../lib/atlas/types";
 
 type InboxSearch = {
 	sel?: string;
@@ -44,7 +43,7 @@ function asFlag(value: unknown): boolean {
 	return value === true || value === 1 || value === "1" || value === "true";
 }
 
-export const Route = createFileRoute("/atlas/inbox")({
+export const Route = createFileRoute("/inbox")({
 	validateSearch: (search: Record<string, unknown>): InboxSearch => ({
 		sel: typeof search.sel === "string" ? search.sel : undefined,
 		setAside: asFlag(search.setAside),

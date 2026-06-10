@@ -25,7 +25,7 @@ import { ScreenerCard } from "./screener_card";
 
 export interface ScreenerScreenProps {
 	decisions: ScreenerDecisions;
-	/** Route path the card links navigate to (e.g. "/atlas/screener"). */
+	/** Route path the card links navigate to (e.g. "/screener"). */
 	to: string;
 }
 

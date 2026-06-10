@@ -13,7 +13,7 @@
     "push": "drizzle-kit push",
     "migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
-    "dev:db": "bunx --bun turso dev --db-file local.db"
+    "dev:db": "bunx sqld --http-listen-addr 127.0.0.1:8080 --db-path local.db"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.11",

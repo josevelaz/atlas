@@ -271,4 +271,3 @@ A tight, engineered radius language.
   exception, for hairline details).
 - **Don't** stack heavy font-weights on Bungee, and don't set long passages in
   the display or pixel faces.
-
