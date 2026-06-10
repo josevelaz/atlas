@@ -163,6 +163,22 @@ textarea {
 /* ============================================================
    Grain / scanline retro texture (subtle, on top of everything)
    ============================================================ */
+/* Scanlines — very subtle CRT feel */
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background: repeating-linear-gradient(
+		to bottom,
+		transparent 0,
+		transparent 3px,
+		rgba(0, 0, 0, 0.012) 3px,
+		rgba(0, 0, 0, 0.012) 6px
+	);
+	pointer-events: none;
+	z-index: 99998;
+}
+
 body::after {
 	content: "";
 	position: fixed;
