@@ -1,12 +1,13 @@
-// Atlas — SSR-proof sidebar navigation link resolver.
+// Atlas — sidebar navigation link resolver.
 //
-// Client hydration is disabled by a pre-existing TanStack Start/Solid error, so
-// sidebar navigation is driven by real server-rendered `<a href>` links. Every
+// Client hydration is healthy (the `<HydrationScript />` + `hydrate()` entry are
+// in place), so sidebar `<Link>`s perform client-side SPA navigation. Every
 // shipped destination (Screener / Inbox / Feed / Paper Trail + Tasks & Dates +
 // Settings) carries the current `?d=` screener-decision token-string so items
-// stay reflected across screens (including the Tasks & Dates counts). This
-// resolver is shared by every Atlas route so the linking behavior is identical
-// (and stays DRY) regardless of which screen is active.
+// stay reflected across screens (including the Tasks & Dates counts), and that
+// state also survives the in-app navigation. This resolver is shared by every
+// Atlas route so the linking behavior is identical (and stays DRY) regardless of
+// which screen is active.
 
 import { viewForMailId } from "./app_state";
 import type { Screen } from "./types";
@@ -57,7 +58,7 @@ export function atlasMailLinkFor(
  * id has no shipped destination so the citation stays inert.
  *
  * The current `?d=` screener decisions are carried through so the destination
- * stays consistent with the rest of the session under broken hydration.
+ * stays consistent with the rest of the session.
  */
 export function atlasCiteLinkFor(
 	id: string,
