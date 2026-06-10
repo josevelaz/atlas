@@ -151,7 +151,6 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 
 			<Link
 				to="/atlas/onboarding"
-				search={{ step: 0 }}
 				class="atlas-nav-item"
 				style={{ "margin-top": "4px" }}
 				data-action="replay-onboarding"

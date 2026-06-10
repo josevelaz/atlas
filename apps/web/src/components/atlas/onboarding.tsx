@@ -5,61 +5,55 @@
 // visual panel), and a footer (Back, step dots, Next / Open Atlas). Mirrors the
 // prototype's `Onboarding` component in `docs/prototype/onboarding.jsx`.
 //
-// Navigation is link-driven. Each control is a `<Link>` that renders a real
-// `<a href>` server-side:
-//   • Back / Next  → same onboarding route with `?step=N`
-//   • Skip / Open Atlas → `/atlas/inbox`
-// The current step is owned by the route (driven by the `step` search param), so
-// every transition is observable in server-rendered output.
+// The active step is owned by local client state (a signal), NOT the URL — the
+// flow no longer uses a `?step=N` query param. Back/Next are buttons that mutate
+// the step signal inside a directional view transition (see
+// `startOnboardingTransition`); Skip / Open Atlas are real links to
+// `/atlas/inbox`. Entering the flow always starts at step 0 (the cached
+// transition state is reset on mount), so a fresh entry / replay is clean.
 
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
-import { For, Show, createEffect, createMemo, onCleanup } from "solid-js";
-import { isServer } from "solid-js/web";
+import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
+
 import { ONBOARDING_STEPS } from "../../lib/atlas/app_state";
-import { resolveOnboardingDirection } from "../../lib/atlas/onboarding_transition";
+import {
+	resetOnboardingDirection,
+	startOnboardingTransition,
+} from "../../lib/atlas/onboarding_transition";
 import type { OnboardingStep } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { AtlasIcon } from "./atlas_icon";
 import { Logo } from "./logo";
 import { OnboardingVisualPanel } from "./onboarding_visuals";
 
-export interface OnboardingProps {
-	/** Current step index (0-based), clamped by the route. */
-	step: number;
-	/** Route path the Back/Next links point at (e.g. "/atlas" or "/atlas/onboarding"). */
-	basePath: "/atlas" | "/atlas/onboarding";
-}
-
-const Onboarding: Component<OnboardingProps> = (props) => {
+const Onboarding: Component = () => {
 	const total = ONBOARDING_STEPS.length;
-	const step = () => Math.min(Math.max(props.step, 0), total - 1);
-	// step() is clamped to a valid index; the cast keeps the type non-optional
-	// under noUncheckedIndexedAccess (ONBOARDING_STEPS is always non-empty).
+	// Active step is local client state. Entering the flow resets the cached
+	// transition direction so the first render is non-directional ("none").
+	resetOnboardingDirection();
+	const [step, setStep] = createSignal(0);
+
+	// step() is always a valid index; the cast keeps the type non-optional under
+	// noUncheckedIndexedAccess (ONBOARDING_STEPS is always non-empty).
 	const data = (): OnboardingStep => ONBOARDING_STEPS[step()] as OnboardingStep;
 	const isLast = () => step() === total - 1;
-	// Slide direction for the view transition, from cached client state (the
-	// previously rendered step) rather than the URL. forward → slide in from the
-	// right, backward → slide in from the left, none → no directional slide.
-	// A memo guarantees `resolveOnboardingDirection` (which mutates the cached
-	// step) runs exactly once per step change, regardless of how many readers
-	// (effect + JSX) access it — calling it per-read would advance the cache
-	// twice and collapse the result to "none".
-	const direction = createMemo(() => resolveOnboardingDirection(step()));
 
-	// The `::view-transition-*` pseudo-elements hang off the document root, so the
-	// directional CSS keys off `data-onb-dir` on <html>, not on this subtree. We
-	// mirror the cached direction onto the root element on the client only (the
-	// attribute is meaningless during SSR and is cleaned up on unmount).
-	if (!isServer) {
-		createEffect(() => {
-			const dir = direction();
-			document.documentElement.setAttribute("data-onb-dir", dir);
-		});
+	// Move to `next` (clamped) as a directional view transition. The direction is
+	// derived from cached client state and stamped on <html> as `data-onb-dir`,
+	// which the CSS `::view-transition` rules key off of.
+	const goToStep = (next: number) => {
+		const clamped = Math.min(Math.max(next, 0), total - 1);
+		if (clamped === step()) return;
+		startOnboardingTransition(clamped, () => setStep(clamped));
+	};
+
+	// Clean up the root attribute when leaving the flow.
+	onMount(() => {
 		onCleanup(() => {
 			document.documentElement.removeAttribute("data-onb-dir");
 		});
-	}
+	});
 
 	return (
 		<div class="atlas-onboarding" data-screen-label="Onboarding">
@@ -87,28 +81,16 @@ const Onboarding: Component<OnboardingProps> = (props) => {
 				</div>
 
 				<div class="atlas-onboarding-foot">
-					<Show
-						when={step() > 0}
-						fallback={
-							<button
-								type="button"
-								class="atlas-btn is-sm"
-								disabled
-								aria-disabled="true"
-							>
-								<AtlasIcon name="back" size={14} /> Back
-							</button>
-						}
+					<button
+						type="button"
+						class="atlas-btn is-sm"
+						disabled={step() === 0}
+						aria-disabled={step() === 0}
+						data-action="back"
+						onClick={() => goToStep(step() - 1)}
 					>
-						<Link
-							to={props.basePath}
-							search={{ step: step() - 1 }}
-							class="atlas-btn is-sm"
-							data-action="back"
-						>
-							<AtlasIcon name="back" size={14} /> Back
-						</Link>
-					</Show>
+						<AtlasIcon name="back" size={14} /> Back
+					</button>
 
 					<div class="atlas-step-dots">
 						<For each={ONBOARDING_STEPS}>
@@ -133,14 +115,14 @@ const Onboarding: Component<OnboardingProps> = (props) => {
 							</Link>
 						}
 					>
-						<Link
-							to={props.basePath}
-							search={{ step: step() + 1 }}
+						<button
+							type="button"
 							class="atlas-btn is-primary is-sm"
 							data-action="next"
+							onClick={() => goToStep(step() + 1)}
 						>
 							Next <AtlasIcon name="chevron-right" size={14} stroke={2.5} />
-						</Link>
+						</button>
 					</Show>
 				</div>
 			</div>
