@@ -1,31 +1,30 @@
-// Atlas — Paper Trail route (`/atlas/paper-trail`).
+// Atlas — Paper Trail route (`/paper-trail`).
 //
 // The mail workspace screen for the Paper Trail category (receipts,
 // confirmations, shipping notices). Reuses the shared Atlas workspace
-// components — only the `view` differs from `/atlas/inbox`, so the list header
+// components — only the `view` differs from `/inbox`, so the list header
 // ("Paper Trail"), row treatments, category count, empty/no-thread pane
 // behavior, tags, and time metadata all come from the same derivation layer.
-// Lives under the `/atlas` layout segment and does not touch `/`.
 //
 // Optional search params seed server-rendered proof variants so the
 // interaction model is observable even when client hydration is unavailable:
 //   ?sel=<mailId>        — pre-select a different paper-trail row
 //   ?d=<decisions>       — screener accept/reject token-string; accepted Paper
 //                          Trail items appear here, and the nav counts reflect
-//                          it (shared with `/atlas/screener` so navigation is
+//                          it (shared with `/screener` so navigation is
 //                          stateful under broken hydration).
 
 import { createFileRoute } from "@tanstack/solid-router";
-import { AtlasApp } from "../../components/atlas/atlas_app";
-import { decodeDecisions } from "../../lib/atlas/app_state";
-import { atlasMailLinkFor } from "../../lib/atlas/nav_links";
+import { AtlasApp } from "../components/atlas/atlas_app";
+import { decodeDecisions } from "../lib/atlas/app_state";
+import { atlasMailLinkFor } from "../lib/atlas/nav_links";
 
 type PaperTrailSearch = {
 	sel?: string;
 	d?: string;
 };
 
-export const Route = createFileRoute("/atlas/paper-trail")({
+export const Route = createFileRoute("/paper-trail")({
 	validateSearch: (search: Record<string, unknown>): PaperTrailSearch => ({
 		sel: typeof search.sel === "string" ? search.sel : undefined,
 		d: typeof search.d === "string" ? search.d : undefined,

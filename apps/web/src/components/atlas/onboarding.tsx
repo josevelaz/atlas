@@ -9,7 +9,7 @@
 // flow no longer uses a `?step=N` query param. Back/Next are buttons that mutate
 // the step signal inside a directional view transition (see
 // `startOnboardingTransition`); Skip / Open Atlas are real links to
-// `/atlas/inbox`. Entering the flow always starts at step 0 (the cached
+// `/inbox`. Entering the flow always starts at step 0 (the cached
 // transition state is reset on mount), so a fresh entry / replay is clean.
 
 import { Link } from "@tanstack/solid-router";
@@ -65,11 +65,7 @@ const Onboarding: Component = () => {
 							Get started — {step() + 1}/{total}
 						</span>
 					</div>
-					<Link
-						to="/atlas/inbox"
-						class="atlas-btn is-ghost is-sm"
-						data-action="skip"
-					>
+					<Link to="/inbox" class="atlas-btn is-ghost is-sm" data-action="skip">
 						Skip
 					</Link>
 				</div>
@@ -106,7 +102,7 @@ const Onboarding: Component = () => {
 						when={!isLast()}
 						fallback={
 							<Link
-								to="/atlas/inbox"
+								to="/inbox"
 								class="atlas-btn is-primary is-sm"
 								data-action="open"
 							>

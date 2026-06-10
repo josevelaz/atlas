@@ -19,7 +19,7 @@ import { AtlasAvatar } from "./mail_row";
 
 export interface ScreenerCardProps {
 	item: ScreenerItem;
-	/** Route path the Accept / Reject links navigate to (e.g. "/atlas/screener"). */
+	/** Route path the Accept / Reject links navigate to (e.g. "/screener"). */
 	to: string;
 	/** Next `?d=` token string after accepting this item into `category`. */
 	acceptD: (id: string, category: AiCategory) => string;

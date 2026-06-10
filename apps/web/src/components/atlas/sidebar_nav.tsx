@@ -150,7 +150,7 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 			<AiUsageCard />
 
 			<Link
-				to="/atlas/onboarding"
+				to="/onboarding"
 				class="atlas-nav-item"
 				style={{ "margin-top": "4px" }}
 				data-action="replay-onboarding"

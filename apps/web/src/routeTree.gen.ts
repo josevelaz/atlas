@@ -9,33 +9,56 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AtlasRouteImport } from './routes/atlas'
+import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ScreenerRouteImport } from './routes/screener'
+import { Route as PaperTrailRouteImport } from './routes/paper-trail'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as FeedRouteImport } from './routes/feed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AtlasIndexRouteImport } from './routes/atlas/index'
 import { Route as DevTanstack_librariesRouteImport } from './routes/dev/tanstack_libraries'
 import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
-import { Route as AtlasTasksRouteImport } from './routes/atlas/tasks'
-import { Route as AtlasSettingsRouteImport } from './routes/atlas/settings'
-import { Route as AtlasScreenerRouteImport } from './routes/atlas/screener'
-import { Route as AtlasPaperTrailRouteImport } from './routes/atlas/paper-trail'
-import { Route as AtlasOnboardingRouteImport } from './routes/atlas/onboarding'
-import { Route as AtlasInboxRouteImport } from './routes/atlas/inbox'
-import { Route as AtlasFeedRouteImport } from './routes/atlas/feed'
 
-const AtlasRoute = AtlasRouteImport.update({
-  id: '/atlas',
-  path: '/atlas',
+const TasksRoute = TasksRouteImport.update({
+  id: '/tasks',
+  path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScreenerRoute = ScreenerRouteImport.update({
+  id: '/screener',
+  path: '/screener',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaperTrailRoute = PaperTrailRouteImport.update({
+  id: '/paper-trail',
+  path: '/paper-trail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedRoute = FeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AtlasIndexRoute = AtlasIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AtlasRoute,
 } as any)
 const DevTanstack_librariesRoute = DevTanstack_librariesRouteImport.update({
   id: '/dev/tanstack_libraries',
@@ -47,142 +70,145 @@ const DevDesignSystemRoute = DevDesignSystemRouteImport.update({
   path: '/dev/design-system',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AtlasTasksRoute = AtlasTasksRouteImport.update({
-  id: '/tasks',
-  path: '/tasks',
-  getParentRoute: () => AtlasRoute,
-} as any)
-const AtlasSettingsRoute = AtlasSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AtlasRoute,
-} as any)
-const AtlasScreenerRoute = AtlasScreenerRouteImport.update({
-  id: '/screener',
-  path: '/screener',
-  getParentRoute: () => AtlasRoute,
-} as any)
-const AtlasPaperTrailRoute = AtlasPaperTrailRouteImport.update({
-  id: '/paper-trail',
-  path: '/paper-trail',
-  getParentRoute: () => AtlasRoute,
-} as any)
-const AtlasOnboardingRoute = AtlasOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => AtlasRoute,
-} as any)
-const AtlasInboxRoute = AtlasInboxRouteImport.update({
-  id: '/inbox',
-  path: '/inbox',
-  getParentRoute: () => AtlasRoute,
-} as any)
-const AtlasFeedRoute = AtlasFeedRouteImport.update({
-  id: '/feed',
-  path: '/feed',
-  getParentRoute: () => AtlasRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/atlas': typeof AtlasRouteWithChildren
-  '/atlas/feed': typeof AtlasFeedRoute
-  '/atlas/inbox': typeof AtlasInboxRoute
-  '/atlas/onboarding': typeof AtlasOnboardingRoute
-  '/atlas/paper-trail': typeof AtlasPaperTrailRoute
-  '/atlas/screener': typeof AtlasScreenerRoute
-  '/atlas/settings': typeof AtlasSettingsRoute
-  '/atlas/tasks': typeof AtlasTasksRoute
+  '/feed': typeof FeedRoute
+  '/inbox': typeof InboxRoute
+  '/onboarding': typeof OnboardingRoute
+  '/paper-trail': typeof PaperTrailRoute
+  '/screener': typeof ScreenerRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
-  '/atlas/': typeof AtlasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/atlas/feed': typeof AtlasFeedRoute
-  '/atlas/inbox': typeof AtlasInboxRoute
-  '/atlas/onboarding': typeof AtlasOnboardingRoute
-  '/atlas/paper-trail': typeof AtlasPaperTrailRoute
-  '/atlas/screener': typeof AtlasScreenerRoute
-  '/atlas/settings': typeof AtlasSettingsRoute
-  '/atlas/tasks': typeof AtlasTasksRoute
+  '/feed': typeof FeedRoute
+  '/inbox': typeof InboxRoute
+  '/onboarding': typeof OnboardingRoute
+  '/paper-trail': typeof PaperTrailRoute
+  '/screener': typeof ScreenerRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
-  '/atlas': typeof AtlasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/atlas': typeof AtlasRouteWithChildren
-  '/atlas/feed': typeof AtlasFeedRoute
-  '/atlas/inbox': typeof AtlasInboxRoute
-  '/atlas/onboarding': typeof AtlasOnboardingRoute
-  '/atlas/paper-trail': typeof AtlasPaperTrailRoute
-  '/atlas/screener': typeof AtlasScreenerRoute
-  '/atlas/settings': typeof AtlasSettingsRoute
-  '/atlas/tasks': typeof AtlasTasksRoute
+  '/feed': typeof FeedRoute
+  '/inbox': typeof InboxRoute
+  '/onboarding': typeof OnboardingRoute
+  '/paper-trail': typeof PaperTrailRoute
+  '/screener': typeof ScreenerRoute
+  '/settings': typeof SettingsRoute
+  '/tasks': typeof TasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
-  '/atlas/': typeof AtlasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/atlas'
-    | '/atlas/feed'
-    | '/atlas/inbox'
-    | '/atlas/onboarding'
-    | '/atlas/paper-trail'
-    | '/atlas/screener'
-    | '/atlas/settings'
-    | '/atlas/tasks'
+    | '/feed'
+    | '/inbox'
+    | '/onboarding'
+    | '/paper-trail'
+    | '/screener'
+    | '/settings'
+    | '/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
-    | '/atlas/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/atlas/feed'
-    | '/atlas/inbox'
-    | '/atlas/onboarding'
-    | '/atlas/paper-trail'
-    | '/atlas/screener'
-    | '/atlas/settings'
-    | '/atlas/tasks'
+    | '/feed'
+    | '/inbox'
+    | '/onboarding'
+    | '/paper-trail'
+    | '/screener'
+    | '/settings'
+    | '/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
-    | '/atlas'
   id:
     | '__root__'
     | '/'
-    | '/atlas'
-    | '/atlas/feed'
-    | '/atlas/inbox'
-    | '/atlas/onboarding'
-    | '/atlas/paper-trail'
-    | '/atlas/screener'
-    | '/atlas/settings'
-    | '/atlas/tasks'
+    | '/feed'
+    | '/inbox'
+    | '/onboarding'
+    | '/paper-trail'
+    | '/screener'
+    | '/settings'
+    | '/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
-    | '/atlas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AtlasRoute: typeof AtlasRouteWithChildren
+  FeedRoute: typeof FeedRoute
+  InboxRoute: typeof InboxRoute
+  OnboardingRoute: typeof OnboardingRoute
+  PaperTrailRoute: typeof PaperTrailRoute
+  ScreenerRoute: typeof ScreenerRoute
+  SettingsRoute: typeof SettingsRoute
+  TasksRoute: typeof TasksRoute
   DevDesignSystemRoute: typeof DevDesignSystemRoute
   DevTanstack_librariesRoute: typeof DevTanstack_librariesRoute
 }
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
-    '/atlas': {
-      id: '/atlas'
-      path: '/atlas'
-      fullPath: '/atlas'
-      preLoaderRoute: typeof AtlasRouteImport
+    '/tasks': {
+      id: '/tasks'
+      path: '/tasks'
+      fullPath: '/tasks'
+      preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/screener': {
+      id: '/screener'
+      path: '/screener'
+      fullPath: '/screener'
+      preLoaderRoute: typeof ScreenerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paper-trail': {
+      id: '/paper-trail'
+      path: '/paper-trail'
+      fullPath: '/paper-trail'
+      preLoaderRoute: typeof PaperTrailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed': {
+      id: '/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof FeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -191,13 +217,6 @@ declare module '@tanstack/solid-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/atlas/': {
-      id: '/atlas/'
-      path: '/'
-      fullPath: '/atlas/'
-      preLoaderRoute: typeof AtlasIndexRouteImport
-      parentRoute: typeof AtlasRoute
     }
     '/dev/tanstack_libraries': {
       id: '/dev/tanstack_libraries'
@@ -213,85 +232,18 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof DevDesignSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/atlas/tasks': {
-      id: '/atlas/tasks'
-      path: '/tasks'
-      fullPath: '/atlas/tasks'
-      preLoaderRoute: typeof AtlasTasksRouteImport
-      parentRoute: typeof AtlasRoute
-    }
-    '/atlas/settings': {
-      id: '/atlas/settings'
-      path: '/settings'
-      fullPath: '/atlas/settings'
-      preLoaderRoute: typeof AtlasSettingsRouteImport
-      parentRoute: typeof AtlasRoute
-    }
-    '/atlas/screener': {
-      id: '/atlas/screener'
-      path: '/screener'
-      fullPath: '/atlas/screener'
-      preLoaderRoute: typeof AtlasScreenerRouteImport
-      parentRoute: typeof AtlasRoute
-    }
-    '/atlas/paper-trail': {
-      id: '/atlas/paper-trail'
-      path: '/paper-trail'
-      fullPath: '/atlas/paper-trail'
-      preLoaderRoute: typeof AtlasPaperTrailRouteImport
-      parentRoute: typeof AtlasRoute
-    }
-    '/atlas/onboarding': {
-      id: '/atlas/onboarding'
-      path: '/onboarding'
-      fullPath: '/atlas/onboarding'
-      preLoaderRoute: typeof AtlasOnboardingRouteImport
-      parentRoute: typeof AtlasRoute
-    }
-    '/atlas/inbox': {
-      id: '/atlas/inbox'
-      path: '/inbox'
-      fullPath: '/atlas/inbox'
-      preLoaderRoute: typeof AtlasInboxRouteImport
-      parentRoute: typeof AtlasRoute
-    }
-    '/atlas/feed': {
-      id: '/atlas/feed'
-      path: '/feed'
-      fullPath: '/atlas/feed'
-      preLoaderRoute: typeof AtlasFeedRouteImport
-      parentRoute: typeof AtlasRoute
-    }
   }
 }
 
-interface AtlasRouteChildren {
-  AtlasFeedRoute: typeof AtlasFeedRoute
-  AtlasInboxRoute: typeof AtlasInboxRoute
-  AtlasOnboardingRoute: typeof AtlasOnboardingRoute
-  AtlasPaperTrailRoute: typeof AtlasPaperTrailRoute
-  AtlasScreenerRoute: typeof AtlasScreenerRoute
-  AtlasSettingsRoute: typeof AtlasSettingsRoute
-  AtlasTasksRoute: typeof AtlasTasksRoute
-  AtlasIndexRoute: typeof AtlasIndexRoute
-}
-
-const AtlasRouteChildren: AtlasRouteChildren = {
-  AtlasFeedRoute: AtlasFeedRoute,
-  AtlasInboxRoute: AtlasInboxRoute,
-  AtlasOnboardingRoute: AtlasOnboardingRoute,
-  AtlasPaperTrailRoute: AtlasPaperTrailRoute,
-  AtlasScreenerRoute: AtlasScreenerRoute,
-  AtlasSettingsRoute: AtlasSettingsRoute,
-  AtlasTasksRoute: AtlasTasksRoute,
-  AtlasIndexRoute: AtlasIndexRoute,
-}
-
-const AtlasRouteWithChildren = AtlasRoute._addFileChildren(AtlasRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AtlasRoute: AtlasRouteWithChildren,
+  FeedRoute: FeedRoute,
+  InboxRoute: InboxRoute,
+  OnboardingRoute: OnboardingRoute,
+  PaperTrailRoute: PaperTrailRoute,
+  ScreenerRoute: ScreenerRoute,
+  SettingsRoute: SettingsRoute,
+  TasksRoute: TasksRoute,
   DevDesignSystemRoute: DevDesignSystemRoute,
   DevTanstack_librariesRoute: DevTanstack_librariesRoute,
 }

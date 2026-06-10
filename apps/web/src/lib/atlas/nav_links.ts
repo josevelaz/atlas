@@ -25,12 +25,12 @@ export interface NavLinkTarget {
  * the sidebar links stay DRY across routes.
  */
 const ROUTES: Partial<Record<Screen, string>> = {
-	screener: "/atlas/screener",
-	inbox: "/atlas/inbox",
-	feed: "/atlas/feed",
-	paper: "/atlas/paper-trail",
-	tasks: "/atlas/tasks",
-	settings: "/atlas/settings",
+	screener: "/screener",
+	inbox: "/inbox",
+	feed: "/feed",
+	paper: "/paper-trail",
+	tasks: "/tasks",
+	settings: "/settings",
 };
 
 /**
