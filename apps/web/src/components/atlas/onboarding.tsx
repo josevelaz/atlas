@@ -15,8 +15,10 @@
 
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
-import { For, Show } from "solid-js";
+import { For, Show, createEffect, createMemo, onCleanup } from "solid-js";
+import { isServer } from "solid-js/web";
 import { ONBOARDING_STEPS } from "../../lib/atlas/app_state";
+import { resolveOnboardingDirection } from "../../lib/atlas/onboarding_transition";
 import type { OnboardingStep } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { AtlasIcon } from "./atlas_icon";
@@ -37,9 +39,35 @@ const Onboarding: Component<OnboardingProps> = (props) => {
 	// under noUncheckedIndexedAccess (ONBOARDING_STEPS is always non-empty).
 	const data = (): OnboardingStep => ONBOARDING_STEPS[step()] as OnboardingStep;
 	const isLast = () => step() === total - 1;
+	// Slide direction for the view transition, from cached client state (the
+	// previously rendered step) rather than the URL. forward → slide in from the
+	// right, backward → slide in from the left, none → no directional slide.
+	// A memo guarantees `resolveOnboardingDirection` (which mutates the cached
+	// step) runs exactly once per step change, regardless of how many readers
+	// (effect + JSX) access it — calling it per-read would advance the cache
+	// twice and collapse the result to "none".
+	const direction = createMemo(() => resolveOnboardingDirection(step()));
+
+	// The `::view-transition-*` pseudo-elements hang off the document root, so the
+	// directional CSS keys off `data-onb-dir` on <html>, not on this subtree. We
+	// mirror the cached direction onto the root element on the client only (the
+	// attribute is meaningless during SSR and is cleaned up on unmount).
+	if (!isServer) {
+		createEffect(() => {
+			const dir = direction();
+			document.documentElement.setAttribute("data-onb-dir", dir);
+		});
+		onCleanup(() => {
+			document.documentElement.removeAttribute("data-onb-dir");
+		});
+	}
 
 	return (
-		<div class="atlas-onboarding" data-screen-label="Onboarding">
+		<div
+			class="atlas-onboarding"
+			data-screen-label="Onboarding"
+			data-onb-dir={direction()}
+		>
 			<div class="atlas-onboarding-card">
 				<div class="atlas-onboarding-head">
 					<div class="atlas-row atlas-gap-8">
