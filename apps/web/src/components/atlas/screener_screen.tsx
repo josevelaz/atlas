@@ -10,7 +10,7 @@
 // store's screener decisions (`useAtlasState`). Accepting shrinks the pending
 // list in place and routes the item into the inbox/feed/paper lists (and the
 // nav counts) through the shared derivation helpers in `app_state.ts` — no URL
-// change and no `?d=` token.
+// change.
 
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";

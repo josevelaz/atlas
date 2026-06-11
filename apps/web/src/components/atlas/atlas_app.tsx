@@ -17,9 +17,9 @@
 // Compose and assistant overlay state also live in the shared store: the
 // top-bar Compose button, the thread Reply button, the "Search or ask" button,
 // `/`, ⌘K, and Escape all dispatch store actions, so the overlay state persists
-// across SPA navigation with no `?compose=` / `?ask=` / `?assistant=` tokens.
-// The overlays and the interactive top-bar callbacks are wired only on the mail
-// workspace views; the full-width screens keep an inert top bar.
+// across SPA navigation. The overlays and the interactive top-bar callbacks are
+// wired only on the mail workspace views; the full-width screens keep an inert
+// top bar.
 
 import type { Component } from "solid-js";
 import { createEffect, createMemo, Match, onCleanup, Switch } from "solid-js";

@@ -7,9 +7,9 @@
 // Routed destinations (Screener, Inbox, Feed, Paper Trail, …) render as
 // `<Link>`s and navigate client-side via the router. Screener decisions live in
 // the shared Atlas store, so accepted items stay reflected across Screener ↔
-// Inbox through provider state (the nav counts read from the store) — no `?d=`
-// token. Other entries stay visually present (for parity) but inert — we don't
-// route users to incomplete screens.
+// Inbox through provider state (the nav counts read from the store). Other
+// entries stay visually present (for parity) but inert — we don't route users
+// to incomplete screens.
 
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";

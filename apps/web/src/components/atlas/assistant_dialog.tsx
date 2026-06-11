@@ -78,7 +78,7 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 	/**
 	 * Focus the cited thread through the shared store, then close the overlay.
 	 * `select(view, id)` is a no-op for the Screener (no per-row selection), so
-	 * Screener citations simply route. Replaces the old `?sel=` deep-link.
+	 * Screener citations simply route.
 	 */
 	const onCiteClick = (c: AssistantCitation) => {
 		const view = viewForMailId(c.id);

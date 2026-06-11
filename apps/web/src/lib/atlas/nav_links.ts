@@ -1,12 +1,11 @@
 // Atlas — sidebar navigation link resolver.
 //
-// Client hydration is healthy, so sidebar `<Link>`s perform client-side SPA
-// navigation and screener decisions live in the shared Atlas store
-// (`atlas_state.tsx`) rather than in the URL. Accepted/rejected state therefore
-// survives navigation through provider state, so the links no longer carry a
-// `?d=` token-string. This resolver is shared by every Atlas route so the
-// linking behavior is identical (and stays DRY) regardless of which screen is
-// active.
+// Sidebar `<Link>`s perform client-side SPA navigation and screener decisions
+// live in the shared Atlas store (`atlas_state.tsx`) rather than in the URL.
+// Accepted/rejected state therefore survives navigation through provider state,
+// so the links carry no decision token. This resolver is shared by every Atlas
+// route so the linking behavior is identical (and stays DRY) regardless of which
+// screen is active.
 
 import { viewForMailId } from "./app_state";
 import type { Screen } from "./types";

@@ -7,8 +7,8 @@
 //
 // Accept / Reject are live `<button>`s that dispatch into the shared Atlas
 // store via the parent's `onAccept` / `onReject` callbacks. The decision is held
-// in provider state (no `?d=` token), so the pending list shrinks in place and
-// accepted items flow into the inbox/feed/paper lists without a URL change.
+// in provider state, so the pending list shrinks in place and accepted items
+// flow into the inbox/feed/paper lists without a URL change.
 
 import type { Component } from "solid-js";
 import type { AiCategory, ScreenerItem } from "../../lib/atlas/types";
