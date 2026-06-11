@@ -18,6 +18,16 @@ import { createAuthClient } from "better-auth/solid";
 
 import { API_BASE_URL } from "./api";
 
+const BETTER_AUTH_BASE_PATH = "/api/auth";
+
+function normaliseAuthOrigin(rawBaseUrl: string): string | undefined {
+	if (!rawBaseUrl) return undefined;
+	const trimmed = rawBaseUrl.replace(/\/$/, "");
+	return trimmed.endsWith(BETTER_AUTH_BASE_PATH)
+		? trimmed.slice(0, -BETTER_AUTH_BASE_PATH.length)
+		: trimmed;
+}
+
 // Lazily initialised — only created in the browser to avoid SSR crashes.
 // `createAuthClient` accesses `Request.prototype` and other browser globals
 // at module init time, which throws during server-side rendering.
@@ -27,12 +37,14 @@ export function getAuthClient(): ReturnType<typeof createAuthClient> {
 	if (!_client) {
 		_client = createAuthClient({
 			/**
-			 * The base URL of the Better Auth server.
-			 * Must match `basePath` on the server (default: /api/auth).
-			 * Falls back to the current origin when API_BASE_URL is empty
-			 * (same-origin proxy setup in local dev).
+			 * Better Auth should target the API origin, while `basePath`
+			 * pins the mounted auth route explicitly. We also normalize an
+			 * accidentally-suffixed `/api/auth` from `VITE_API_BASE_URL` so
+			 * local env mistakes do not produce `/api/auth/api/auth/*` or
+			 * route misses like `/social`.
 			 */
-			baseURL: API_BASE_URL || undefined,
+			baseURL: normaliseAuthOrigin(API_BASE_URL),
+			basePath: BETTER_AUTH_BASE_PATH,
 		});
 	}
 	return _client;
