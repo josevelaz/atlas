@@ -14,6 +14,7 @@
 // routed through the shared `Dialog` primitive (`components/ui/dialog.tsx`).
 
 import type { Component } from "solid-js";
+import { usePrimaryConnectedAccount } from "../../lib/identity/queries";
 import {
 	composeBodyClasses,
 	composeBodyTextareaClasses,
@@ -32,9 +33,6 @@ import { Button } from "../ui/button";
 import { Dialog } from "../ui/dialog";
 import { Input, Textarea } from "../ui/input";
 import { AtlasIcon } from "./atlas_icon";
-
-/** The signed-in user's own address — shown disabled in the From row. */
-const FROM_ADDRESS = "rob@atlas.co";
 
 /** Prototype reply draft, used when composing a reply (`docs/prototype`). */
 const REPLY_DRAFT =
@@ -57,6 +55,9 @@ export interface ComposeDialogProps {
 }
 
 const ComposeDialog: Component<ComposeDialogProps> = (props) => {
+	const primaryAccount = usePrimaryConnectedAccount();
+	/** Primary mailbox address — blank while loading or before any connection. */
+	const fromValue = () => primaryAccount()?.email ?? "";
 	const isReply = () => Boolean(props.replyTo);
 	const title = () => (isReply() ? "Reply" : "New message");
 	const toValue = () => props.replyTo ?? "";
@@ -90,7 +91,7 @@ const ComposeDialog: Component<ComposeDialogProps> = (props) => {
 				<Input
 					id="compose-from"
 					class={composeFieldInputClasses}
-					value={FROM_ADDRESS}
+					value={fromValue()}
 					disabled
 				/>
 			</div>
