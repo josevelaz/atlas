@@ -2,12 +2,18 @@ import { html } from "@elysiajs/html";
 import { serverTiming } from "@elysiajs/server-timing";
 import { staticPlugin } from "@elysiajs/static";
 import { swagger } from "@elysiajs/swagger";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { autoload } from "elysia-autoload";
 
 import { auth } from "./auth.ts";
 import { config } from "./config.ts";
 import { authSessionPlugin, requireAuth } from "./plugins/auth_session.ts";
+import {
+	ConnectedAccountForbiddenError,
+	ConnectedAccountNotFoundError,
+	listConnectedAccounts,
+	setPrimaryConnectedAccount,
+} from "./services/connected_accounts.ts";
 
 const CORS_METHODS = "GET, POST, PUT, DELETE, OPTIONS";
 const CORS_HEADERS = "Content-Type, Authorization";
@@ -54,11 +60,62 @@ export const app = new Elysia()
 	.use(authSessionPlugin)
 	.use(autoload({ failGlob: false }))
 	.get("/", "Hello World")
-	// Protected smoke route — returns the current user & session
+	// Identity endpoints — all guarded by requireAuth (401 when no session)
 	.use(requireAuth)
-	.get("/me", ({ authUser, authSession }) => ({
-		user: authUser,
-		session: authSession,
-	}));
+	.get("/me", ({ authUser, set }) => {
+		if (!authUser) {
+			set.status = 401;
+			return { error: "Unauthorized" };
+		}
+		return {
+			user: {
+				id: authUser.id,
+				name: authUser.name,
+				email: authUser.email,
+				image: authUser.image ?? null,
+				createdAt: authUser.createdAt.toISOString(),
+			},
+		};
+	})
+	.get("/me/connected-accounts", async ({ authUser, set }) => {
+		if (!authUser) {
+			set.status = 401;
+			return { error: "Unauthorized" };
+		}
+		const accounts = await listConnectedAccounts(authUser.id);
+		return {
+			accounts,
+			// Effective primary id; empty string when the user has no
+			// connected OAuth accounts (credential-only users).
+			primaryConnectedAccountId:
+				accounts.find((row) => row.isPrimary)?.id ?? "",
+		};
+	})
+	.put(
+		"/me/primary-connected-account",
+		async ({ authUser, body, set }) => {
+			if (!authUser) {
+				set.status = 401;
+				return { error: "Unauthorized" };
+			}
+			try {
+				await setPrimaryConnectedAccount(authUser.id, body.accountId);
+			} catch (error) {
+				if (error instanceof ConnectedAccountNotFoundError) {
+					set.status = 404;
+					return { error: "Connected account not found" };
+				}
+				if (error instanceof ConnectedAccountForbiddenError) {
+					set.status = 403;
+					return { error: "Account is not a connected OAuth account" };
+				}
+				throw error;
+			}
+			set.status = 204;
+		},
+		{
+			body: t.Object({ accountId: t.String() }),
+		},
+	);
 
 export type ElysiaApp = typeof app;
