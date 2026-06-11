@@ -1,48 +1,61 @@
-// Atlas — top-level app component for the mail workspace.
+// Atlas — the single application shell for every Atlas screen.
 //
-// Wires the shell together: top bar, sidebar nav, and the mail workspace. The
-// active `view` is route-bound; the screener `decisions` are supplied by the
-// route from the shared Atlas store, so accepted-item counts and lists update
-// live as the Screener dispatches accept/reject actions.
+// `AtlasApp` is the one shell that all Atlas routes render. Each route only
+// selects its active `view` and renders `<AtlasApp view="..." />`; this
+// component owns the top bar, sidebar nav, and the active workspace region,
+// switching its content by `view`:
+//   - "inbox" / "feed" / "paper" → the mail workspace (list + thread pane),
+//   - "screener"                 → the full-width Screener region,
+//   - "tasks"                    → the full-width Tasks & Dates region,
+//   - "settings"                 → the full-width Settings region.
 //
-// Compose and assistant overlay state live in the shared Atlas store
-// (`atlas_state.tsx`): the top-bar Compose button, the thread Reply button, the
-// "Search or ask" button, `/`, ⌘K, and Escape all dispatch store actions, so
-// the overlay state persists across SPA navigation with no `?compose=` /
-// `?ask=` / `?assistant=` tokens.
+// Screener decisions are read from the shared Atlas store (`atlas_state.tsx`),
+// so accepted-item counts and lists update live as the Screener dispatches
+// accept/reject actions. Sidebar `<Link>` targets are resolved once via the
+// shared `atlasMailLinkFor()` resolver.
+//
+// Compose and assistant overlay state also live in the shared store: the
+// top-bar Compose button, the thread Reply button, the "Search or ask" button,
+// `/`, ⌘K, and Escape all dispatch store actions, so the overlay state persists
+// across SPA navigation with no `?compose=` / `?ask=` / `?assistant=` tokens.
+// The overlays and the interactive top-bar callbacks are wired only on the mail
+// workspace views; the full-width screens keep an inert top bar.
 
 import type { Component } from "solid-js";
-import { createEffect, createMemo, onCleanup } from "solid-js";
-import {
-	createInitialState,
-	currentThread,
-	resolveShortcut,
-} from "../../lib/atlas/app_state";
+import { createEffect, createMemo, Match, onCleanup, Switch } from "solid-js";
+import { currentThread, resolveShortcut } from "../../lib/atlas/app_state";
 import { useAtlasActions, useAtlasState } from "../../lib/atlas/atlas_state";
-import type { Screen, ScreenerDecisions } from "../../lib/atlas/types";
+import { atlasMailLinkFor } from "../../lib/atlas/nav_links";
+import type { Screen } from "../../lib/atlas/types";
 import { AppShell } from "./app_shell";
 import { AssistantDialog } from "./assistant_dialog";
 import { ComposeDialog } from "./compose_dialog";
 import { MailWorkspace } from "./mail_workspace";
-import { SidebarNav, type SidebarNavProps } from "./sidebar_nav";
+import { ScreenerScreen } from "./screener_screen";
+import { SettingsScreen } from "./settings_screen";
+import { SidebarNav } from "./sidebar_nav";
+import { TasksScreen } from "./tasks_screen";
 import { TopBar } from "./top_bar";
 
 export interface AtlasAppProps {
 	/** Active screen (route-bound). Defaults to "inbox". */
 	view?: Screen;
-	/** Screener decisions (from the shared Atlas store). Defaults to empty. */
-	decisions?: ScreenerDecisions;
-	/** Resolve nav `<Link>` targets for the sidebar. */
-	linkFor?: SidebarNavProps["linkFor"];
+}
+
+/** The mail workspace views — the only views with list/pane + overlay wiring. */
+function isMailView(view: Screen): boolean {
+	return view === "inbox" || view === "feed" || view === "paper";
 }
 
 const AtlasApp: Component<AtlasAppProps> = (props) => {
-	const initial = createInitialState();
 	const view = (): Screen => props.view ?? "inbox";
-	const decisions = (): ScreenerDecisions =>
-		props.decisions ?? initial.screener;
 
 	const actions = useAtlasActions();
+	const linkFor = atlasMailLinkFor();
+
+	// Screener decisions live in the shared Atlas store; the accepted mail lists
+	// and the sidebar counts derive from it reactively.
+	const decisions = useAtlasState((s) => s.screener);
 
 	// Compose + assistant overlay state from the shared store.
 	const compose = useAtlasState((s) => s.compose);
@@ -66,8 +79,10 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 
 	// Keyboard shortcuts. `/` and ⌘K/Ctrl-K open the assistant; `c` composes;
 	// Escape dismisses overlays. Bound at the document level via the shared
-	// `resolveShortcut` map.
+	// `resolveShortcut` map. Only the mail workspace exposes the overlays, so the
+	// shortcuts are inert on the full-width screens.
 	createEffect(() => {
+		if (!isMailView(view())) return;
 		const handler = (e: KeyboardEvent) => {
 			const action = resolveShortcut(e);
 			if (!action) return;
@@ -88,30 +103,55 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 	// the selected thread's sender as a fallback.
 	const replyTo = () => compose().replyAddr || selectedReplyAddr();
 
+	const noop = () => {};
+
 	return (
 		<AppShell
 			topBar={
-				<TopBar
-					onSearch={() => actions.openAssistant()}
-					onCompose={openCompose}
-				/>
+				<Switch fallback={<TopBar onSearch={noop} onCompose={noop} />}>
+					<Match when={isMailView(view())}>
+						<TopBar
+							onSearch={() => actions.openAssistant()}
+							onCompose={openCompose}
+						/>
+					</Match>
+				</Switch>
 			}
-			sidebar={<SidebarNav activeView={view()} linkFor={props.linkFor} />}
+			sidebar={<SidebarNav activeView={view()} linkFor={linkFor} />}
 		>
-			<MailWorkspace
-				view={view()}
-				decisions={decisions()}
-				onCompose={openReply}
-			/>
-			<ComposeDialog
-				open={compose().mode !== "closed"}
-				onClose={() => actions.closeCompose()}
-				replyTo={compose().mode === "reply" ? replyTo() : undefined}
-			/>
-			<AssistantDialog
-				open={assistantOpen()}
-				onClose={() => actions.closeAssistant()}
-			/>
+			<Switch>
+				<Match when={isMailView(view())}>
+					<MailWorkspace
+						view={view()}
+						decisions={decisions()}
+						onCompose={openReply}
+					/>
+					<ComposeDialog
+						open={compose().mode !== "closed"}
+						onClose={() => actions.closeCompose()}
+						replyTo={compose().mode === "reply" ? replyTo() : undefined}
+					/>
+					<AssistantDialog
+						open={assistantOpen()}
+						onClose={() => actions.closeAssistant()}
+					/>
+				</Match>
+				<Match when={view() === "screener"}>
+					<div class="atlas-list is-wide">
+						<ScreenerScreen />
+					</div>
+				</Match>
+				<Match when={view() === "tasks"}>
+					<div class="atlas-fullpane">
+						<TasksScreen />
+					</div>
+				</Match>
+				<Match when={view() === "settings"}>
+					<div class="atlas-fullpane">
+						<SettingsScreen />
+					</div>
+				</Match>
+			</Switch>
 		</AppShell>
 	);
 };
