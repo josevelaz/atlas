@@ -194,30 +194,11 @@ body::after {
 /* ============================================================
    Atlas primitive utilities
    The button / card / badge / priority / input / textarea / kbd /
-   avatar / toggle / dialog-overlay primitives moved to Tailwind
-   utilities generated from src/lib/atlas/component_classes.ts. The
-   only primitive that still lives here is the standalone tag chip
-   (.atlas-tag), which has no SolidJS component owner.
+   avatar / toggle / dialog-overlay / tag primitives all moved to
+   Tailwind utilities generated from
+   src/lib/atlas/component_classes.ts. No primitive styling remains
+   in this file.
    ============================================================ */
-
-/* ---- Tag ---- */
-.atlas-tag {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	padding: 1px 6px;
-	font-family: var(--font-mono);
-	font-size: 13px;
-	font-weight: 700;
-	border: 1.5px solid var(--color-border);
-	border-radius: 3px;
-	background: var(--color-secondary-background);
-	color: var(--color-foreground);
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	white-space: nowrap;
-	line-height: 1;
-}
 
 /* ---- Compose overlay ---- */
 .atlas-compose-card {
@@ -1079,23 +1060,16 @@ body::after {
    when they appear inside the app shell. The base primitive styling lives in
    the Tailwind utility strings (component_classes.ts); these rules add the
    in-app VT323 sizing + sticker tilt on top, via the surviving marker hooks
-   (`.atlas-priority` / `.atlas-tag` / `.atlas-avatar`). The empty-state box
-   tilt is baked directly into `emptyBoxClasses` (EmptyState only ever renders
-   inside the app). */
+   (`.atlas-priority` / `.atlas-avatar`). The tag chip's retro upgrade is baked
+   into `tagAppClasses` / `tagAppRowClasses`, and the empty-state box tilt into
+   `emptyBoxClasses` (both only ever render inside the app). */
 /* VT323 sizing for coded chips, matching the prototype's mono pass. */
-.atlas-app .atlas-priority,
-.atlas-app .atlas-tag {
+.atlas-app .atlas-priority {
 	font-family: "VT323", var(--font-mono);
 	font-size: 15px;
 }
 /* Sticker-like rotation on chips and avatars. */
 .atlas-app .atlas-priority {
-	transform: rotate(-1deg);
-}
-.atlas-app .atlas-tag {
-	transform: rotate(0.8deg);
-}
-.atlas-app .atlas-row-tags .atlas-tag:nth-child(2n) {
 	transform: rotate(-1deg);
 }
 .atlas-app .atlas-avatar {

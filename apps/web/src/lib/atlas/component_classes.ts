@@ -472,14 +472,32 @@ export const rowTagsClasses = "flex flex-wrap gap-1 mt-1.5";
 /**
  * Standalone tag chip (former `.atlas-tag`). Uppercase mono caps, 1.5px ink
  * border, 3px radius. Used on mail rows, the thread header, and the dev
- * design-system gallery — no single SolidJS component owns it. Inside the app
- * shell the `.atlas-tag` marker hook upgrades this to VT323 + a sticker tilt
- * (the `.atlas-app .atlas-tag` retro pass in styles.css).
+ * design-system gallery — no single SolidJS component owns it. The base styling
+ * is framework-neutral; the in-app retro upgrade (VT323 + sticker tilt) lives in
+ * `tagAppClasses`.
  */
 export const tagClasses =
 	"inline-flex items-center gap-1 px-1.5 py-px leading-none whitespace-nowrap uppercase tracking-[0.04em] " +
 	"font-[family-name:var(--font-base)] text-[13px] font-bold " +
 	"bg-secondary-background text-foreground border-[1.5px] border-solid border-border rounded-[3px]";
+
+/**
+ * App-shell retro upgrade for the tag chip (former `.atlas-app .atlas-tag`
+ * pass). Swaps the mono face for VT323 at 15px and adds the default sticker
+ * tilt. Compose with `tagClasses` for chips that render inside the application
+ * shell (the thread header and single chips).
+ */
+export const tagAppClasses =
+	"font-[family-name:'VT323',var(--font-base)] text-[15px] rotate-[0.8deg]";
+
+/**
+ * Row variant of the retro tag upgrade (former `.atlas-row-tags .atlas-tag`
+ * pass). Same VT323 face, but every second chip in the row tilts the other way
+ * for a scattered-sticker look. Used by the mail-row tag loop.
+ */
+export const tagAppRowClasses =
+	"font-[family-name:'VT323',var(--font-base)] text-[15px] rotate-[0.8deg] " +
+	"[&:nth-child(2n)]:-rotate-[1deg]";
 
 /* ------------------------------------------------------------------ */
 /*  AI inbox banner                                                    */

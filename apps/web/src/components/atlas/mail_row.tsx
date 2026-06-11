@@ -19,6 +19,7 @@ import {
 	mailRowClasses,
 	mailSubjClasses,
 	rowTagsClasses,
+	tagAppRowClasses,
 	tagClasses,
 } from "../../lib/atlas/component_classes";
 import type { MailItem, MailTag } from "../../lib/atlas/types";
@@ -109,15 +110,15 @@ const MailRow: Component<MailRowProps> = (props) => {
 				<div class={mailSubjClasses}>{mail().subject}</div>
 				<div class={mailPreviewClasses}>{mail().preview}</div>
 				<Show when={hasChips()}>
-					<div class={cn("atlas-row-tags", rowTagsClasses)}>
+					<div class={rowTagsClasses}>
 						<Show when={mail().priority}>
 							{(p) => <PriorityChip priority={p()} />}
 						</Show>
 						<For each={tags()}>
 							{(tag) => (
-								// `atlas-tag` marker hook → the in-app retro pass
-								// (`.atlas-app .atlas-tag`: VT323 + sticker tilt).
-								<span class={cn("atlas-tag", tagClasses)}>{tagLabel(tag)}</span>
+								<span class={cn(tagClasses, tagAppRowClasses)}>
+									{tagLabel(tag)}
+								</span>
 							)}
 						</For>
 					</div>
