@@ -7,16 +7,23 @@
 //   bg-secondary-background, border-border, shadow-[var(--shadow)],
 //   rounded-[var(--radius)], etc.
 //
-// Components compose these strings via `cn(...)`. A few legacy `.atlas-*` marker
-// classes are still emitted by the components as *selector hooks* for the
-// remaining contextual CSS — the `.atlas-app .atlas-btn.is-primary::after` star
-// tick / chip-and-avatar tilt (scoped to the app shell) and the
-// `.atlas-onboarding-card` view-transition target (scoped to the onboarding
-// motion). The borderless compose-row / compose-body treatment is now composed
-// onto the Input/Textarea `class` prop (composeFieldInputClasses /
-// composeBodyTextareaClasses) rather than a contextual selector. Those marker
-// classes no longer carry any styling of their own — the styling lives entirely
-// in the utilities below.
+// Components compose these strings via `cn(...)`. No component styling lives in
+// styles.css — every primitive, shell, screen, overlay, and onboarding surface
+// is expressed here. The former app-shell contextual CSS (the
+// `.atlas-app .atlas-btn.is-primary::after` star tick + the chip/avatar sticker
+// tilt + VT323 chip sizing) is now baked into the relevant utility strings as
+// `[.atlas-app_&]:` ancestor-variant utilities, so the retro pass only applies
+// inside the app shell (the `.atlas-app` root in app_shell.tsx) and `/` + `/dev`
+// stay clean. The onboarding card names its view-transition via the
+// `[view-transition-name:atlas-onb-card]` arbitrary utility in
+// `onboardingCardClasses` (the directional slide keyframes/pseudo rules remain
+// global in styles.css). The borderless compose-row / compose-body treatment is
+// composed onto the Input/Textarea `class` prop (composeFieldInputClasses /
+// composeBodyTextareaClasses).
+//
+// `.atlas-app` (app shell root) and `.atlas-badge` (badge marker) survive only
+// as non-styling scope/test hooks — `.atlas-app` is the ancestor selector the
+// `[.atlas-app_&]:` variants above key off, and neither carries styling.
 
 import { cva } from "class-variance-authority";
 
@@ -45,7 +52,18 @@ export const buttonClasses = cva(
 		variants: {
 			variant: {
 				default: "bg-secondary-background text-foreground",
-				primary: "bg-main text-main-foreground",
+				// App-shell retro star tick (former `.atlas-app .atlas-btn.is-primary::after`
+				// pass): a small ✦ in the top-right corner, applied only when the primary
+				// button renders inside the `.atlas-app` shell so `/dev` stays clean.
+				// Expressed as an ancestor arbitrary variant over an `after:` pseudo.
+				primary:
+					"bg-main text-main-foreground " +
+					"[.atlas-app_&]:relative " +
+					"[.atlas-app_&]:after:content-['✦'] [.atlas-app_&]:after:absolute " +
+					"[.atlas-app_&]:after:-top-1 [.atlas-app_&]:after:-right-1 " +
+					"[.atlas-app_&]:after:text-[8px] [.atlas-app_&]:after:text-main " +
+					"[.atlas-app_&]:after:[text-shadow:0_0_4px_var(--color-main)] " +
+					"[.atlas-app_&]:after:pointer-events-none",
 				danger: "bg-danger text-[#1d1f27]",
 				ghost:
 					"bg-transparent border-transparent shadow-none " +
@@ -133,10 +151,19 @@ export const badgeClasses = cva(
 /*  Priority chip                                                      */
 /* ------------------------------------------------------------------ */
 
+// App-shell retro upgrade for coded chips (former `.atlas-app .atlas-priority`
+// pass): VT323 face at 15px + a sticker tilt, applied only when the chip renders
+// inside the `.atlas-app` shell so `/dev` stays clean. Expressed as an ancestor
+// arbitrary variant (`[.atlas-app_&]:`) so the styling lives here, not in CSS.
+const PRIORITY_APP_RETRO =
+	"[.atlas-app_&]:font-[family-name:'VT323',var(--font-mono)] " +
+	"[.atlas-app_&]:text-[15px] [.atlas-app_&]:-rotate-[1deg]";
+
 export const priorityClasses = cva(
 	"inline-flex items-center gap-1 leading-none uppercase tracking-[0.04em] " +
 		"font-[family-name:var(--font-mono)] font-bold text-[13px] px-[6px] py-[1px] " +
-		"border-[1.5px] border-solid border-border rounded-[3px]",
+		"border-[1.5px] border-solid border-border rounded-[3px] " +
+		PRIORITY_APP_RETRO,
 	{
 		variants: {
 			priority: {
@@ -183,7 +210,10 @@ export const kbdClasses =
 export const avatarClasses = cva(
 	"inline-flex items-center justify-center shrink-0 select-none " +
 		"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)] " +
-		"font-[family-name:var(--font-base)] font-bold",
+		"font-[family-name:var(--font-base)] font-bold " +
+		// App-shell retro upgrade (former `.atlas-app .atlas-avatar` pass): sticker
+		// tilt applied only inside the `.atlas-app` shell so `/dev` stays clean.
+		"[.atlas-app_&]:-rotate-[1deg]",
 	{
 		variants: {
 			size: {
@@ -1077,12 +1107,13 @@ export const assistantExampleClasses =
 /*                                                                    */
 /*  Component styling migrated out of the hand-written `.atlas-onboarding*` */
 /*  / `.atlas-onb-*` / `.atlas-step-*` CSS into Tailwind utility strings */
-/*  over the same design tokens. The global view-transition slide rules */
-/*  (`view-transition-name` + directional keyframes keyed off            */
-/*  `data-onb-dir`) stay in styles.css — only the card itself keeps the  */
-/*  `atlas-onboarding-card` marker so those `::view-transition` rules can */
-/*  target it. The ≤560px adaptations are expressed as `max-[560px]:`    */
-/*  arbitrary variants here.                                             */
+/*  over the same design tokens. The directional view-transition slide   */
+/*  keyframes + `[data-onb-dir]::view-transition-old/new(atlas-onb-card)` */
+/*  rules stay in styles.css as genuinely global motion machinery; the    */
+/*  card itself names the transition via the `[view-transition-name:…]`   */
+/*  arbitrary utility in `onboardingCardClasses` (no marker selector).    */
+/*  The ≤560px adaptations are expressed as `max-[560px]:` arbitrary       */
+/*  variants here.                                                        */
 /* ================================================================== */
 
 /** Full-screen onboarding backdrop (calm canvas, centered, scrollable). */
@@ -1092,10 +1123,13 @@ export const onboardingClasses =
 
 /**
  * Onboarding card: 720px wide (capped to the viewport), 8px radius, large
- * offset shadow. Keeps the `atlas-onboarding-card` marker (added at the call
- * site) so the global directional view-transition slide can target it.
+ * offset shadow. Carries the `atlas-onb-card` view-transition-name directly as
+ * an arbitrary utility so the global directional slide rules
+ * (`[data-onb-dir]::view-transition-old/new(atlas-onb-card)` in styles.css) can
+ * target it — no marker selector required.
  */
 export const onboardingCardClasses =
+	"[view-transition-name:atlas-onb-card] " +
 	"w-[720px] max-w-[calc(100vw-48px)] overflow-hidden bg-secondary-background " +
 	"border-[length:var(--border-w)] border-solid border-border " +
 	"rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] " +

@@ -35,13 +35,9 @@ const Badge: Component<BadgeProps> = (raw_props) => {
 	if (local.priority) {
 		return (
 			<span
-				// `atlas-priority` is a selector hook for the app-shell retro pass
-				// (`.atlas-app .atlas-priority` rotation/VT323 sizing).
-				class={cn(
-					"atlas-priority",
-					priorityClasses({ priority: local.priority }),
-					local.class,
-				)}
+				// The app-shell retro pass (VT323 sizing + sticker tilt) is baked into
+				// `priorityClasses` via `[.atlas-app_&]:` ancestor variants.
+				class={cn(priorityClasses({ priority: local.priority }), local.class)}
 				{...others}
 			>
 				{local.priority}

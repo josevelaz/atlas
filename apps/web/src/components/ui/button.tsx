@@ -3,13 +3,6 @@ import { mergeProps, splitProps } from "solid-js";
 import { buttonClasses } from "../../lib/atlas/component_classes";
 import { cn } from "../../lib/utils";
 
-const VARIANT_MARKERS: Record<string, string> = {
-	default: "",
-	primary: "is-primary",
-	danger: "is-danger",
-	ghost: "is-ghost",
-};
-
 export type ButtonProps = {
 	variant?: "default" | "primary" | "danger" | "ghost";
 	size?: "default" | "sm";
@@ -36,13 +29,9 @@ const Button: Component<ButtonProps> = (raw_props) => {
 	return (
 		<button
 			class={cn(
-				// `atlas-btn` + `is-*` markers are selector hooks for app-shell CSS
-				// (e.g. the `.atlas-app .atlas-btn.is-primary::after` star tick); the
-				// styling itself comes from the Tailwind utilities below.
-				"atlas-btn",
-				VARIANT_MARKERS[local.variant],
-				local.size === "sm" && "is-sm",
-				local.icon && "is-icon",
+				// All styling — including the app-shell-only primary star tick (the
+				// former `.atlas-app .atlas-btn.is-primary::after` pass) — lives in
+				// `buttonClasses`, applied via `[.atlas-app_&]:` ancestor variants.
 				buttonClasses({
 					variant: local.variant,
 					size: local.size,

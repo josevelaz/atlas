@@ -34,13 +34,9 @@ const Avatar: Component<AvatarProps> = (raw_props) => {
 
 	return (
 		<div
-			// `atlas-avatar` is a selector hook for the app-shell retro pass
-			// (`.atlas-app .atlas-avatar` rotation).
-			class={cn(
-				"atlas-avatar",
-				avatarClasses({ size: props.size }),
-				props.class,
-			)}
+			// The app-shell retro pass (sticker tilt) is baked into `avatarClasses`
+			// via a `[.atlas-app_&]:` ancestor variant.
+			class={cn(avatarClasses({ size: props.size }), props.class)}
 			style={{ "background-color": bg_color() }}
 			role="img"
 			aria-label={props.name}

@@ -1,8 +1,8 @@
 // Atlas — priority chip.
 //
 // Renders the P1/P2/P3 chip used on mail rows and the thread header. Reuses the
-// shared `.atlas-priority` token styling (defined in styles.css) so it stays in
-// lockstep with the design system: P1 = error red, P2 = feed yellow, P3 =
+// shared `priorityClasses` Tailwind utility (component_classes.ts) so it stays
+// in lockstep with the design system: P1 = error red, P2 = feed yellow, P3 =
 // neutral surface, all in uppercase mono with a 1.5px border. Mirrors the
 // prototype's `.priority.p{n}` chips.
 
@@ -36,10 +36,9 @@ const PriorityChip: Component<PriorityChipProps> = (raw_props) => {
 
 	return (
 		<span
-			// `atlas-priority` is a selector hook for the app-shell retro pass
-			// (`.atlas-app .atlas-priority` rotation/VT323 sizing).
+			// The app-shell retro pass (VT323 sizing + sticker tilt) is baked into
+			// `priorityClasses` via `[.atlas-app_&]:` ancestor variants.
 			class={cn(
-				"atlas-priority",
 				priorityClasses({ priority: PRIORITY_KEY[props.priority] }),
 				props.class,
 			)}

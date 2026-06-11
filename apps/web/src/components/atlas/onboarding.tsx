@@ -74,9 +74,10 @@ const Onboarding: Component = () => {
 
 	return (
 		<div class={onboardingClasses} data-screen-label="Onboarding">
-			{/* `atlas-onboarding-card` is the surviving marker hook for the global
-			    directional view-transition slide (styles.css). */}
-			<div class={cn("atlas-onboarding-card", onboardingCardClasses)}>
+			{/* The card names its own view-transition (`[view-transition-name:atlas-onb-card]`
+			    in onboardingCardClasses) so the global directional slide rules in
+			    styles.css can target it — no marker class needed. */}
+			<div class={onboardingCardClasses}>
 				<div class={onboardingHeadClasses}>
 					<div class={cn(rowClasses, gap8Classes)}>
 						<Logo markSize={24} />

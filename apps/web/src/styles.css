@@ -233,17 +233,21 @@ body::after {
 }
 
 /* ---- Onboarding step slide (directional) ----
-   The onboarding card animates its step changes as a horizontal slide whose
-   direction is driven by cached client state (the `data-onb-dir` attribute set
-   by startOnboardingTransition), NOT by the URL. forward → next step slides in from the
-   right while the old slides out to the left; backward → the reverse. The card
-   is given a dedicated `view-transition-name` so only it slides; the rest of
-   the page cross-fades via the default `::view-transition-group`.
-   `prefers-reduced-motion` is already neutralised by the rule above. */
-.atlas-onboarding-card {
-	view-transition-name: atlas-onb-card;
-}
+   GLOBAL view-transition machinery. The onboarding card animates its step
+   changes as a horizontal slide whose direction is driven by cached client
+   state (the `data-onb-dir` attribute set by startOnboardingTransition on
+   <html>), NOT by the URL. forward → next step slides in from the right while
+   the old slides out to the left; backward → the reverse.
 
+   The card itself names the transition via the `[view-transition-name:atlas-onb-card]`
+   arbitrary utility baked into `onboardingCardClasses` (component_classes.ts) —
+   no component selector lives here. The keyframes and the directional
+   `[data-onb-dir]::view-transition-old/new(atlas-onb-card)` rules below are
+   genuinely global (they target the document's `::view-transition-*` pseudo
+   tree, which is not addressable from a Tailwind utility) and so must remain in
+   this global stylesheet. The rest of the page cross-fades via the default
+   `::view-transition-group`. `prefers-reduced-motion` is already neutralised by
+   the rule above. */
 @keyframes atlas-onb-slide-out-left {
 	to {
 		transform: translateX(-100%);
@@ -286,55 +290,20 @@ body::after {
 }
 
 /* ============================================================
-   Atlas mail workspace — app shell layout
-   Scoped under .atlas-app so it never leaks onto `/` or `/dev`.
-   The app-shell grid, top bar, structural columns, sidebar nav, AI
-   usage card, mail-list header/scroll, AI inbox banner, mail rows,
-   avatars, tag/empty primitives, AND the thread / message / AI-summary /
-   screener / Tasks & Dates / Settings content screens now render from
-   Tailwind utility strings in src/lib/atlas/component_classes.ts
-   (appShellClasses / topBarClasses / sidebarClasses / navItemClasses /
-   listHeaderClasses / mailRowClasses / threadClasses / messageClasses /
-   aiSummaryClasses / screenerCardClasses / tasksGridClasses /
-   settingsRowClasses …). Their in-app retro flourishes (Bungee screener
-   action bars, VT323 pill, colored card shadows, tasks col-head badge
-   tilt) are baked into those strings, and their responsive tablet/mobile
-   behavior is expressed with arbitrary `max-[…]` variants.
-   `.atlas-app` remains as a non-styling scope marker for the contextual
-   retro pass below (chip / avatar rotation + the primary-button star tick).
-   ============================================================ */
+   GLOBAL-ONLY BOUNDARY
+   This stylesheet is intentionally global-only. It holds exactly:
+   the Tailwind import, the @theme/:root/.dark design tokens, the
+   element reset/base/body chrome, ::selection, the grain/scanline
+   retro texture, the reduced-motion override, and the global
+   view-transition rules (the @view-transition opt-in + the onboarding
+   directional slide keyframes/pseudo rules above, which target the
+   un-addressable `::view-transition-*` document tree).
 
-/* ---- Retro flourishes (scoped to the app so /dev stays clean) ----
-   Contextual upgrades applied to the migrated chip / avatar primitives only
-   when they appear inside the app shell. The base primitive styling lives in
-   the Tailwind utility strings (component_classes.ts); these rules add the
-   in-app VT323 sizing + sticker tilt on top, via the surviving marker hooks
-   (`.atlas-priority` / `.atlas-avatar`). The tag chip's retro upgrade is baked
-   into `tagAppClasses` / `tagAppRowClasses`, and the empty-state box tilt into
-   `emptyBoxClasses` (both only ever render inside the app). */
-/* VT323 sizing for coded chips, matching the prototype's mono pass. */
-.atlas-app .atlas-priority {
-	font-family: "VT323", var(--font-mono);
-	font-size: 15px;
-}
-/* Sticker-like rotation on chips and avatars. */
-.atlas-app .atlas-priority {
-	transform: rotate(-1deg);
-}
-.atlas-app .atlas-avatar {
-	transform: rotate(-1deg);
-}
-/* Star tick on primary buttons, matching retro.css `.btn.primary::after`. */
-.atlas-app .atlas-btn.is-primary {
-	position: relative;
-}
-.atlas-app .atlas-btn.is-primary::after {
-	content: "✦";
-	font-size: 8px;
-	position: absolute;
-	top: -4px;
-	right: -4px;
-	color: var(--color-main);
-	text-shadow: 0 0 4px var(--color-main);
-	pointer-events: none;
-}
+   No Atlas component or contextual (`.atlas-*` / `.is-*`) selectors live
+   here. Every primitive, shell, screen, overlay, and onboarding surface
+   — including the former `.atlas-app …` retro flourishes (chip/avatar
+   tilt, VT323 chip sizing, primary-button star tick) — is expressed as
+   Tailwind utility strings in src/lib/atlas/component_classes.ts. The
+   app-scoped flourishes use the `[.atlas-app_&]:` ancestor variant there
+   so `/` and `/dev` stay clean. Add new component styling there, NOT here.
+   ============================================================ */
