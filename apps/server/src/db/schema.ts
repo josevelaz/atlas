@@ -1,5 +1,11 @@
 import { relations, sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+	index,
+	integer,
+	sqliteTable,
+	text,
+	uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
 	id: text("id").primaryKey(),
@@ -59,6 +65,9 @@ export const account = sqliteTable(
 		}),
 		scope: text("scope"),
 		password: text("password"),
+		isPrimary: integer("is_primary", { mode: "boolean" })
+			.default(false)
+			.notNull(),
 		createdAt: integer("created_at", { mode: "timestamp_ms" })
 			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
 			.notNull(),
@@ -66,7 +75,12 @@ export const account = sqliteTable(
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
-	(table) => [index("account_userId_idx").on(table.userId)],
+	(table) => [
+		index("account_userId_idx").on(table.userId),
+		uniqueIndex("account_user_primary_uq")
+			.on(table.userId)
+			.where(sql`is_primary = 1`),
+	],
 );
 
 export const verification = sqliteTable(
