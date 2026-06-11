@@ -5,13 +5,11 @@
 // AI recommendation strip (hint + category pill), and a split Accept / Reject
 // action bar. Mirrors `ScreenerScreen`'s card in `docs/prototype/screens.jsx`.
 //
-// Client hydration is disabled (pre-existing TanStack/Solid error), so the
-// Accept / Reject controls are rendered as `<Link>`s that carry the next
-// cumulative decision token-string in the `?d=` search param (matching the
-// onboarding flow's link-driven SSR-proof pattern). The parent supplies the
-// `to` path and the next-`d` builders so the card stays route-agnostic.
+// Accept / Reject are live `<button>`s that dispatch into the shared Atlas
+// store via the parent's `onAccept` / `onReject` callbacks. The decision is held
+// in provider state (no `?d=` token), so the pending list shrinks in place and
+// accepted items flow into the inbox/feed/paper lists without a URL change.
 
-import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
 import type { AiCategory, ScreenerItem } from "../../lib/atlas/types";
 import { AtlasIcon } from "./atlas_icon";
@@ -19,12 +17,10 @@ import { AtlasAvatar } from "./mail_row";
 
 export interface ScreenerCardProps {
 	item: ScreenerItem;
-	/** Route path the Accept / Reject links navigate to (e.g. "/screener"). */
-	to: string;
-	/** Next `?d=` token string after accepting this item into `category`. */
-	acceptD: (id: string, category: AiCategory) => string;
-	/** Next `?d=` token string after rejecting this item. */
-	rejectD: (id: string) => string;
+	/** Accept this item into `category` (dispatches the live store action). */
+	onAccept: (id: string, category: AiCategory) => void;
+	/** Reject this item (dispatches the live store action). */
+	onReject: (id: string) => void;
 }
 
 const ScreenerCard: Component<ScreenerCardProps> = (props) => {
@@ -54,25 +50,25 @@ const ScreenerCard: Component<ScreenerCardProps> = (props) => {
 			</div>
 
 			<div class="atlas-screener-actions">
-				<Link
-					to={props.to}
-					search={{ d: props.acceptD(item().id, item().aiCategory) }}
+				<button
+					type="button"
 					class="atlas-screener-accept"
 					data-action="accept"
 					data-category={item().aiCategory}
+					onClick={() => props.onAccept(item().id, item().aiCategory)}
 				>
 					<AtlasIcon name="check" size={18} stroke={3} />
 					ACCEPT INTO {category()}
-				</Link>
-				<Link
-					to={props.to}
-					search={{ d: props.rejectD(item().id) }}
+				</button>
+				<button
+					type="button"
 					class="atlas-screener-reject"
 					data-action="reject"
+					onClick={() => props.onReject(item().id)}
 				>
 					<AtlasIcon name="hide" size={18} stroke={3} />
 					REJECT
-				</Link>
+				</button>
 			</div>
 		</div>
 	);

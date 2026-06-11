@@ -53,8 +53,6 @@ export interface AssistantDialogProps {
 	 * citations) are server-rendered so the chat-response state is observable.
 	 */
 	seededQuery?: string;
-	/** Current `?d=` screener decisions, carried through citation links. */
-	decisions?: string;
 }
 
 /** Build the seeded transcript for a server-rendered query (intro + Q + A). */
@@ -95,8 +93,7 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 	/** Show the example chips only while the intro bubble is alone. */
 	const showExamples = () => messages().length === 1;
 
-	const citeLink = (c: AssistantCitation) =>
-		atlasCiteLinkFor(c.id, props.decisions);
+	const citeLink = (c: AssistantCitation) => atlasCiteLinkFor(c.id);
 
 	return (
 		<Dialog

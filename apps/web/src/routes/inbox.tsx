@@ -7,10 +7,6 @@
 //   ?sel=<mailId>        — pre-select a different inbox row
 //   ?setAside=1          — render the selected row's "set aside" toggle active
 //   ?replyLater=1        — render the selected row's "reply later" toggle active
-//   ?d=<decisions>       — screener accept/reject token-string; accepted Inbox
-//                          items appear here, and the nav counts reflect it
-//                          (shared with `/screener` so navigation is
-//                          stateful under broken hydration).
 //   ?compose=new|reply   — open the compose overlay server-side (proof variant):
 //                          `new` opens a blank "New message"; `reply` opens a
 //                          "Reply" prefilled from the selected row's sender.
@@ -24,7 +20,8 @@
 
 import { createFileRoute } from "@tanstack/solid-router";
 import { AtlasApp } from "../components/atlas/atlas_app";
-import { decodeComposeMode, decodeDecisions } from "../lib/atlas/app_state";
+import { decodeComposeMode } from "../lib/atlas/app_state";
+import { useAtlasState } from "../lib/atlas/atlas_state";
 import { atlasMailLinkFor } from "../lib/atlas/nav_links";
 import type { ToggleSet } from "../lib/atlas/types";
 
@@ -32,7 +29,6 @@ type InboxSearch = {
 	sel?: string;
 	setAside?: boolean;
 	replyLater?: boolean;
-	d?: string;
 	compose?: string;
 	ask?: string;
 	assistant?: boolean;
@@ -48,7 +44,6 @@ export const Route = createFileRoute("/inbox")({
 		sel: typeof search.sel === "string" ? search.sel : undefined,
 		setAside: asFlag(search.setAside),
 		replyLater: asFlag(search.replyLater),
-		d: typeof search.d === "string" ? search.d : undefined,
 		compose: typeof search.compose === "string" ? search.compose : undefined,
 		ask: typeof search.ask === "string" ? search.ask : undefined,
 		assistant: asFlag(search.assistant),
@@ -59,7 +54,9 @@ export const Route = createFileRoute("/inbox")({
 function InboxScreen() {
 	const search = Route.useSearch();
 	const selectedId = () => search().sel ?? "i1";
-	const decisions = () => decodeDecisions(search().d);
+	// Screener decisions live in the shared Atlas store; accepted Inbox items and
+	// the nav counts derive from it reactively.
+	const decisions = useAtlasState((s) => s.screener);
 	const setAsideMap = (): ToggleSet =>
 		search().setAside ? { [selectedId()]: true } : {};
 	const replyLaterMap = (): ToggleSet =>
@@ -67,14 +64,13 @@ function InboxScreen() {
 
 	const composeMode = () => decodeComposeMode(search().compose);
 
-	// SSR-proof nav: keep the current decisions when moving between mail screens.
-	const linkFor = () => atlasMailLinkFor(search().d);
+	const linkFor = atlasMailLinkFor();
 
 	return (
 		<AtlasApp
 			view="inbox"
 			decisions={decisions()}
-			linkFor={linkFor()}
+			linkFor={linkFor}
 			initialSelectedId={search().sel}
 			initialSetAside={setAsideMap()}
 			initialReplyLater={replyLaterMap()}

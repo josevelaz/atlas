@@ -5,37 +5,24 @@
 // When every item has been decided, it swaps to the "Screener clear" empty
 // state. Mirrors `docs/prototype/screens.jsx` (`ScreenerScreen`).
 //
-// Decisions arrive as a `?d=` token string (SSR-proof, link-driven — client
-// hydration is disabled). Accept / Reject on each card append the new decision
-// to that string via the card's `to` + next-`d` builders, so the pending list
-// shrinks and accepted items flow into the inbox/feed/paper lists (and the nav
-// counts) through the shared derivation helpers in `app_state.ts`.
+// Decisions are live: Accept / Reject on each card dispatch into the shared
+// Atlas store (`useAtlasActions`), and the pending list is derived from the
+// store's screener decisions (`useAtlasState`). Accepting shrinks the pending
+// list in place and routes the item into the inbox/feed/paper lists (and the
+// nav counts) through the shared derivation helpers in `app_state.ts` — no URL
+// change and no `?d=` token.
 
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
-import {
-	acceptScreener,
-	encodeDecisions,
-	pendingScreener,
-	rejectScreener,
-} from "../../lib/atlas/app_state";
-import type { AiCategory, ScreenerDecisions } from "../../lib/atlas/types";
+import { pendingScreener } from "../../lib/atlas/app_state";
+import { useAtlasActions, useAtlasState } from "../../lib/atlas/atlas_state";
 import { EmptyState } from "./empty_state";
 import { ScreenerCard } from "./screener_card";
 
-export interface ScreenerScreenProps {
-	decisions: ScreenerDecisions;
-	/** Route path the card links navigate to (e.g. "/screener"). */
-	to: string;
-}
-
-const ScreenerScreen: Component<ScreenerScreenProps> = (props) => {
-	const pending = () => pendingScreener(props.decisions);
-
-	const acceptD = (id: string, category: AiCategory): string =>
-		encodeDecisions(acceptScreener(props.decisions, id, category));
-	const rejectD = (id: string): string =>
-		encodeDecisions(rejectScreener(props.decisions, id));
+const ScreenerScreen: Component = () => {
+	const decisions = useAtlasState((s) => s.screener);
+	const actions = useAtlasActions();
+	const pending = () => pendingScreener(decisions());
 
 	return (
 		<Show
@@ -64,9 +51,8 @@ const ScreenerScreen: Component<ScreenerScreenProps> = (props) => {
 						{(item) => (
 							<ScreenerCard
 								item={item}
-								to={props.to}
-								acceptD={acceptD}
-								rejectD={rejectD}
+								onAccept={actions.accept}
+								onReject={actions.reject}
 							/>
 						)}
 					</For>

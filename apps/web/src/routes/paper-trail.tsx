@@ -7,43 +7,39 @@
 // behavior, tags, and time metadata all come from the same derivation layer.
 //
 // Optional search params seed server-rendered proof variants so the
-// interaction model is observable even when client hydration is unavailable:
+// interaction model is observable:
 //   ?sel=<mailId>        — pre-select a different paper-trail row
-//   ?d=<decisions>       — screener accept/reject token-string; accepted Paper
-//                          Trail items appear here, and the nav counts reflect
-//                          it (shared with `/screener` so navigation is
-//                          stateful under broken hydration).
+//
+// Screener decisions live in the shared Atlas store: accepted Paper Trail items
+// appear here and the nav counts reflect them through provider state (shared
+// with `/screener`), so navigation stays stateful with no `?d=` token.
 
 import { createFileRoute } from "@tanstack/solid-router";
 import { AtlasApp } from "../components/atlas/atlas_app";
-import { decodeDecisions } from "../lib/atlas/app_state";
+import { useAtlasState } from "../lib/atlas/atlas_state";
 import { atlasMailLinkFor } from "../lib/atlas/nav_links";
 
 type PaperTrailSearch = {
 	sel?: string;
-	d?: string;
 };
 
 export const Route = createFileRoute("/paper-trail")({
 	validateSearch: (search: Record<string, unknown>): PaperTrailSearch => ({
 		sel: typeof search.sel === "string" ? search.sel : undefined,
-		d: typeof search.d === "string" ? search.d : undefined,
 	}),
 	component: PaperTrailScreen,
 });
 
 function PaperTrailScreen() {
 	const search = Route.useSearch();
-	const decisions = () => decodeDecisions(search().d);
-
-	// SSR-proof nav: keep the current decisions when moving between mail screens.
-	const linkFor = () => atlasMailLinkFor(search().d);
+	const decisions = useAtlasState((s) => s.screener);
+	const linkFor = atlasMailLinkFor();
 
 	return (
 		<AtlasApp
 			view="paper"
 			decisions={decisions()}
-			linkFor={linkFor()}
+			linkFor={linkFor}
 			initialSelectedId={search().sel}
 		/>
 	);

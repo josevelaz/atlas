@@ -1,17 +1,15 @@
 // Atlas — top-level app component for the mail workspace.
 //
 // Wires the shell together: top bar, sidebar nav, and the mail workspace. The
-// active `view` and screener `decisions` are supplied by the route (they derive
-// from the URL — path + `?d=` — so the screen and accepted-item counts are
-// server-rendered correctly under the pre-existing broken-hydration constraint).
-// Compose / assistant overlays land in later tasks, so their triggers are inert.
+// active `view` is route-bound; the screener `decisions` are supplied by the
+// route from the shared Atlas store, so accepted-item counts and lists update
+// live as the Screener dispatches accept/reject actions.
 
 import type { Component } from "solid-js";
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
 import {
 	createInitialState,
 	currentThread,
-	encodeDecisions,
 	resolveShortcut,
 } from "../../lib/atlas/app_state";
 import type {
@@ -31,9 +29,9 @@ import { TopBar } from "./top_bar";
 export interface AtlasAppProps {
 	/** Active screen (route-bound). Defaults to "inbox". */
 	view?: Screen;
-	/** Screener decisions (decoded from the route's `?d=`). Defaults to empty. */
+	/** Screener decisions (from the shared Atlas store). Defaults to empty. */
 	decisions?: ScreenerDecisions;
-	/** Resolve SSR-proof nav `<Link>` targets (carries the current `?d=`). */
+	/** Resolve nav `<Link>` targets for the sidebar. */
 	linkFor?: SidebarNavProps["linkFor"];
 	/**
 	 * Optional initial selected mail id (proof variants). Seeds the thread pane
@@ -141,20 +139,10 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 	const assistantInline = () =>
 		Boolean(props.initialAsk) || Boolean(props.initialAssistantOpen);
 
-	// Serialize the current decisions so citation deep-links stay consistent
-	// with the rest of the session (carries the `?d=` token-string through).
-	const decisionsToken = createMemo(() => encodeDecisions(decisions()));
-
 	return (
 		<AppShell
 			topBar={<TopBar onSearch={openAssistant} onCompose={openNew} />}
-			sidebar={
-				<SidebarNav
-					activeView={view()}
-					decisions={decisions()}
-					linkFor={props.linkFor}
-				/>
-			}
+			sidebar={<SidebarNav activeView={view()} linkFor={props.linkFor} />}
 		>
 			<MailWorkspace
 				view={view()}
@@ -175,7 +163,6 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 				onClose={closeAssistant}
 				inline={assistantInline()}
 				seededQuery={props.initialAsk}
-				decisions={decisionsToken() || undefined}
 			/>
 		</AppShell>
 	);

@@ -5,17 +5,19 @@
 // link. Mirrors the prototype's `.sidebar`.
 //
 // Routed destinations (Screener, Inbox, Feed, Paper Trail, …) render as
-// `<Link>`s and navigate client-side via the router; each link carries the
-// current `?d=` screener-decision token-string so accepted items stay reflected
-// across Screener ↔ Inbox. Other entries stay visually present (for parity) but
-// inert — we don't route users to incomplete screens.
+// `<Link>`s and navigate client-side via the router. Screener decisions live in
+// the shared Atlas store, so accepted items stay reflected across Screener ↔
+// Inbox through provider state (the nav counts read from the store) — no `?d=`
+// token. Other entries stay visually present (for parity) but inert — we don't
+// route users to incomplete screens.
 
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
 
 import { ASSIST_NAV_ITEMS, mailNavItems } from "../../lib/atlas/app_state";
-import type { NavItem, Screen, ScreenerDecisions } from "../../lib/atlas/types";
+import { useAtlasState } from "../../lib/atlas/atlas_state";
+import type { NavItem, Screen } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { AiUsageCard } from "./ai_usage_card";
 import { AtlasIcon } from "./atlas_icon";
@@ -108,23 +110,23 @@ function NavRow(props: NavRowProps) {
 
 export interface SidebarNavProps {
 	activeView: Screen;
-	decisions: ScreenerDecisions;
 	/**
 	 * Resolve a routed `<Link>` target for a nav id. Return `undefined` to keep
-	 * the entry inert. Lets routes wire SSR-proof navigation (carrying the
-	 * current `?d=` decisions) without coupling the sidebar to any one route.
+	 * the entry inert. Lets routes wire navigation without coupling the sidebar
+	 * to any one route.
 	 */
 	linkFor?: (id: Screen) => NavLinkTarget | undefined;
 }
 
 const SidebarNav: Component<SidebarNavProps> = (props) => {
+	const decisions = useAtlasState((s) => s.screener);
 	const linkFor = (id: Screen): NavLinkTarget | undefined =>
 		props.linkFor?.(id);
 
 	return (
 		<div class="atlas-sidebar">
 			<div class="atlas-section-title">Mail</div>
-			<For each={mailNavItems(props.decisions)}>
+			<For each={mailNavItems(decisions())}>
 				{(item) => (
 					<NavRow
 						item={item}
