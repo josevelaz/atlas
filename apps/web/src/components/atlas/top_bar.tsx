@@ -5,6 +5,12 @@
 // prototype's `.topbar`.
 
 import type { Component } from "solid-js";
+import {
+	dividerVClasses,
+	spacerClasses,
+	topBarClasses,
+	topBarVersionClasses,
+} from "../../lib/atlas/component_classes";
 import { Button, Kbd } from "../ui/index";
 import { AtlasIcon } from "./atlas_icon";
 import { Logo } from "./logo";
@@ -17,10 +23,10 @@ export interface TopBarProps {
 
 const TopBar: Component<TopBarProps> = (props) => {
 	return (
-		<div class="atlas-topbar">
+		<div class={topBarClasses}>
 			<Logo markSize={26} />
-			<span class="atlas-version">v0.1 · MVP</span>
-			<div class="atlas-spacer" />
+			<span class={topBarVersionClasses}>v0.1 · MVP</span>
+			<div class={spacerClasses} />
 			<Button size="sm" onClick={props.onSearch}>
 				<AtlasIcon name="search" size={14} /> Search or ask
 				<Kbd style={{ "margin-left": "6px" }}>⌘K</Kbd>
@@ -36,7 +42,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 					C
 				</Kbd>
 			</Button>
-			<div class="atlas-divider-v" />
+			<div class={dividerVClasses} />
 			<AtlasAvatar name="Rob Barrett" size="sm" />
 		</div>
 	);

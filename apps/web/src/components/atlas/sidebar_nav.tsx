@@ -17,6 +17,16 @@ import { For, Show } from "solid-js";
 
 import { ASSIST_NAV_ITEMS, mailNavItems } from "../../lib/atlas/app_state";
 import { useAtlasState } from "../../lib/atlas/atlas_state";
+import {
+	navCountActiveClasses,
+	navCountClasses,
+	navItemActiveClasses,
+	navItemClasses,
+	navTileClasses,
+	sectionTitleClasses,
+	sidebarClasses,
+	spacerClasses,
+} from "../../lib/atlas/component_classes";
 import type { NavItem, Screen } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { AiUsageCard } from "./ai_usage_card";
@@ -44,7 +54,7 @@ function NavRowInner(props: NavTileProps) {
 	return (
 		<>
 			<span
-				class="atlas-nav-tile"
+				class={navTileClasses}
 				style={{
 					background: tileBackground(props.item, props.active),
 					color: "#000",
@@ -59,7 +69,11 @@ function NavRowInner(props: NavTileProps) {
 			</span>
 			<span>{props.item.label}</span>
 			<Show when={props.item.count !== null && props.item.count > 0}>
-				<span class="atlas-count">{props.item.count}</span>
+				<span
+					class={cn(navCountClasses, props.active && navCountActiveClasses)}
+				>
+					{props.item.count}
+				</span>
 			</Show>
 		</>
 	);
@@ -85,7 +99,7 @@ function NavRow(props: NavRowProps) {
 			fallback={
 				<button
 					type="button"
-					class={cn("atlas-nav-item", props.active && "is-active")}
+					class={cn(navItemClasses, props.active && navItemActiveClasses)}
 					aria-current={props.active ? "page" : undefined}
 					aria-disabled="true"
 				>
@@ -97,7 +111,7 @@ function NavRow(props: NavRowProps) {
 				<Link
 					to={link().to}
 					search={link().search}
-					class={cn("atlas-nav-item", props.active && "is-active")}
+					class={cn(navItemClasses, props.active && navItemActiveClasses)}
 					aria-current={props.active ? "page" : undefined}
 					data-nav={props.item.id}
 				>
@@ -124,8 +138,8 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 		props.linkFor?.(id);
 
 	return (
-		<div class="atlas-sidebar">
-			<div class="atlas-section-title">Mail</div>
+		<div class={sidebarClasses}>
+			<div class={sectionTitleClasses}>Mail</div>
 			<For each={mailNavItems(decisions())}>
 				{(item) => (
 					<NavRow
@@ -136,7 +150,7 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 				)}
 			</For>
 
-			<div class="atlas-section-title">Assist</div>
+			<div class={sectionTitleClasses}>Assist</div>
 			<For each={ASSIST_NAV_ITEMS}>
 				{(item) => (
 					<NavRow
@@ -147,18 +161,18 @@ const SidebarNav: Component<SidebarNavProps> = (props) => {
 				)}
 			</For>
 
-			<div class="atlas-spacer" />
+			<div class={spacerClasses} />
 
 			<AiUsageCard />
 
 			<Link
 				to="/onboarding"
-				class="atlas-nav-item"
+				class={navItemClasses}
 				style={{ "margin-top": "4px" }}
 				data-action="replay-onboarding"
 			>
 				<span
-					class="atlas-nav-tile"
+					class={navTileClasses}
 					style={{ border: "none", background: "transparent" }}
 				>
 					<AtlasIcon name="user" size={15} />

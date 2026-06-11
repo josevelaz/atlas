@@ -15,6 +15,7 @@ import {
 	Textarea,
 	Toggle,
 } from "../../components/ui/index";
+import { tagClasses } from "../../lib/atlas/component_classes";
 
 type DesignSystemSearch = {
 	/**
@@ -244,9 +245,9 @@ function DesignSystemPage() {
 					Tag (utility)
 				</p>
 				<div class="flex flex-wrap items-center gap-2">
-					<span class="atlas-tag">work</span>
-					<span class="atlas-tag">finance</span>
-					<span class="atlas-tag">urgent</span>
+					<span class={tagClasses}>work</span>
+					<span class={tagClasses}>finance</span>
+					<span class={tagClasses}>urgent</span>
 				</div>
 			</section>
 

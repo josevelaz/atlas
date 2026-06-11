@@ -6,6 +6,14 @@
 
 import type { Component } from "solid-js";
 import { mergeProps } from "solid-js";
+import {
+	usageCardClasses,
+	usageFillClasses,
+	usageLabelClasses,
+	usageLabelTextClasses,
+	usageMetaClasses,
+	usageTrackClasses,
+} from "../../lib/atlas/component_classes";
 import { AtlasIcon } from "./atlas_icon";
 
 export interface AiUsageCardProps {
@@ -25,15 +33,15 @@ const AiUsageCard: Component<AiUsageCardProps> = (raw_props) => {
 		Math.max(0, Math.min(100, Math.round((props.used / props.total) * 100)));
 
 	return (
-		<div class="atlas-usage-card">
-			<div class="atlas-usage-label">
+		<div class={usageCardClasses}>
+			<div class={usageLabelClasses}>
 				<AtlasIcon name="sparkle" size={12} color="#fff" stroke={2.5} />
-				<span>AI usage</span>
+				<span class={usageLabelTextClasses}>AI usage</span>
 			</div>
-			<div class="atlas-usage-track">
-				<div class="atlas-usage-fill" style={{ width: `${pct()}%` }} />
+			<div class={usageTrackClasses}>
+				<div class={usageFillClasses} style={{ width: `${pct()}%` }} />
 			</div>
-			<div class="atlas-usage-meta">
+			<div class={usageMetaClasses}>
 				{props.used}/{props.total} monthly · {props.tier}
 			</div>
 		</div>

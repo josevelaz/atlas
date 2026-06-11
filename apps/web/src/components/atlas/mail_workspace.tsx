@@ -16,6 +16,13 @@ import {
 	selectedIdForView,
 } from "../../lib/atlas/app_state";
 import { useAtlasActions, useAtlasState } from "../../lib/atlas/atlas_state";
+import {
+	aiBannerButtonClasses,
+	aiBannerClasses,
+	listColumnClasses,
+	paneClasses,
+	spacerClasses,
+} from "../../lib/atlas/component_classes";
 import type { Screen, ScreenerDecisions } from "../../lib/atlas/types";
 import { Button } from "../ui/index";
 import { AtlasIcon } from "./atlas_icon";
@@ -65,7 +72,7 @@ const MailWorkspace: Component<MailWorkspaceProps> = (props) => {
 
 	return (
 		<>
-			<div class="atlas-list">
+			<div class={listColumnClasses}>
 				<MailList
 					title={listTitle(props.view)}
 					items={list()}
@@ -73,17 +80,19 @@ const MailWorkspace: Component<MailWorkspaceProps> = (props) => {
 					onSelect={select}
 					aiBanner={
 						props.view === "inbox" ? (
-							<div class="atlas-ai-banner">
+							<div class={aiBannerClasses}>
 								<AtlasIcon name="sparkle" size={12} color="#fff" stroke={2.5} />
 								<span>2 P1 threads need a reply today.</span>
-								<span class="atlas-spacer" />
-								<Button size="sm">Sort by priority</Button>
+								<span class={spacerClasses} />
+								<Button size="sm" class={aiBannerButtonClasses}>
+									Sort by priority
+								</Button>
 							</div>
 						) : undefined
 					}
 				/>
 			</div>
-			<div class="atlas-pane">
+			<div class={paneClasses}>
 				<ThreadView
 					thread={thread()}
 					setAside={isSetAside()}

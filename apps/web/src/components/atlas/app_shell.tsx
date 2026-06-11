@@ -5,6 +5,8 @@
 // prototype's `.app` grid. Layout-only — all interaction state lives above.
 
 import type { Component, JSX } from "solid-js";
+import { appShellClasses } from "../../lib/atlas/component_classes";
+import { cn } from "../../lib/utils";
 
 export interface AppShellProps {
 	topBar: JSX.Element;
@@ -15,7 +17,7 @@ export interface AppShellProps {
 
 const AppShell: Component<AppShellProps> = (props) => {
 	return (
-		<div class="atlas-app" data-screen-label="Atlas app">
+		<div class={cn("atlas-app", appShellClasses)} data-screen-label="Atlas app">
 			{props.topBar}
 			{props.sidebar}
 			{props.children}

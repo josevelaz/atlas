@@ -11,7 +11,16 @@
 
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
-import { avatarClasses } from "../../lib/atlas/component_classes";
+import {
+	avatarClasses,
+	mailFromClasses,
+	mailMetaTextClasses,
+	mailPreviewClasses,
+	mailRowClasses,
+	mailSubjClasses,
+	rowTagsClasses,
+	tagClasses,
+} from "../../lib/atlas/component_classes";
 import type { MailItem, MailTag } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { PriorityChip } from "./priority_chip";
@@ -85,31 +94,36 @@ const MailRow: Component<MailRowProps> = (props) => {
 	return (
 		<button
 			type="button"
-			class={cn(
-				"atlas-mail-row",
-				mail().unread && "is-unread",
-				props.selected && "is-selected",
-			)}
+			// `group` + `data-unread`/`data-selected` drive the child text/dot
+			// state styling (`group-data-[…]` variants on the from/preview/meta
+			// classes, plus the `before:` unread dot on the row itself).
+			class={cn("group", mailRowClasses)}
+			data-unread={mail().unread ? "true" : undefined}
+			data-selected={props.selected ? "true" : undefined}
 			aria-pressed={props.selected}
 			onClick={() => props.onSelect(mail().id)}
 		>
 			<AtlasAvatar name={mail().from} />
 			<div style={{ "min-width": 0 }}>
-				<div class="atlas-from">{mail().from}</div>
-				<div class="atlas-subj">{mail().subject}</div>
-				<div class="atlas-preview">{mail().preview}</div>
+				<div class={mailFromClasses}>{mail().from}</div>
+				<div class={mailSubjClasses}>{mail().subject}</div>
+				<div class={mailPreviewClasses}>{mail().preview}</div>
 				<Show when={hasChips()}>
-					<div class="atlas-row-tags">
+					<div class={cn("atlas-row-tags", rowTagsClasses)}>
 						<Show when={mail().priority}>
 							{(p) => <PriorityChip priority={p()} />}
 						</Show>
 						<For each={tags()}>
-							{(tag) => <span class="atlas-tag">{tagLabel(tag)}</span>}
+							{(tag) => (
+								// `atlas-tag` marker hook → the in-app retro pass
+								// (`.atlas-app .atlas-tag`: VT323 + sticker tilt).
+								<span class={cn("atlas-tag", tagClasses)}>{tagLabel(tag)}</span>
+							)}
 						</For>
 					</div>
 				</Show>
 			</div>
-			<div class="atlas-meta-text">{mail().time}</div>
+			<div class={mailMetaTextClasses}>{mail().time}</div>
 		</button>
 	);
 };

@@ -25,6 +25,10 @@ import type { Component } from "solid-js";
 import { createEffect, createMemo, Match, onCleanup, Switch } from "solid-js";
 import { currentThread, resolveShortcut } from "../../lib/atlas/app_state";
 import { useAtlasActions, useAtlasState } from "../../lib/atlas/atlas_state";
+import {
+	fullPaneClasses,
+	listWideClasses,
+} from "../../lib/atlas/component_classes";
 import { atlasMailLinkFor } from "../../lib/atlas/nav_links";
 import type { Screen } from "../../lib/atlas/types";
 import { AppShell } from "./app_shell";
@@ -137,17 +141,17 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 					/>
 				</Match>
 				<Match when={view() === "screener"}>
-					<div class="atlas-list is-wide">
+					<div class={listWideClasses}>
 						<ScreenerScreen />
 					</div>
 				</Match>
 				<Match when={view() === "tasks"}>
-					<div class="atlas-fullpane">
+					<div class={fullPaneClasses}>
 						<TasksScreen />
 					</div>
 				</Match>
 				<Match when={view() === "settings"}>
-					<div class="atlas-fullpane">
+					<div class={fullPaneClasses}>
 						<SettingsScreen />
 					</div>
 				</Match>

@@ -7,6 +7,7 @@
 
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
+import { tagClasses } from "../../lib/atlas/component_classes";
 import type { MailTag, Thread } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/index";
@@ -98,11 +99,15 @@ const ThreadView: Component<ThreadViewProps> = (props) => {
 								<Show when={thread().priority}>
 									{(p) => <PriorityChip priority={p()} withLabel />}
 								</Show>
-								<span class="atlas-tag">
+								<span class={cn("atlas-tag", tagClasses)}>
 									<AtlasIcon name="inbox" size={11} /> Inbox
 								</span>
 								<For each={thread().tags ?? []}>
-									{(tag) => <span class="atlas-tag">{tagLabel(tag)}</span>}
+									{(tag) => (
+										<span class={cn("atlas-tag", tagClasses)}>
+											{tagLabel(tag)}
+										</span>
+									)}
 								</For>
 							</div>
 						</div>
