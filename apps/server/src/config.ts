@@ -76,6 +76,11 @@ const HAY_ENV = env.get("HAY_ENV").default("development").asString();
 
 const BETTER_AUTH_SECRET = env.get("BETTER_AUTH_SECRET").required().asString();
 
+// Google OAuth credentials — optional; when absent, Google sign-in is disabled.
+// Set in .env.local for local dev; inject via secrets manager in production.
+const GOOGLE_CLIENT_ID = env.get("GOOGLE_CLIENT_ID").asString();
+const GOOGLE_CLIENT_SECRET = env.get("GOOGLE_CLIENT_SECRET").asString();
+
 const BETTER_AUTH_URL = env
 	.get("BETTER_AUTH_URL")
 	.default("http://localhost:3000")
@@ -192,4 +197,6 @@ export const config = {
 	BETTER_AUTH_SECRET,
 	BETTER_AUTH_URL,
 	CORS_ALLOWED_ORIGINS,
+	GOOGLE_CLIENT_ID,
+	GOOGLE_CLIENT_SECRET,
 };

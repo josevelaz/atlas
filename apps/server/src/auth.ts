@@ -18,18 +18,21 @@ import { db } from "./db/index.ts";
  * To allow cookies to flow across origins we must set:
  *   SameSite=None; Secure
  *
- * The `Secure` flag is REQUIRED when SameSite=None — browsers reject
+ * The `Secure` flag is REQUIRED when SameSite=None is set — browsers reject
  * SameSite=None cookies without it.
  *
  * TRADEOFF — local development (HTTP):
  *   `Secure` cookies are not sent over plain HTTP. In local dev the API
  *   runs on http://localhost:3000, so `Secure` cookies will be silently
- *   dropped by the browser. Options for local dev:
- *     1. Use a local HTTPS proxy (e.g. mkcert + caddy/nginx).
- *     2. Accept that cookie-based auth won't work in the Tauri dev build
- *        and test auth flows against a staging HTTPS environment.
- *     3. Override BETTER_AUTH_URL to an https:// URL in local dev if you
- *        have a local TLS setup.
+ *   dropped by the browser.
+ *
+ *   To make local web dev testing viable we relax to SameSite=Lax (no
+ *   Secure flag) when NODE_ENV=development. This is safe because:
+ *     - SameSite=Lax is the browser default and is appropriate for
+ *       same-site requests (web app and API both on localhost).
+ *     - The Tauri desktop dev build still works because Tauri's webview
+ *       ignores the SameSite attribute for its custom-protocol origins.
+ *     - Production always uses SameSite=None; Secure (HTTPS required).
  *
  * CSRF / session-fixation notes:
  *   - Better Auth performs origin-check CSRF protection by default
@@ -50,14 +53,19 @@ import { db } from "./db/index.ts";
  */
 const isProduction = config.NODE_ENV === "production";
 
-// SameSite=None is required for cross-origin Tauri requests.
-// Secure=true is required whenever SameSite=None is set.
-// In production the API is always HTTPS so Secure cookies work correctly.
-// In development (HTTP) Secure cookies are dropped — see tradeoff note above.
-const crossOriginCookieAttributes = {
-	sameSite: "none" as const,
-	secure: true,
-};
+/**
+ * Cookie attributes per environment:
+ *
+ *   production  → SameSite=None; Secure  (required for Tauri cross-origin)
+ *   development → SameSite=Lax           (allows plain HTTP localhost testing)
+ *
+ * SameSite=None without Secure is rejected by all modern browsers, so we
+ * must drop the Secure flag in dev to avoid cookies being silently dropped
+ * over HTTP.
+ */
+const defaultCookieAttributes = isProduction
+	? { sameSite: "none" as const, secure: true, httpOnly: true }
+	: { sameSite: "lax" as const, secure: false, httpOnly: true };
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, { provider: "sqlite" }),
@@ -66,19 +74,25 @@ export const auth = betterAuth({
 	secret: config.BETTER_AUTH_SECRET,
 	trustedOrigins: config.CORS_ALLOWED_ORIGINS,
 
+	socialProviders: {
+		...(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET
+			? {
+					google: {
+						clientId: config.GOOGLE_CLIENT_ID,
+						clientSecret: config.GOOGLE_CLIENT_SECRET,
+					},
+				}
+			: {}),
+	},
+
 	advanced: {
 		// Force the __Secure- cookie prefix in production.
 		// Better Auth auto-detects this from baseURL protocol, but we make it
 		// explicit so the intent is clear and auditable.
 		useSecureCookies: isProduction,
 
-		// Apply SameSite=None; Secure to all auth cookies so they are sent on
-		// cross-origin requests from the Tauri desktop app.
-		// httpOnly is already true by default in Better Auth — we keep it here
-		// for explicitness and defence-in-depth.
-		defaultCookieAttributes: {
-			httpOnly: true,
-			...crossOriginCookieAttributes,
-		},
+		// Apply environment-appropriate cookie attributes.
+		// See the comment block above for the full rationale.
+		defaultCookieAttributes,
 	},
 });

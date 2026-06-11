@@ -8,6 +8,7 @@
 
 import type { Component } from "solid-js";
 import { For, Match, Switch } from "solid-js";
+
 import {
 	buttonClasses,
 	onbAiBodyClasses,
@@ -17,8 +18,8 @@ import {
 	onbCatClasses,
 	onbCatDescClasses,
 	onbCatNameClasses,
-	onbCatsClasses,
 	onbCatTileClasses,
+	onbCatsClasses,
 	onbConnectBtnClasses,
 	onbConnectClasses,
 	onbConnectGridClasses,
@@ -53,6 +54,7 @@ import type {
 	OnboardingScreenerCard,
 	OnboardingVisual,
 } from "../../lib/atlas/types";
+import { getAuthClient } from "../../lib/auth";
 import { cn } from "../../lib/utils";
 import { AtlasIcon } from "./atlas_icon";
 
@@ -69,6 +71,17 @@ function ConnectCard(props: ConnectCardProps) {
 	const tile = () =>
 		props.provider === "Google" ? "var(--color-main)" : "var(--color-ai)";
 	const icon = () => (props.provider === "Google" ? "google" : "outlook");
+
+	const handleConnect = () => {
+		if (props.provider === "Google") {
+			getAuthClient().signIn.social({
+				provider: "google",
+				callbackURL: "/inbox",
+			});
+		}
+		// Microsoft / other providers: not yet configured — no-op for now.
+	};
+
 	return (
 		<div class={onbConnectClasses}>
 			<div class={onbConnectHeadClasses}>
@@ -86,6 +99,7 @@ function ConnectCard(props: ConnectCardProps) {
 					buttonClasses({ variant: "primary", size: "sm" }),
 					onbConnectBtnClasses,
 				)}
+				onClick={handleConnect}
 			>
 				Connect with OAuth
 			</button>
