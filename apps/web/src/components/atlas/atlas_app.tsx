@@ -12,12 +12,11 @@ import {
 	currentThread,
 	resolveShortcut,
 } from "../../lib/atlas/app_state";
+import { useAtlasState } from "../../lib/atlas/atlas_state";
 import type {
 	ComposeMode,
 	Screen,
 	ScreenerDecisions,
-	SelectionState,
-	ToggleSet,
 } from "../../lib/atlas/types";
 import { AppShell } from "./app_shell";
 import { AssistantDialog } from "./assistant_dialog";
@@ -33,15 +32,6 @@ export interface AtlasAppProps {
 	decisions?: ScreenerDecisions;
 	/** Resolve nav `<Link>` targets for the sidebar. */
 	linkFor?: SidebarNavProps["linkFor"];
-	/**
-	 * Optional initial selected mail id (proof variants). Seeds the thread pane
-	 * server-side so row selection is observable without client hydration.
-	 */
-	initialSelectedId?: string;
-	/** Optional initial set-aside toggle map (proof variants). */
-	initialSetAside?: ToggleSet;
-	/** Optional initial reply-later toggle map (proof variants). */
-	initialReplyLater?: ToggleSet;
 	/**
 	 * Optional initial compose overlay mode (proof variants). `"new"` opens a
 	 * blank compose, `"reply"` opens a reply prefilled from the selected thread's
@@ -115,22 +105,16 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 		onCleanup(() => document.removeEventListener("keydown", handler));
 	});
 
-	// Resolve the selected thread's sender for the SSR-proof reply prefill.
-	// Mirrors the prototype's `replyTo={currentMail ? currentMail.addr : ""}`.
-	const seededSelection = (): SelectionState => {
-		const id = props.initialSelectedId;
-		if (!id) return initial.selected;
-		if (view() === "inbox") return { ...initial.selected, inbox: id };
-		if (view() === "feed") return { ...initial.selected, feed: id };
-		if (view() === "paper") return { ...initial.selected, paper: id };
-		return initial.selected;
-	};
-	const seededReplyAddr = createMemo(() => {
-		const thread = currentThread(view(), seededSelection(), decisions());
+	// Resolve the selected thread's sender for the reply prefill, reading the
+	// selection from the shared store. Mirrors the prototype's
+	// `replyTo={currentMail ? currentMail.addr : ""}`.
+	const selection = useAtlasState((s) => s.selected);
+	const selectedReplyAddr = createMemo(() => {
+		const thread = currentThread(view(), selection(), decisions());
 		return thread?.addr ?? "";
 	});
-	// Prefer the live (clicked-thread) address; fall back to the SSR-seeded one.
-	const replyAddr = () => liveReplyAddr() || seededReplyAddr();
+	// Prefer the live (clicked-thread) address; fall back to the selected one.
+	const replyAddr = () => liveReplyAddr() || selectedReplyAddr();
 
 	// SSR-proof: when a compose mode is seeded, render the overlay inline so it
 	// is emitted in the server stream (Portal content is not). Live (hydrated)
@@ -148,9 +132,6 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 				view={view()}
 				decisions={decisions()}
 				onCompose={openReply}
-				initialSelectedId={props.initialSelectedId}
-				initialSetAside={props.initialSetAside}
-				initialReplyLater={props.initialReplyLater}
 			/>
 			<ComposeDialog
 				open={compose() !== "closed"}

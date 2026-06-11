@@ -1,25 +1,22 @@
 // Atlas — mail workspace (list + thread pane).
 //
-// Owns the local interaction state for the inbox slice: selected row, and the
-// per-mail set-aside / reply-later toggle sets. Renders the `MailList` (with the
-// inbox AI banner) alongside the `ThreadView` for the current selection.
-// Mirrors the list/pane half of the prototype's `App`.
+// Reads the selected row and the per-mail set-aside / reply-later toggle sets
+// from the shared Atlas store (`atlas_state.tsx`) and dispatches selection /
+// toggle actions through it, so the interaction state persists across SPA route
+// changes. Renders the `MailList` (with the inbox AI banner) alongside the
+// `ThreadView` for the current selection. Mirrors the list/pane half of the
+// prototype's `App`.
 
 import type { Component } from "solid-js";
-import { createMemo, createSignal } from "solid-js";
+import { createMemo } from "solid-js";
 import {
-	createInitialState,
 	currentThread,
 	listForView,
 	listTitle,
-	selectInView,
+	selectedIdForView,
 } from "../../lib/atlas/app_state";
-import type {
-	Screen,
-	ScreenerDecisions,
-	SelectionState,
-	ToggleSet,
-} from "../../lib/atlas/types";
+import { useAtlasActions, useAtlasState } from "../../lib/atlas/atlas_state";
+import type { Screen, ScreenerDecisions } from "../../lib/atlas/types";
 import { Button } from "../ui/index";
 import { AtlasIcon } from "./atlas_icon";
 import { MailList } from "./mail_list";
@@ -30,59 +27,31 @@ export interface MailWorkspaceProps {
 	decisions: ScreenerDecisions;
 	/** Open the compose overlay as a reply, carrying the sender's address. */
 	onCompose: (replyTo?: string) => void;
-	/**
-	 * Optional initial selected mail id for the active list. Lets the route seed
-	 * the selection server-side (proof variants) so "selecting a row updates the
-	 * pane" is observable even when client hydration is unavailable.
-	 */
-	initialSelectedId?: string;
-	/** Optional initial set-aside toggle map (proof variants). */
-	initialSetAside?: ToggleSet;
-	/** Optional initial reply-later toggle map (proof variants). */
-	initialReplyLater?: ToggleSet;
 }
 
 const MailWorkspace: Component<MailWorkspaceProps> = (props) => {
-	const initial = createInitialState();
-	const seededSelection = (): SelectionState => {
-		if (!props.initialSelectedId) return initial.selected;
-		return selectInView(props.view, initial.selected, props.initialSelectedId);
-	};
-	const [selection, setSelection] = createSignal<SelectionState>(
-		seededSelection(),
-	);
-	const [setAside, setSetAside] = createSignal<ToggleSet>(
-		props.initialSetAside ?? {},
-	);
-	const [replyLater, setReplyLater] = createSignal<ToggleSet>(
-		props.initialReplyLater ?? {},
-	);
+	const selection = useAtlasState((s) => s.selected);
+	const setAside = useAtlasState((s) => s.setAside);
+	const replyLater = useAtlasState((s) => s.replyLater);
+	const actions = useAtlasActions();
 
 	const list = createMemo(() => listForView(props.view, props.decisions));
-	const selectedId = createMemo(() => {
-		const sel = selection();
-		if (props.view === "inbox") return sel.inbox;
-		if (props.view === "feed") return sel.feed;
-		if (props.view === "paper") return sel.paper;
-		return null;
-	});
+	const selectedId = createMemo(() =>
+		selectedIdForView(props.view, selection()),
+	);
 	const thread = createMemo(() =>
 		currentThread(props.view, selection(), props.decisions),
 	);
 
-	const select = (id: string) => {
-		setSelection((s) => selectInView(props.view, s, id));
-	};
+	const select = (id: string) => actions.select(props.view, id);
 
 	const toggleSetAside = () => {
 		const id = selectedId();
-		if (!id) return;
-		setSetAside((s) => ({ ...s, [id]: !s[id] }));
+		if (id) actions.toggleSetAside(id);
 	};
 	const toggleReplyLater = () => {
 		const id = selectedId();
-		if (!id) return;
-		setReplyLater((s) => ({ ...s, [id]: !s[id] }));
+		if (id) actions.toggleReplyLater(id);
 	};
 
 	const isSetAside = createMemo(() => {

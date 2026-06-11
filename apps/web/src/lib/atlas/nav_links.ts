@@ -48,19 +48,19 @@ export function atlasMailLinkFor(): (id: Screen) => NavLinkTarget | undefined {
 
 /**
  * Resolve the route a citation's mail id opens. Inbox / Feed / Paper Trail
- * citations deep-link to their category list with the row pre-selected via
- * `?sel=`; Screener citations open the Screener. Returns `undefined` when the
- * id has no shipped destination so the citation stays inert.
+ * citations open their category list; Screener citations open the Screener.
+ * Returns `undefined` when the id has no shipped destination so the citation
+ * stays inert.
+ *
+ * Row pre-selection no longer rides in the URL — clicking a citation dispatches
+ * a `select(view, id)` store action (see `assistant_dialog.tsx`) so the cited
+ * thread is focused through shared provider state, and this resolver only owns
+ * the navigation target.
  */
 export function atlasCiteLinkFor(id: string): NavLinkTarget | undefined {
 	const view = viewForMailId(id);
 	if (!view) return undefined;
 	const to = ROUTES[view];
 	if (!to) return undefined;
-	// Category lists support row pre-selection; the Screener has no per-row
-	// selection, so it just routes.
-	if (view === "inbox" || view === "feed" || view === "paper") {
-		return { to, search: { sel: id } };
-	}
 	return { to };
 }

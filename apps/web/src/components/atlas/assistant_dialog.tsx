@@ -22,6 +22,8 @@
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
 import { For, Show, createSignal } from "solid-js";
+import { viewForMailId } from "../../lib/atlas/app_state";
+import { useAtlasActions } from "../../lib/atlas/atlas_state";
 import {
 	ASSISTANT_EXAMPLES,
 	ASSISTANT_INTRO,
@@ -62,6 +64,8 @@ function seededTranscript(query: string): AssistantMessage[] {
 }
 
 const AssistantDialog: Component<AssistantDialogProps> = (props) => {
+	const actions = useAtlasActions();
+
 	// Live transcript (used once hydration works). Seeded from `?ask=` for the
 	// SSR-proof chat-response variant; otherwise just the intro bubble.
 	const initial = (): AssistantMessage[] =>
@@ -94,6 +98,17 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 	const showExamples = () => messages().length === 1;
 
 	const citeLink = (c: AssistantCitation) => atlasCiteLinkFor(c.id);
+
+	/**
+	 * Focus the cited thread through the shared store, then close the overlay.
+	 * `select(view, id)` is a no-op for the Screener (no per-row selection), so
+	 * Screener citations simply route. Replaces the old `?sel=` deep-link.
+	 */
+	const onCiteClick = (c: AssistantCitation) => {
+		const view = viewForMailId(c.id);
+		if (view) actions.select(view, c.id);
+		props.onClose();
+	};
 
 	return (
 		<Dialog
@@ -147,7 +162,7 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 												search={link().search}
 												class="atlas-cite"
 												data-cite={c.id}
-												onClick={() => props.onClose()}
+												onClick={() => onCiteClick(c)}
 											>
 												<span class="atlas-cite-num">{c.num}</span>
 												<div class="atlas-cite-body">
