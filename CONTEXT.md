@@ -68,6 +68,35 @@ The primary handling states are:
 
 A third-party email account that the user authorizes the product to access. The product is a sync-only email client: it organizes mail from connected accounts rather than issuing or hosting new email addresses. The user can send replies and compose new emails through a connected account, so outgoing mail appears to come from the user's existing email address.
 
+### Primary Connected Account
+
+The connected account Atlas uses by default when a mailbox-specific choice is required and the user has not explicitly chosen a different account.
+
+### User
+
+The person who signs in to Atlas and owns one or more connected accounts.
+
+### Onboarded
+
+A User is Onboarded when they are signed in and have at least one Connected Account. Only Onboarded users can access the main app views; everyone else lands on the onboarding flow.
+
 ### Unified View
 
 A cross-account view that combines threads from all connected accounts into one experience. The product is unified by default, so the user sees one Inbox, one Feed, one Paper Trail, and one Screener across connected accounts. Threads remain associated with their connected account and can be filtered by account.
+
+## Relationships
+
+- A **User** owns one or more **Connected Accounts** over time.
+- A **Connected Account** belongs to exactly one **User** at a time.
+- A **User** may designate exactly one **Primary Connected Account** at a time.
+- A **Primary Connected Account** must belong to the same **User**.
+- A **User** is **Onboarded** when signed in with at least one **Connected Account**; only **Onboarded** users can access the main app views.
+
+## Example dialogue
+
+> **Dev:** "When a signed-in **User** opens compose, which address do we send from by default?"
+> **Domain expert:** "Use the **Primary Connected Account** unless the user explicitly chooses a different **Connected Account** for that message."
+
+## Flagged Ambiguities
+
+- **Account** is overloaded — use **User** for the Atlas identity and **Connected Account** for an authorized mailbox.
