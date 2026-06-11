@@ -18,7 +18,7 @@ Tasks 1–12 shipped the full Atlas web recreation (onboarding, inbox, screener,
 feed, paper trail, tasks, settings, compose overlay, assistant overlay, and the
 cross-route responsive pass). This task is the closing sweep: run the required
 engineering gates, drive a full browser smoke over every surface, verify the
-hard constraints (no React/backend in `apps/web`, `/` and `/dev/*` intact, the
+hard constraints (no React/backend in `apps/web`, `/dev/*` intact, the
 SSR-proof `?d=`/`?compose=`/`?assistant=`/`?ask=` plumbing intact), and hand the
 branch off as a PR.
 
@@ -33,13 +33,13 @@ the toolchain output (no perpetual post-build drift).
 
 ### Post-Task-13 corrections (commits after `04be59b`)
 
-Two follow-up commits changed the shipped route structure and hydration state
+Three follow-up commits changed the shipped route structure and hydration state
 after the original manifest was written. This manifest reflects the final state:
 
 | Commit | Change |
 |---|---|
 | `0419138` | Restored client hydration (`hydrateStart` + `hydrate()` in `src/client.tsx`, `<HydrationScript />` in `__root.tsx`). The `template2 is not a function` error is resolved; SPA navigation and event handlers are live. |
-| `419fdde` | Removed the `/atlas` route segment. All Atlas routes are now root-based: `/`, `/inbox`, `/screener`, `/feed`, `/paper-trail`, `/tasks`, `/settings`, `/onboarding`. The `/atlas/**` path structure no longer exists. |
+| `419fdde` | Removed the `/atlas` route segment. All Atlas routes are now root-based: `/`, `/inbox`, `/screener`, `/feed`, `/paper-trail`, `/tasks`, `/settings`, `/onboarding`. The `/atlas/**` path structure no longer exists. `/` changed from the old placeholder to the Atlas onboarding entry. |
 | `9eac0e8` | Onboarding step is now local client state (a signal). The `?step=N` query param was removed; entering `/` or `/onboarding` always starts at step 0. |
 
 ---
@@ -83,11 +83,18 @@ type-correctness.
 
 ---
 
-## Browser smoke (curl / Chromium via CDP)
+## Browser smoke
 
-Dev server: `http://localhost:3001` (`vite dev --port 3001`). Mobile/tablet use
-Chromium device emulation (`set device "iPhone 14"` / `"iPad"`); desktop is the
-default viewport.
+**Original Task-13 smoke (2026-06-08):** Chromium via CDP, dev server
+`http://localhost:3001`. Mobile/tablet used Chromium device emulation
+(`set device "iPhone 14"` / `"iPad"`). All screenshots in this directory were
+captured during that run against the `/atlas/**` route structure.
+
+**Re-verification smoke (2026-06-10):** `curl` against dev server
+`http://localhost:3001` only — no browser session was available. Route
+reachability (HTTP 200) and SSR HTML content were confirmed for every route.
+No new screenshots were captured; all screenshots in this directory remain from
+the original Task-13 run (see per-section notes below).
 
 Client hydration is **healthy**: `src/client.tsx` calls `hydrateStart()` then
 `hydrate(() => <StartClient router={router} />, document)`, and `__root.tsx`
@@ -104,7 +111,12 @@ render client-side after hydration.
 | Replay | `/onboarding` | same first-run flow, always starts at step 0 |
 
 Step navigation (Back/Next) is driven by a local client signal — no `?step=N`
-query param. Screenshots: `01-onboarding.png`, `01b-onboarding-step1.png`.
+query param.
+
+> **Screenshots (historical):** `01-onboarding.png`, `01b-onboarding-step1.png`
+> were captured during the original Task-13 run when the route was
+> `/atlas/onboarding?step=0`. The rendered onboarding UI is identical; only the
+> URL changed. No replacement screenshots were captured in the re-verification.
 
 ### All nav destinations
 
@@ -118,12 +130,16 @@ query param. Screenshots: `01-onboarding.png`, `01b-onboarding-step1.png`.
 | Tasks | `/tasks` | **TASKS & DATES** AI-extracted, Sync 5 tasks / 5 dates |
 | Settings | `/settings` | **CONNECTED ACCOUNTS**, Google Workspace / Microsoft 365 rows |
 
-Screenshots: `03-inbox.png`, `04-screener.png`, `05-feed.png`,
-`06-paper-trail.png`, `07-tasks.png`, `08-settings.png`.
-
-> Note: `02-atlas-index.png` in the screenshot directory was captured when the
-> `/atlas` route still existed. The current entry point is `/` (onboarding);
-> `01-onboarding.png` is the canonical entry-point screenshot.
+> **Screenshots (historical):** `03-inbox.png`, `04-screener.png`, `05-feed.png`,
+> `06-paper-trail.png`, `07-tasks.png`, `08-settings.png` were captured during
+> the original Task-13 run at `/atlas/**` URLs. The rendered content is
+> identical; only the URL prefix changed. No replacement screenshots were
+> captured in the re-verification.
+>
+> `02-atlas-index.png` is **fully stale** — it was captured when `/atlas`
+> redirected to `/atlas/onboarding`. The current `/` renders the Atlas onboarding
+> directly. `01-onboarding.png` is the closest canonical entry-point screenshot
+> (also historical, same caveat above).
 
 ### Screener accept / reject
 
@@ -137,8 +153,10 @@ Each Accept / Reject is an SSR-proof `<Link>` appending an `id:category` token t
 | Decide all | `?d=s1:inbox,s2:feed,s3:paper,s4:x` | **"Screener clear"** empty state; **Inbox 4 / Feed 3 / Paper Trail 8** (accepts flow through) |
 | Accepted → Inbox | `/inbox?d=s1:inbox,s4:inbox` | **Inbox 5** (base 3 + 2 accepts), **Screener 2** |
 
-Screenshots: `04a-screener-initial.png`, `04b-screener-after-accept.png`,
-`04c-screener-cleared.png`.
+> **Screenshots (historical):** `04a-screener-initial.png`,
+> `04b-screener-after-accept.png`, `04c-screener-cleared.png` were captured
+> during the original Task-13 run at `/atlas/screener`. Content is identical;
+> URL prefix changed.
 
 ### Compose overlay
 
@@ -151,7 +169,11 @@ operates as a live client component.
 | New | `/inbox?compose=new` | overlay: **NEW MESSAGE · FROM · TO · SUBJECT · Attach · Suggest reply (off) · Discard · Send** (blank — intentional task-spec divergence from the prototype's prefilled behavior) |
 | Reply | `/inbox?compose=reply` | **Reply** prefilled (**Re:**, **REPLY**, Send) from selected sender |
 
-Screenshots: `09-compose-new.png`, `09b-compose-reply.png`.
+> **Screenshots (historical):** `09-compose-new.png`, `09b-compose-reply.png`
+> were captured during the original Task-13 run at `/atlas/inbox?compose=…`.
+> The overlay UI is identical; URL prefix changed. The re-verification confirmed
+> the `?compose=` param still seeds the initial open state; overlay content
+> renders client-side after hydration.
 
 ### Assistant overlay (Ask Atlas)
 
@@ -163,7 +185,9 @@ The assistant overlay is opened client-side (hydration is healthy). The
 | Intro | `/inbox?assistant=1` | **ASK ATLAS · SEMANTIC SEARCH** intro + example prompt chips ("TRY …") |
 | Seeded ask | `/inbox?ask=What does Priya need from me?` | query echoed + AI answer (numbered points) + **citation** "1 Priya Ramanathan — Re: Q3 hiring plan" linking to `?sel=i1` |
 
-Screenshots: `10-assistant-intro.png`, `10b-assistant-ask.png`.
+> **Screenshots (historical):** `10-assistant-intro.png`, `10b-assistant-ask.png`
+> were captured during the original Task-13 run at `/atlas/inbox?assistant=…`.
+> The overlay UI is identical; URL prefix changed.
 
 ### Keyboard shortcuts
 
@@ -191,22 +215,32 @@ mobile, etc.). The single genuine responsive regression (tablet thread-toolbar
 clip) was already found + fixed in Task 12 (`16100df`); desktop geometry is
 unchanged.
 
-### `/` and `/dev/*` (must remain unchanged)
+> **Screenshots (historical):** All five responsive screenshots were captured
+> during the original Task-13 run at `/atlas/**` URLs. The responsive layout is
+> identical; only the URL prefix changed. No replacement screenshots were
+> captured in the re-verification.
 
-| Route | Asserted | Screenshot |
+### `/` and `/dev/*`
+
+`/dev/design-system` and `/dev/tanstack_libraries` are **unchanged** — no
+recreation task touched them and they render the same content as before.
+
+`/` **changed intentionally**: it previously served the "HELLO FROM TANSTACK
+START + SOLIDJS" placeholder. After commit `419fdde` removed the `/atlas` route
+segment and re-rooted the app, `/` now serves the Atlas onboarding entry. This
+is the accepted final state (user explicitly accepted this re-rooting).
+
+| Route | Current content | Screenshot |
 |---|---|---|
-| `/` | Atlas onboarding entry — "Welcome to Atlas." | `01-onboarding.png` |
-| `/dev/design-system` | "ATLAS DESIGN SYSTEM" primitive gallery | `13-dev-design.png` |
-| `/dev/tanstack_libraries` | "TANSTACK LIBRARIES DEMO" — TanStack Query "Status: success" | `14-dev-tanstack.png` |
+| `/` | Atlas onboarding — "Welcome to Atlas." (**changed** from placeholder; re-rooted) | `01-onboarding.png` *(historical — captured at `/atlas/onboarding`)* |
+| `/dev/design-system` | "ATLAS DESIGN SYSTEM" primitive gallery (unchanged) | `13-dev-design.png` *(historical)* |
+| `/dev/tanstack_libraries` | "TANSTACK LIBRARIES DEMO" — TanStack Query "Status: success" (unchanged) | `14-dev-tanstack.png` *(historical)* |
 
-All three render correctly. `/` now hosts the Atlas onboarding entry (not the
-old "HELLO FROM TANSTACK START + SOLIDJS" placeholder — that was replaced when
-the `/atlas` route segment was removed and the app was re-rooted at `/`).
+All three return HTTP 200 (confirmed by `curl` re-verification, 2026-06-10).
 
-> Note: `12-root.png` in the screenshot directory shows the old "HELLO FROM
-> TANSTACK START + SOLIDJS" placeholder that existed before the `/atlas` removal.
-> The current `/` renders the Atlas onboarding; `01-onboarding.png` is the
-> canonical screenshot.
+> `12-root.png` is **fully stale** — it shows the old "HELLO FROM TANSTACK START
+> + SOLIDJS" placeholder that `/` served before the re-rooting. It does not
+> represent the current state of `/`.
 
 ---
 
@@ -220,7 +254,9 @@ the `/atlas` route segment was removed and the app was re-rooted at `/`).
       + proof-URL destinations), and responsive resize.
 - [x] grep finds **no** React imports/dependencies in `apps/web` (only a
       prototype-origin code comment) and no backend leakage.
-- [x] `/` and `/dev/*` routes still work and are unchanged.
+- [x] `/dev/*` routes are unchanged and still work (HTTP 200, content verified).
+- [x] `/` changed intentionally (re-rooted to Atlas onboarding per accepted plan
+      deviation); it works correctly at its new content.
 - [x] `git status --short` is clean after focused commits (see below).
 - [x] Remote branch pushed and PR opened (recorded below).
 
