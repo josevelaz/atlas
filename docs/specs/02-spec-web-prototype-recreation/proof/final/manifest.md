@@ -4,7 +4,8 @@
 web prototype recreation, update the proof index, confirm generated-route-tree
 health, confirm no React/backend leakage, ensure `/` and `/dev/*` still work,
 land the focused final commits, push the branch, and open the PR.
-**Date:** 2026-06-08
+**Date:** 2026-06-08 (manifest updated 2026-06-10 to reflect post-Task-13 route
+and hydration corrections)
 **Surface touched:** final-proof artifacts (this dir) + the build-regenerated
 `apps/web/src/routeTree.gen.ts`. No `apps/web/src` component/route logic changed
 in this task.
@@ -30,18 +31,16 @@ is unaffected; `tsc --noEmit` and `vite build` both pass against the regenerated
 file. Committing the regenerated output makes the tracked generated file match
 the toolchain output (no perpetual post-build drift).
 
-> **Known, pre-existing, out-of-scope limitation (documented since Tasks 4–11):**
-> client hydration is broken app-wide by a TanStack Start / Solid error
-> (`template2 is not a function`). Live clicks / keyboard shortcuts therefore do
-> **not** fire in the browser. Every interaction in this recreation is proven via
-> **server-rendered proof URLs** (search-param-seeded states) plus real `<Link>`
-> navigation, which is why the smoke below drives URLs and asserts on rendered
-> DOM rather than on post-hydration click handlers. The keyboard-shortcut
-> *implementation* is present and verified in source
-> (`resolveShortcut` in `src/lib/atlas/app_state.ts`, wired in
-> `src/components/atlas/atlas_app.tsx`); its live firing is gated by the same
-> hydration limitation and its destinations were exercised via the equivalent
-> proof URLs.
+### Post-Task-13 corrections (commits after `04be59b`)
+
+Two follow-up commits changed the shipped route structure and hydration state
+after the original manifest was written. This manifest reflects the final state:
+
+| Commit | Change |
+|---|---|
+| `0419138` | Restored client hydration (`hydrateStart` + `hydrate()` in `src/client.tsx`, `<HydrationScript />` in `__root.tsx`). The `template2 is not a function` error is resolved; SPA navigation and event handlers are live. |
+| `419fdde` | Removed the `/atlas` route segment. All Atlas routes are now root-based: `/`, `/inbox`, `/screener`, `/feed`, `/paper-trail`, `/tasks`, `/settings`, `/onboarding`. The `/atlas/**` path structure no longer exists. |
+| `9eac0e8` | Onboarding step is now local client state (a signal). The `?step=N` query param was removed; entering `/` or `/onboarding` always starts at step 0. |
 
 ---
 
@@ -50,7 +49,7 @@ the toolchain output (no perpetual post-build drift).
 | Check | Command | Result |
 |---|---|---|
 | Typecheck | `bun run --cwd apps/web typecheck` | ✅ pass — `tsc --noEmit`, exit 0 |
-| Lint | `bun run --cwd apps/web lint` | ✅ clean — `biome lint ./src`, 65 files, no fixes |
+| Lint | `bun run --cwd apps/web lint` | ✅ clean — `biome lint ./src`, 64 files, no fixes |
 | Build | `bun run --cwd apps/web build` | ✅ pass — client + SSR chunks emit, exit 0, built in ~2s |
 
 Typecheck was re-run **after** the build regenerated `routeTree.gen.ts` and still
@@ -84,36 +83,47 @@ type-correctness.
 
 ---
 
-## Browser smoke (agent-browser / Chromium via CDP)
+## Browser smoke (curl / Chromium via CDP)
 
 Dev server: `http://localhost:3001` (`vite dev --port 3001`). Mobile/tablet use
 Chromium device emulation (`set device "iPhone 14"` / `"iPad"`); desktop is the
-default viewport. Each interaction is driven via SSR-proof URLs (hydration is
-broken app-wide — see limitation note above).
+default viewport.
+
+Client hydration is **healthy**: `src/client.tsx` calls `hydrateStart()` then
+`hydrate(() => <StartClient router={router} />, document)`, and `__root.tsx`
+emits `<HydrationScript />`. SPA navigation and event handlers fire normally.
+SSR-proof URL variants (`?d=`, `?compose=`, `?assistant=`, `?ask=`) remain
+available for seeding server-rendered states; overlays (compose, assistant) now
+render client-side after hydration.
 
 ### Onboarding
 
 | Step | URL | Asserted |
 |---|---|---|
-| Entry | `/atlas/onboarding` → `?step=0` | heading **"Welcome to Atlas."**, Skip / Connect with OAuth / Back(disabled) / Next |
-| Advance | `Next` link → `?step=1` | heading changes to **"Strangers go to the Screener."** (SSR-proof step nav works) |
+| Entry | `/` | heading **"Welcome to Atlas."**, Skip / Connect with OAuth / Back(disabled) / Next; step counter "1/5" |
+| Replay | `/onboarding` | same first-run flow, always starts at step 0 |
 
-Screenshots: `01-onboarding.png`, `01b-onboarding-step1.png`.
+Step navigation (Back/Next) is driven by a local client signal — no `?step=N`
+query param. Screenshots: `01-onboarding.png`, `01b-onboarding-step1.png`.
 
 ### All nav destinations
 
 | Destination | URL | Distinct content asserted |
 |---|---|---|
-| Atlas index | `/atlas` → `?step=0` | redirects to onboarding entry |
-| Inbox | `/atlas/inbox` | **INBOX 9** list, P1 threads (Priya / Marcus …), sidebar counts |
-| Screener | `/atlas/screener` | **THE SCREENER**, first-time senders (Maya Chen …) |
-| Feed | `/atlas/feed` | **THE FEED 7** (Stratechery / Vercel …) |
-| Paper Trail | `/atlas/paper-trail` | **PAPER TRAIL 7** (Stripe / Delta / Amazon receipts) |
-| Tasks | `/atlas/tasks` | **TASKS & DATES** AI-extracted, Sync 5 tasks / 5 dates |
-| Settings | `/atlas/settings` | **CONNECTED ACCOUNTS**, Google Workspace / Microsoft 365 rows |
+| Atlas entry | `/` | onboarding step 0 — "Welcome to Atlas." |
+| Inbox | `/inbox` | **INBOX 9** list, P1 threads (Priya / Marcus …), sidebar counts |
+| Screener | `/screener` | **THE SCREENER**, first-time senders (Maya Chen …) |
+| Feed | `/feed` | **THE FEED 7** (Stratechery / Vercel …) |
+| Paper Trail | `/paper-trail` | **PAPER TRAIL 7** (Stripe / Delta / Amazon receipts) |
+| Tasks | `/tasks` | **TASKS & DATES** AI-extracted, Sync 5 tasks / 5 dates |
+| Settings | `/settings` | **CONNECTED ACCOUNTS**, Google Workspace / Microsoft 365 rows |
 
-Screenshots: `02-atlas-index.png`, `03-inbox.png`, `04-screener.png`,
-`05-feed.png`, `06-paper-trail.png`, `07-tasks.png`, `08-settings.png`.
+Screenshots: `03-inbox.png`, `04-screener.png`, `05-feed.png`,
+`06-paper-trail.png`, `07-tasks.png`, `08-settings.png`.
+
+> Note: `02-atlas-index.png` in the screenshot directory was captured when the
+> `/atlas` route still existed. The current entry point is `/` (onboarding);
+> `01-onboarding.png` is the canonical entry-point screenshot.
 
 ### Screener accept / reject
 
@@ -122,29 +132,36 @@ Each Accept / Reject is an SSR-proof `<Link>` appending an `id:category` token t
 
 | Action | URL | Asserted |
 |---|---|---|
-| Initial | `/atlas/screener` | Accept-into-Inbox / Feed / Paper + Reject per sender (`?d=s1:inbox`, `?d=s1:x`, …) |
+| Initial | `/screener` | Accept-into-Inbox / Feed / Paper + Reject per sender (`?d=s1:inbox`, `?d=s1:x`, …) |
 | Accept s1→Inbox | `?d=s1:inbox` | **Screener 4→3**, **Inbox 3→4** (counts update) |
 | Decide all | `?d=s1:inbox,s2:feed,s3:paper,s4:x` | **"Screener clear"** empty state; **Inbox 4 / Feed 3 / Paper Trail 8** (accepts flow through) |
-| Accepted → Inbox | `/atlas/inbox?d=s1:inbox,s4:inbox` | **Inbox 5** (base 3 + 2 accepts), **Screener 2** |
+| Accepted → Inbox | `/inbox?d=s1:inbox,s4:inbox` | **Inbox 5** (base 3 + 2 accepts), **Screener 2** |
 
 Screenshots: `04a-screener-initial.png`, `04b-screener-after-accept.png`,
 `04c-screener-cleared.png`.
 
 ### Compose overlay
 
+The compose overlay is opened client-side (hydration is healthy). The `?compose=`
+search param seeds the initial open state on first render; the overlay then
+operates as a live client component.
+
 | Variant | URL | Asserted |
 |---|---|---|
-| New | `/atlas/inbox?compose=new` | overlay: **NEW MESSAGE · FROM · TO · SUBJECT · Attach · Suggest reply (off) · Discard · Send** (blank — intentional task-spec divergence from the prototype's prefilled behavior) |
-| Reply | `/atlas/inbox?compose=reply` | **Reply** prefilled (**Re:**, **REPLY**, Send) from selected sender |
+| New | `/inbox?compose=new` | overlay: **NEW MESSAGE · FROM · TO · SUBJECT · Attach · Suggest reply (off) · Discard · Send** (blank — intentional task-spec divergence from the prototype's prefilled behavior) |
+| Reply | `/inbox?compose=reply` | **Reply** prefilled (**Re:**, **REPLY**, Send) from selected sender |
 
 Screenshots: `09-compose-new.png`, `09b-compose-reply.png`.
 
 ### Assistant overlay (Ask Atlas)
 
+The assistant overlay is opened client-side (hydration is healthy). The
+`?assistant=1` and `?ask=<query>` params seed the initial open state and query.
+
 | Variant | URL | Asserted |
 |---|---|---|
-| Intro | `/atlas/inbox?assistant=1` | **ASK ATLAS · SEMANTIC SEARCH** intro + example prompt chips ("TRY …") |
-| Seeded ask | `/atlas/inbox?ask=What does Priya need from me?` | query echoed + AI answer (numbered points) + **citation** "1 Priya Ramanathan — Re: Q3 hiring plan" linking to `?sel=i1` |
+| Intro | `/inbox?assistant=1` | **ASK ATLAS · SEMANTIC SEARCH** intro + example prompt chips ("TRY …") |
+| Seeded ask | `/inbox?ask=What does Priya need from me?` | query echoed + AI answer (numbered points) + **citation** "1 Priya Ramanathan — Re: Q3 hiring plan" linking to `?sel=i1` |
 
 Screenshots: `10-assistant-intro.png`, `10b-assistant-ask.png`.
 
@@ -153,10 +170,11 @@ Screenshots: `10-assistant-intro.png`, `10b-assistant-ask.png`.
 Implementation verified in source (`resolveShortcut`,
 `src/lib/atlas/app_state.ts`): ⌘K / Ctrl-K → assistant, `1`–`4` → views,
 `c` → compose, `/` → assistant, `Esc` → dismiss overlays. UI affordances render
-(top-bar `⌘K` and `Compose C` kbd chips). Live firing is blocked by the app-wide
-hydration error; each shortcut's destination was exercised via the equivalent
-proof URL (assistant via `?assistant=1`, compose via `?compose=new`, views via
-the nav `<Link>`s).
+(top-bar `⌘K` and `Compose C` kbd chips). With hydration restored, the
+document-level `keydown` listener in `AtlasApp` is live and shortcuts fire
+normally. Each shortcut's destination was also exercised via the equivalent proof
+URL (assistant via `?assistant=1`, compose via `?compose=new`, views via the nav
+`<Link>`s).
 
 ### Responsive resize
 
@@ -177,18 +195,25 @@ unchanged.
 
 | Route | Asserted | Screenshot |
 |---|---|---|
-| `/` | "HELLO FROM TANSTACK START + SOLIDJS" | `12-root.png` |
+| `/` | Atlas onboarding entry — "Welcome to Atlas." | `01-onboarding.png` |
 | `/dev/design-system` | "ATLAS DESIGN SYSTEM" primitive gallery | `13-dev-design.png` |
 | `/dev/tanstack_libraries` | "TANSTACK LIBRARIES DEMO" — TanStack Query "Status: success" | `14-dev-tanstack.png` |
 
-All three render correctly and are unchanged by the recreation work.
+All three render correctly. `/` now hosts the Atlas onboarding entry (not the
+old "HELLO FROM TANSTACK START + SOLIDJS" placeholder — that was replaced when
+the `/atlas` route segment was removed and the app was re-rooted at `/`).
+
+> Note: `12-root.png` in the screenshot directory shows the old "HELLO FROM
+> TANSTACK START + SOLIDJS" placeholder that existed before the `/atlas` removal.
+> The current `/` renders the Atlas onboarding; `01-onboarding.png` is the
+> canonical screenshot.
 
 ---
 
 ## Acceptance criteria
 
 - [x] `bun run --cwd apps/web typecheck` passes (exit 0).
-- [x] `bun run --cwd apps/web lint` passes (65 files, no fixes).
+- [x] `bun run --cwd apps/web lint` passes (64 files, no fixes).
 - [x] `bun run --cwd apps/web build` passes (exit 0; client + SSR chunks).
 - [x] Final browser smoke covers onboarding, all nav destinations, screener
       accept/reject, compose, assistant, keyboard shortcuts (source + affordances
