@@ -1,13 +1,18 @@
 import type { Component, JSX } from "solid-js";
 import {
-	Show,
 	createEffect,
 	mergeProps,
 	onCleanup,
+	Show,
 	splitProps,
 } from "solid-js";
 import { Portal } from "solid-js/web";
-
+import {
+	overlayBodyClasses,
+	overlayCardClasses,
+	overlayClasses,
+	overlayHeadClasses,
+} from "../../lib/atlas/component_classes";
 import { cn } from "../../lib/utils";
 
 export type DialogProps = {
@@ -55,7 +60,7 @@ const Dialog: Component<DialogProps> = (raw_props) => {
 		// biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss; Escape handled at document level
 		// biome-ignore lint/a11y/useKeyWithClickEvents: Escape handled at document level
 		<div
-			class="atlas-overlay"
+			class={cn("atlas-overlay", overlayClasses)}
 			onClick={(e) => {
 				if (local.closeOnBackdrop && e.target === e.currentTarget) {
 					local.onClose();
@@ -63,7 +68,9 @@ const Dialog: Component<DialogProps> = (raw_props) => {
 			}}
 		>
 			<div
-				class={cn("atlas-overlay-card", local.class)}
+				// `atlas-overlay-card` is a selector hook for the compose / assistant
+				// overlay variants (`.atlas-compose-card`, `.atlas-assistant-card`).
+				class={cn("atlas-overlay-card", overlayCardClasses, local.class)}
 				role="dialog"
 				aria-modal="true"
 				{...others}
@@ -90,7 +97,10 @@ export type DialogHeaderProps = {
 const DialogHeader: Component<DialogHeaderProps> = (raw_props) => {
 	const [local, others] = splitProps(raw_props, ["class", "children"]);
 	return (
-		<div class={cn("atlas-overlay-head", local.class)} {...others}>
+		<div
+			class={cn("atlas-overlay-head", overlayHeadClasses, local.class)}
+			{...others}
+		>
 			{local.children}
 		</div>
 	);
@@ -104,10 +114,13 @@ export type DialogBodyProps = {
 const DialogBody: Component<DialogBodyProps> = (raw_props) => {
 	const [local, others] = splitProps(raw_props, ["class", "children"]);
 	return (
-		<div class={cn("atlas-overlay-body", local.class)} {...others}>
+		<div
+			class={cn("atlas-overlay-body", overlayBodyClasses, local.class)}
+			{...others}
+		>
 			{local.children}
 		</div>
 	);
 };
 
-export { Dialog, DialogHeader, DialogBody };
+export { Dialog, DialogBody, DialogHeader };

@@ -11,7 +11,7 @@
 import type { Component } from "solid-js";
 import { For } from "solid-js";
 import { SAMPLE } from "../../lib/atlas/sample_data";
-import { Button } from "../ui/index";
+import { Badge, Button } from "../ui/index";
 import { AtlasIcon } from "./atlas_icon";
 import { DateCard } from "./date_card";
 import { TaskCard } from "./task_card";
@@ -44,10 +44,10 @@ const TasksScreen: Component = () => {
 			<div class="atlas-tasks-grid">
 				<div class="atlas-tasks-col">
 					<h3 class="atlas-tasks-col-head">
-						<span class="atlas-badge is-paper is-square">
+						<Badge variant="paper" square>
 							<AtlasIcon name="check" size={12} stroke={3} />
 							TASKS
-						</span>
+						</Badge>
 						<span class="atlas-tasks-col-count">{tasks.length}</span>
 					</h3>
 					<For each={tasks}>{(task) => <TaskCard task={task} />}</For>
@@ -55,10 +55,10 @@ const TasksScreen: Component = () => {
 
 				<div class="atlas-tasks-col">
 					<h3 class="atlas-tasks-col-head">
-						<span class="atlas-badge is-feed is-square">
+						<Badge variant="feed" square>
 							<AtlasIcon name="calendar" size={12} />
 							DATES
-						</span>
+						</Badge>
 						<span class="atlas-tasks-col-count">{dates.length}</span>
 					</h3>
 					<For each={dates}>{(entry) => <DateCard entry={entry} />}</For>

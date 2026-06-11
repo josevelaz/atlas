@@ -15,7 +15,7 @@
 
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
-import { For, Show, createSignal } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import { viewForMailId } from "../../lib/atlas/app_state";
 import {
 	ASSISTANT_EXAMPLES,
@@ -23,11 +23,13 @@ import {
 	answerQuery,
 } from "../../lib/atlas/assistant_responses";
 import { useAtlasActions } from "../../lib/atlas/atlas_state";
+import { overlayHeadClasses } from "../../lib/atlas/component_classes";
 import { atlasCiteLinkFor } from "../../lib/atlas/nav_links";
 import type {
 	AssistantCitation,
 	AssistantMessage,
 } from "../../lib/atlas/types";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Dialog } from "../ui/dialog";
 import { Input } from "../ui/input";
@@ -93,7 +95,12 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 			class="atlas-assistant-card"
 			aria-label="Ask Atlas"
 		>
-			<div class="atlas-overlay-head atlas-assistant-head">
+			<div
+				class={cn(
+					"atlas-overlay-head atlas-assistant-head",
+					overlayHeadClasses,
+				)}
+			>
 				<div class="atlas-row atlas-gap-8">
 					<AtlasIcon name="sparkle" size={18} color="#fff" stroke={2.5} />
 					<h3 class="atlas-assistant-title">Ask Atlas</h3>

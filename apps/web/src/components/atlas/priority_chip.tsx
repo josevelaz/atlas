@@ -8,6 +8,7 @@
 
 import type { Component } from "solid-js";
 import { mergeProps, Show } from "solid-js";
+import { priorityClasses } from "../../lib/atlas/component_classes";
 import type { Priority } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 
@@ -17,10 +18,10 @@ const PRIORITY_LABEL: Record<Priority, string> = {
 	3: "P3",
 };
 
-const PRIORITY_CLASS: Record<Priority, string> = {
-	1: "is-p1",
-	2: "is-p2",
-	3: "is-p3",
+const PRIORITY_KEY: Record<Priority, "P1" | "P2" | "P3"> = {
+	1: "P1",
+	2: "P2",
+	3: "P3",
 };
 
 export interface PriorityChipProps {
@@ -35,7 +36,13 @@ const PriorityChip: Component<PriorityChipProps> = (raw_props) => {
 
 	return (
 		<span
-			class={cn("atlas-priority", PRIORITY_CLASS[props.priority], props.class)}
+			// `atlas-priority` is a selector hook for the app-shell retro pass
+			// (`.atlas-app .atlas-priority` rotation/VT323 sizing).
+			class={cn(
+				"atlas-priority",
+				priorityClasses({ priority: PRIORITY_KEY[props.priority] }),
+				props.class,
+			)}
 		>
 			{PRIORITY_LABEL[props.priority]}
 			<Show when={props.withLabel}> priority</Show>

@@ -1,23 +1,10 @@
 import type { Component, JSX } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
+import {
+	badgeClasses,
+	priorityClasses,
+} from "../../lib/atlas/component_classes";
 import { cn } from "../../lib/utils";
-
-const variant_classes: Record<string, string> = {
-	default: "",
-	main: "is-main",
-	feed: "is-feed",
-	paper: "is-paper",
-	ai: "is-ai",
-	danger: "is-danger",
-	inbox: "is-inbox",
-	muted: "is-muted",
-};
-
-const priority_classes: Record<string, string> = {
-	P1: "is-p1",
-	P2: "is-p2",
-	P3: "is-p3",
-};
 
 export type BadgeProps = {
 	variant?:
@@ -48,9 +35,11 @@ const Badge: Component<BadgeProps> = (raw_props) => {
 	if (local.priority) {
 		return (
 			<span
+				// `atlas-priority` is a selector hook for the app-shell retro pass
+				// (`.atlas-app .atlas-priority` rotation/VT323 sizing).
 				class={cn(
 					"atlas-priority",
-					priority_classes[local.priority],
+					priorityClasses({ priority: local.priority }),
 					local.class,
 				)}
 				{...others}
@@ -62,10 +51,14 @@ const Badge: Component<BadgeProps> = (raw_props) => {
 
 	return (
 		<span
+			// `atlas-badge` is a selector hook for the app-shell retro pass
+			// (e.g. `.atlas-app .atlas-tasks-col-head .atlas-badge` rotation).
 			class={cn(
 				"atlas-badge",
-				variant_classes[local.variant],
-				local.square && "is-square",
+				badgeClasses({
+					variant: local.variant,
+					square: local.square ?? false,
+				}),
 				local.class,
 			)}
 			{...others}

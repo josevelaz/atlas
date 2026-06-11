@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { Archive, Bell, Mail, Reply, Search, Star, Zap } from "lucide-solid";
-import { For, createSignal } from "solid-js";
+import { createSignal, For } from "solid-js";
 import {
 	Avatar,
 	Badge,
@@ -282,9 +282,8 @@ function DesignSystemPage() {
 			<section>
 				<SectionHeading title="Dialog / Overlay" />
 				<p class="mb-3 text-[12px] text-muted">
-					Visit <span class="atlas-kbd">/dev/design-system?overlay=open</span>{" "}
-					to render the overlay on initial load (server-rendered, no client
-					interaction required).
+					Visit <Kbd>/dev/design-system?overlay=open</Kbd> to render the overlay
+					on initial load (server-rendered, no client interaction required).
 				</p>
 				<Button variant="primary" onClick={() => set_dialog_open(true)}>
 					Open dialog
@@ -355,15 +354,14 @@ function DesignSystemPage() {
 			</section>
 
 			{/* ── Reduced Motion ───────────────────────────────────── */}
-			<section class="atlas-card p-4">
+			<Card class="p-4">
 				<p class="text-[13px] text-foreground">♿ Reduced Motion</p>
 				<p class="mt-2 text-[12px] text-muted">
-					This page respects{" "}
-					<span class="atlas-kbd">prefers-reduced-motion</span>. All CSS
+					This page respects <Kbd>prefers-reduced-motion</Kbd>. All CSS
 					transitions collapse to 0.01 ms and solid-motionone durations drop to
 					0.
 				</p>
-			</section>
+			</Card>
 
 			<footer class="pb-8 text-[11px] text-muted">
 				Atlas Design System · Spec 02 · Task 02

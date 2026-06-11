@@ -14,9 +14,10 @@
 
 import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
-import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
+import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
 import { ONBOARDING_STEPS } from "../../lib/atlas/app_state";
+import { buttonClasses } from "../../lib/atlas/component_classes";
 import {
 	resetOnboardingDirection,
 	startOnboardingTransition,
@@ -65,7 +66,14 @@ const Onboarding: Component = () => {
 							Get started — {step() + 1}/{total}
 						</span>
 					</div>
-					<Link to="/inbox" class="atlas-btn is-ghost is-sm" data-action="skip">
+					<Link
+						to="/inbox"
+						class={cn(
+							"atlas-btn is-ghost is-sm",
+							buttonClasses({ variant: "ghost", size: "sm" }),
+						)}
+						data-action="skip"
+					>
 						Skip
 					</Link>
 				</div>
@@ -79,7 +87,10 @@ const Onboarding: Component = () => {
 				<div class="atlas-onboarding-foot">
 					<button
 						type="button"
-						class="atlas-btn is-sm"
+						class={cn(
+							"atlas-btn is-sm",
+							buttonClasses({ size: "sm", disabled: step() === 0 }),
+						)}
 						disabled={step() === 0}
 						aria-disabled={step() === 0}
 						data-action="back"
@@ -103,7 +114,10 @@ const Onboarding: Component = () => {
 						fallback={
 							<Link
 								to="/inbox"
-								class="atlas-btn is-primary is-sm"
+								class={cn(
+									"atlas-btn is-primary is-sm",
+									buttonClasses({ variant: "primary", size: "sm" }),
+								)}
 								data-action="open"
 							>
 								Open Atlas{" "}
@@ -113,7 +127,10 @@ const Onboarding: Component = () => {
 					>
 						<button
 							type="button"
-							class="atlas-btn is-primary is-sm"
+							class={cn(
+								"atlas-btn is-primary is-sm",
+								buttonClasses({ variant: "primary", size: "sm" }),
+							)}
 							data-action="next"
 							onClick={() => goToStep(step() + 1)}
 						>

@@ -1,5 +1,6 @@
 import type { Component, JSX } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
+import { cardClasses } from "../../lib/atlas/component_classes";
 import { cn } from "../../lib/utils";
 
 export type CardProps = {
@@ -15,7 +16,9 @@ const Card: Component<CardProps> = (raw_props) => {
 
 	return (
 		<div
-			class={cn("atlas-card", local.size === "lg" && "is-lg", local.class)}
+			// `atlas-card` is a selector hook for app-shell composition
+			// (e.g. `.atlas-card.atlas-settings-card`).
+			class={cn("atlas-card", cardClasses({ size: local.size }), local.class)}
 			{...others}
 		>
 			{local.children}

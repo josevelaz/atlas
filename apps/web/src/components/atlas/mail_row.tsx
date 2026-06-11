@@ -11,6 +11,7 @@
 
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
+import { avatarClasses } from "../../lib/atlas/component_classes";
 import type { MailItem, MailTag } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { PriorityChip } from "./priority_chip";
@@ -53,11 +54,9 @@ export const AtlasAvatar: Component<AtlasAvatarProps> = (props) => {
 	const size = () => props.size ?? "default";
 	return (
 		<div
-			class={cn(
-				"atlas-avatar",
-				size() === "sm" && "is-sm",
-				size() === "lg" && "is-lg",
-			)}
+			// `atlas-avatar` is a selector hook for the app-shell retro pass
+			// (`.atlas-app .atlas-avatar` rotation).
+			class={cn("atlas-avatar", avatarClasses({ size: size() }))}
 			style={{ background: avatarColor(props.name) }}
 			role="img"
 			aria-label={props.name}

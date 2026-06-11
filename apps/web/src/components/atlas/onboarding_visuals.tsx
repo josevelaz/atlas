@@ -8,12 +8,14 @@
 
 import type { Component } from "solid-js";
 import { For, Match, Switch } from "solid-js";
+import { buttonClasses } from "../../lib/atlas/component_classes";
 import type {
 	OnboardingCategoryRow,
 	OnboardingExtractedRow,
 	OnboardingScreenerCard,
 	OnboardingVisual,
 } from "../../lib/atlas/types";
+import { cn } from "../../lib/utils";
 import { AtlasIcon } from "./atlas_icon";
 
 // ---------------------------------------------------------------------------
@@ -42,7 +44,10 @@ function ConnectCard(props: ConnectCardProps) {
 			</div>
 			<button
 				type="button"
-				class="atlas-btn is-primary is-sm atlas-onb-connect-btn"
+				class={cn(
+					"atlas-btn is-primary is-sm atlas-onb-connect-btn",
+					buttonClasses({ variant: "primary", size: "sm" }),
+				)}
 			>
 				Connect with OAuth
 			</button>
