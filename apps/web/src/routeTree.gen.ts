@@ -14,6 +14,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScreenerRouteImport } from './routes/screener'
 import { Route as PaperTrailRouteImport } from './routes/paper-trail'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as LogoutRouteImport } from './routes/logout'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as IndexRouteImport } from './routes/index'
@@ -43,6 +44,11 @@ const PaperTrailRoute = PaperTrailRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LogoutRoute = LogoutRouteImport.update({
+  id: '/logout',
+  path: '/logout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InboxRoute = InboxRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/inbox': typeof InboxRoute
+  '/logout': typeof LogoutRoute
   '/onboarding': typeof OnboardingRoute
   '/paper-trail': typeof PaperTrailRoute
   '/screener': typeof ScreenerRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/inbox': typeof InboxRoute
+  '/logout': typeof LogoutRoute
   '/onboarding': typeof OnboardingRoute
   '/paper-trail': typeof PaperTrailRoute
   '/screener': typeof ScreenerRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/feed': typeof FeedRoute
   '/inbox': typeof InboxRoute
+  '/logout': typeof LogoutRoute
   '/onboarding': typeof OnboardingRoute
   '/paper-trail': typeof PaperTrailRoute
   '/screener': typeof ScreenerRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/inbox'
+    | '/logout'
     | '/onboarding'
     | '/paper-trail'
     | '/screener'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/inbox'
+    | '/logout'
     | '/onboarding'
     | '/paper-trail'
     | '/screener'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/feed'
     | '/inbox'
+    | '/logout'
     | '/onboarding'
     | '/paper-trail'
     | '/screener'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FeedRoute: typeof FeedRoute
   InboxRoute: typeof InboxRoute
+  LogoutRoute: typeof LogoutRoute
   OnboardingRoute: typeof OnboardingRoute
   PaperTrailRoute: typeof PaperTrailRoute
   ScreenerRoute: typeof ScreenerRoute
@@ -197,6 +210,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/logout': {
+      id: '/logout'
+      path: '/logout'
+      fullPath: '/logout'
+      preLoaderRoute: typeof LogoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inbox': {
       id: '/inbox'
       path: '/inbox'
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FeedRoute: FeedRoute,
   InboxRoute: InboxRoute,
+  LogoutRoute: LogoutRoute,
   OnboardingRoute: OnboardingRoute,
   PaperTrailRoute: PaperTrailRoute,
   ScreenerRoute: ScreenerRoute,
@@ -250,12 +271,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/solid-start'
-declare module '@tanstack/solid-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
