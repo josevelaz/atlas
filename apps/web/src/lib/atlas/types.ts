@@ -281,12 +281,6 @@ export interface ComposeState {
 	replyAddr: string;
 }
 
-/** Visibility of the overlay surfaces. */
-export interface OverlayState {
-	composeOpen: boolean;
-	assistantOpen: boolean;
-}
-
 /**
  * The full Atlas interaction model. The Solid app owns these via the shared
  * Atlas state provider (`atlas_state.tsx`); this interface documents the

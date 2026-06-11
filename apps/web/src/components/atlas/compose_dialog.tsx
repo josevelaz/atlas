@@ -7,15 +7,11 @@
 // the thread Reply button opens it as a "Reply" prefilled with the selected
 // sender's address, a `Re:` subject, and a prototype reply draft.
 //
+// Open/close + reply target come from the shared Atlas store
+// (`atlas_state.tsx`): the top-bar Compose button opens a blank "New message",
+// the thread Reply button opens a "Reply" prefilled with the sender address.
 // Closes via the header close button, backdrop click, Discard, or Escape — all
 // routed through the shared `Dialog` primitive (`components/ui/dialog.tsx`).
-//
-// SSR-proof note: client hydration is disabled by a pre-existing TanStack
-// Start/Solid error, so the open state is driven by the route's `?compose=`
-// search param and the `Dialog` is rendered with `inline` so the overlay is
-// emitted in the SSR stream (Portal content is not). The field defaults are
-// rendered as `value` (not `defaultValue`) so the prefilled state is observable
-// server-side.
 
 import type { Component } from "solid-js";
 import { Button } from "../ui/button";
@@ -44,11 +40,6 @@ export interface ComposeDialogProps {
 	 * it renders as a blank "New message".
 	 */
 	replyTo?: string;
-	/**
-	 * Render the overlay inline (in the SSR stream) instead of through a Portal.
-	 * Required for SSR-proof variants while client hydration is unavailable.
-	 */
-	inline?: boolean;
 }
 
 const ComposeDialog: Component<ComposeDialogProps> = (props) => {
@@ -62,7 +53,6 @@ const ComposeDialog: Component<ComposeDialogProps> = (props) => {
 		<Dialog
 			open={props.open}
 			onClose={props.onClose}
-			inline={props.inline}
 			class="atlas-compose-card"
 			aria-label={title()}
 		>
@@ -123,6 +113,3 @@ const ComposeDialog: Component<ComposeDialogProps> = (props) => {
 };
 
 export { ComposeDialog };
-
-/** Exported so proof variants / tests can assert against the prefilled draft. */
-export { FROM_ADDRESS, REPLY_DRAFT, REPLY_SUBJECT };

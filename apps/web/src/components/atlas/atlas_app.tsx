@@ -4,20 +4,22 @@
 // active `view` is route-bound; the screener `decisions` are supplied by the
 // route from the shared Atlas store, so accepted-item counts and lists update
 // live as the Screener dispatches accept/reject actions.
+//
+// Compose and assistant overlay state live in the shared Atlas store
+// (`atlas_state.tsx`): the top-bar Compose button, the thread Reply button, the
+// "Search or ask" button, `/`, ⌘K, and Escape all dispatch store actions, so
+// the overlay state persists across SPA navigation with no `?compose=` /
+// `?ask=` / `?assistant=` tokens.
 
 import type { Component } from "solid-js";
-import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
+import { createEffect, createMemo, onCleanup } from "solid-js";
 import {
 	createInitialState,
 	currentThread,
 	resolveShortcut,
 } from "../../lib/atlas/app_state";
-import { useAtlasState } from "../../lib/atlas/atlas_state";
-import type {
-	ComposeMode,
-	Screen,
-	ScreenerDecisions,
-} from "../../lib/atlas/types";
+import { useAtlasActions, useAtlasState } from "../../lib/atlas/atlas_state";
+import type { Screen, ScreenerDecisions } from "../../lib/atlas/types";
 import { AppShell } from "./app_shell";
 import { AssistantDialog } from "./assistant_dialog";
 import { ComposeDialog } from "./compose_dialog";
@@ -32,26 +34,6 @@ export interface AtlasAppProps {
 	decisions?: ScreenerDecisions;
 	/** Resolve nav `<Link>` targets for the sidebar. */
 	linkFor?: SidebarNavProps["linkFor"];
-	/**
-	 * Optional initial compose overlay mode (proof variants). `"new"` opens a
-	 * blank compose, `"reply"` opens a reply prefilled from the selected thread's
-	 * sender. Defaults to `"closed"`. Because client hydration is unavailable,
-	 * the overlay renders inline (in the SSR stream) when this is not closed.
-	 */
-	initialCompose?: ComposeMode;
-	/**
-	 * Optional initial Ask Atlas query (proof variant). When set, the assistant
-	 * overlay opens server-side with the intro bubble, the seeded question, and
-	 * the canned AI reply (plus citations) rendered inline in the SSR stream so
-	 * the chat-response and citation states are observable without hydration.
-	 */
-	initialAsk?: string;
-	/**
-	 * Open the assistant overlay server-side in its initial state (intro bubble
-	 * + example prompt chips), without a seeded query (proof variant). Implied
-	 * when `initialAsk` is set.
-	 */
-	initialAssistantOpen?: boolean;
 }
 
 const AtlasApp: Component<AtlasAppProps> = (props) => {
@@ -60,50 +42,11 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 	const decisions = (): ScreenerDecisions =>
 		props.decisions ?? initial.screener;
 
-	// Compose overlay state. Seeded from the route's `?compose=` (proof variant)
-	// so the New-message / Reply states are server-rendered; the topbar Compose
-	// button and thread Reply button also drive it live once hydration works.
-	const [compose, setCompose] = createSignal<ComposeMode>(
-		props.initialCompose ?? "closed",
-	);
-	// The recipient captured when opening a reply from a thread (live path).
-	const [liveReplyAddr, setLiveReplyAddr] = createSignal<string>("");
-	const openNew = () => setCompose("new");
-	const openReply = (addr?: string) => {
-		setLiveReplyAddr(addr ?? "");
-		setCompose("reply");
-	};
-	const closeCompose = () => setCompose("closed");
+	const actions = useAtlasActions();
 
-	// Assistant (Ask Atlas) overlay state. Seeded from the route's `?ask=` (proof
-	// variant) so the chat-response state is server-rendered; the topbar "Search
-	// or ask" button, `/`, and ⌘K/Ctrl-K also drive it live once hydration works.
-	const [assistantOpen, setAssistantOpen] = createSignal<boolean>(
-		Boolean(props.initialAsk) || Boolean(props.initialAssistantOpen),
-	);
-	const openAssistant = () => setAssistantOpen(true);
-	const closeAssistant = () => setAssistantOpen(false);
-
-	// Keyboard shortcuts (live path). `/` and ⌘K/Ctrl-K open the assistant; `c`
-	// composes; Escape dismisses overlays. Bound at the document level via the
-	// shared `resolveShortcut` map; inert under broken hydration but ready.
-	createEffect(() => {
-		const handler = (e: KeyboardEvent) => {
-			const action = resolveShortcut(e);
-			if (!action) return;
-			if (action.kind === "assistant") {
-				e.preventDefault();
-				openAssistant();
-			} else if (action.kind === "compose") {
-				openNew();
-			} else if (action.kind === "dismiss-overlays") {
-				closeCompose();
-				closeAssistant();
-			}
-		};
-		document.addEventListener("keydown", handler);
-		onCleanup(() => document.removeEventListener("keydown", handler));
-	});
+	// Compose + assistant overlay state from the shared store.
+	const compose = useAtlasState((s) => s.compose);
+	const assistantOpen = useAtlasState((s) => s.assistantOpen);
 
 	// Resolve the selected thread's sender for the reply prefill, reading the
 	// selection from the shared store. Mirrors the prototype's
@@ -113,19 +56,46 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 		const thread = currentThread(view(), selection(), decisions());
 		return thread?.addr ?? "";
 	});
-	// Prefer the live (clicked-thread) address; fall back to the selected one.
-	const replyAddr = () => liveReplyAddr() || selectedReplyAddr();
 
-	// SSR-proof: when a compose mode is seeded, render the overlay inline so it
-	// is emitted in the server stream (Portal content is not). Live (hydrated)
-	// opens use the default Portal path. The assistant follows the same rule.
-	const composeInline = () => Boolean(props.initialCompose);
-	const assistantInline = () =>
-		Boolean(props.initialAsk) || Boolean(props.initialAssistantOpen);
+	// Open a blank compose from the top bar.
+	const openCompose = () => actions.openCompose();
+	// Open a reply: prefer the clicked-thread address, fall back to the selected
+	// thread's sender.
+	const openReply = (addr?: string) =>
+		actions.openReply(addr || selectedReplyAddr());
+
+	// Keyboard shortcuts. `/` and ⌘K/Ctrl-K open the assistant; `c` composes;
+	// Escape dismisses overlays. Bound at the document level via the shared
+	// `resolveShortcut` map.
+	createEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			const action = resolveShortcut(e);
+			if (!action) return;
+			if (action.kind === "assistant") {
+				e.preventDefault();
+				actions.openAssistant();
+			} else if (action.kind === "compose") {
+				actions.openCompose();
+			} else if (action.kind === "dismiss-overlays") {
+				actions.dismissOverlays();
+			}
+		};
+		document.addEventListener("keydown", handler);
+		onCleanup(() => document.removeEventListener("keydown", handler));
+	});
+
+	// The reply recipient: the address captured when the reply was opened, or
+	// the selected thread's sender as a fallback.
+	const replyTo = () => compose().replyAddr || selectedReplyAddr();
 
 	return (
 		<AppShell
-			topBar={<TopBar onSearch={openAssistant} onCompose={openNew} />}
+			topBar={
+				<TopBar
+					onSearch={() => actions.openAssistant()}
+					onCompose={openCompose}
+				/>
+			}
 			sidebar={<SidebarNav activeView={view()} linkFor={props.linkFor} />}
 		>
 			<MailWorkspace
@@ -134,16 +104,13 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 				onCompose={openReply}
 			/>
 			<ComposeDialog
-				open={compose() !== "closed"}
-				onClose={closeCompose}
-				replyTo={compose() === "reply" ? replyAddr() : undefined}
-				inline={composeInline()}
+				open={compose().mode !== "closed"}
+				onClose={() => actions.closeCompose()}
+				replyTo={compose().mode === "reply" ? replyTo() : undefined}
 			/>
 			<AssistantDialog
 				open={assistantOpen()}
-				onClose={closeAssistant}
-				inline={assistantInline()}
-				seededQuery={props.initialAsk}
+				onClose={() => actions.closeAssistant()}
 			/>
 		</AppShell>
 	);
