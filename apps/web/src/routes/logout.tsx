@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/solid-router";
 import { createSignal, onMount, Show } from "solid-js";
 
 import { getAuthClient } from "../lib/auth";
+import { invalidateIdentity } from "../lib/identity/queries";
+import { queryClient } from "../lib/tanstack/query";
 
 export const Route = createFileRoute("/logout")({
 	component: LogoutRoute,
@@ -14,7 +16,11 @@ function LogoutRoute() {
 	onMount(() => {
 		void getAuthClient().signOut({
 			fetchOptions: {
-				onSuccess: () => {
+				onSuccess: async () => {
+					// Mark the identity slice stale before navigating so the `/`
+					// guard re-resolves `me` (→ null) instead of trusting the
+					// cached signed-in snapshot.
+					await invalidateIdentity(queryClient);
 					void navigate({ to: "/" });
 				},
 				onError: (ctx) => {

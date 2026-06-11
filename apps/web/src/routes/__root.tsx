@@ -4,10 +4,12 @@ import {
 	Outlet,
 	Scripts,
 	createRootRoute,
+	useRouter,
 } from "@tanstack/solid-router";
 import { QueryClientProvider } from "@tanstack/solid-query";
 import type * as Solid from "solid-js";
-import { HydrationScript } from "solid-js/web";
+import { onMount } from "solid-js";
+import { HydrationScript, isServer } from "solid-js/web";
 import appCss from "../styles.css?url";
 import { AtlasProvider } from "../lib/atlas/atlas_state";
 import { queryClient } from "../lib/tanstack/query";
@@ -47,6 +49,19 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+	const router = useRouter();
+
+	// Route guards (`lib/identity/route_guards.ts`) are no-ops during SSR so
+	// rendering the shell never fetches identity. The server marks `beforeLoad`
+	// as already run, so hydration alone would never execute the guards for a
+	// direct page load — re-run matched routes once on the client so auth
+	// redirects apply to initial loads, not just SPA navigations.
+	onMount(() => {
+		if (!isServer) {
+			void router.invalidate();
+		}
+	});
+
 	return (
 		<RootDocument>
 			<QueryClientProvider client={queryClient}>

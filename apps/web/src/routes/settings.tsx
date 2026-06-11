@@ -7,8 +7,10 @@
 
 import { createFileRoute } from "@tanstack/solid-router";
 import { AtlasApp } from "../components/atlas/atlas_app";
+import { requireOnboarded } from "../lib/identity/route_guards";
 
 export const Route = createFileRoute("/settings")({
+	beforeLoad: requireOnboarded,
 	component: SettingsRoute,
 });
 

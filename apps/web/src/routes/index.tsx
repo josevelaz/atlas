@@ -7,8 +7,10 @@
 
 import { createFileRoute } from "@tanstack/solid-router";
 import { Onboarding } from "../components/atlas/onboarding";
+import { redirectIfOnboarded } from "../lib/identity/route_guards";
 
 export const Route = createFileRoute("/")({
+	beforeLoad: redirectIfOnboarded,
 	component: AtlasEntry,
 });
 
