@@ -3,8 +3,10 @@
 // Mirrors the prototype's `SettingsScreen` (`docs/prototype/screens.jsx`): a
 // thread toolbar titled "Settings" over a centered (max-width 760px) body of
 // three carded sections —
-//   1. Connected accounts (Google active + Disconnect, Outlook upgrade, Connect
-//      another account),
+//   1. Connected accounts — real rows from `useConnectedAccounts()` (one per
+//      OAuth `account` row): the primary account carries a "Primary" badge,
+//      others get a "Set primary" button (`useSetPrimary()`), plus a trailing
+//      "Connect another account" row that starts a Google link flow,
 //   2. AI & Privacy (4 AI-keyed toggle rows),
 //   3. Notifications (3 toggle rows).
 // Every toggle is the shared `Toggle` primitive driven by local Solid signal
@@ -13,10 +15,8 @@
 // the prototype. No runtime imports from `docs/prototype/**`.
 
 import type { Component } from "solid-js";
-import { createSignal, For } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import {
-	gap8Classes,
-	rowClasses,
 	settingsCardClasses,
 	settingsInnerClasses,
 	settingsSectionClasses,
@@ -25,9 +25,97 @@ import {
 	threadClasses,
 	threadToolbarClasses,
 } from "../../lib/atlas/component_classes";
-import { cn } from "../../lib/utils";
+import { getAuthClient } from "../../lib/auth";
+import {
+	useConnectedAccounts,
+	useSetPrimary,
+} from "../../lib/identity/queries";
 import { Badge, Button, Card, Toggle } from "../ui/index";
+import type { IconName } from "./atlas_icon";
 import { SettingsRow } from "./settings_row";
+
+/** Icon + human label for a Better Auth `providerId`. */
+interface ProviderMeta {
+	icon: IconName;
+	label: string;
+}
+
+const PROVIDER_META: Record<string, ProviderMeta> = {
+	google: { icon: "google", label: "Google" },
+	outlook: { icon: "outlook", label: "Outlook" },
+	microsoft: { icon: "outlook", label: "Microsoft 365" },
+};
+
+/** Map a providerId to its icon/label, falling back to a generic row. */
+function providerMeta(providerId: string): ProviderMeta {
+	return (
+		PROVIDER_META[providerId] ?? {
+			icon: "user",
+			label: providerId.charAt(0).toUpperCase() + providerId.slice(1),
+		}
+	);
+}
+
+/**
+ * Connected-account rows backed by the shared identity query cache. The
+ * primary row shows a "Primary" badge; others offer "Set primary", which
+ * round-trips through `PUT /me/primary-connected-account` and invalidates
+ * the connected-accounts query (so compose and other consumers re-render).
+ */
+const ConnectedAccountsCard: Component = () => {
+	const accounts = useConnectedAccounts();
+	const setPrimary = useSetPrimary();
+
+	const handleConnect = () => {
+		getAuthClient().linkSocial({
+			provider: "google",
+			callbackURL: new URL("/settings", window.location.origin).toString(),
+		});
+	};
+
+	return (
+		<Card class={settingsCardClasses}>
+			<For each={accounts.data?.accounts ?? []}>
+				{(account) => (
+					<SettingsRow
+						icon={providerMeta(account.providerId).icon}
+						iconSize={24}
+						title={account.email}
+						sub={providerMeta(account.providerId).label}
+						control={
+							<Show
+								when={account.isPrimary}
+								fallback={
+									<Button
+										size="sm"
+										disabled={setPrimary.isPending}
+										onClick={() => setPrimary.mutate(account.id)}
+									>
+										Set primary
+									</Button>
+								}
+							>
+								<Badge variant="paper">Primary</Badge>
+							</Show>
+						}
+					/>
+				)}
+			</For>
+			<SettingsRow
+				icon="plus"
+				iconStroke={2.5}
+				tileBackground="var(--color-background)"
+				title="Connect another account"
+				sub="Gmail, Google Workspace, Outlook, or Microsoft 365"
+				control={
+					<Button size="sm" onClick={handleConnect}>
+						Connect
+					</Button>
+				}
+			/>
+		</Card>
+	);
+};
 
 /** A toggle setting's initial state + descriptive copy (verbatim from proto). */
 interface ToggleSetting {
@@ -121,40 +209,7 @@ const SettingsScreen: Component = () => {
 				<div class={settingsInnerClasses}>
 					{/* ---- Connected accounts ---- */}
 					<h3 class={settingsSectionClasses}>Connected accounts</h3>
-					<Card class={settingsCardClasses}>
-						<SettingsRow
-							icon="google"
-							iconSize={24}
-							title="rob@atlas.co"
-							subMono
-							sub="Google Workspace · synced 24s ago · 142 threads"
-							control={
-								<div class={cn(rowClasses, gap8Classes)}>
-									<Badge variant="paper">Active</Badge>
-									<Button size="sm">Disconnect</Button>
-								</div>
-							}
-						/>
-						<SettingsRow
-							icon="outlook"
-							iconSize={24}
-							title="rob.barrett@outlook.com"
-							sub="Microsoft 365 personal · paid tier required"
-							control={
-								<Button size="sm" variant="primary">
-									Upgrade to connect
-								</Button>
-							}
-						/>
-						<SettingsRow
-							icon="plus"
-							iconStroke={2.5}
-							tileBackground="var(--color-background)"
-							title="Connect another account"
-							sub="Gmail, Google Workspace, Outlook, or Microsoft 365"
-							control={<Button size="sm">Connect</Button>}
-						/>
-					</Card>
+					<ConnectedAccountsCard />
 
 					{/* ---- AI & Privacy ---- */}
 					<h3 class={settingsSectionClasses}>AI &amp; Privacy</h3>
