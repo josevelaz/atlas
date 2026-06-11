@@ -4,11 +4,49 @@
 web prototype recreation, update the proof index, confirm generated-route-tree
 health, confirm no React/backend leakage, ensure `/` and `/dev/*` still work,
 land the focused final commits, push the branch, and open the PR.
-**Date:** 2026-06-08 (manifest updated 2026-06-10 to reflect post-Task-13 route
-and hydration corrections)
+**Date:** 2026-06-08 (updated 2026-06-10 for post-Task-13 route/hydration
+corrections; updated 2026-06-11 to supersede the URL-param "proof" model with
+the live store-driven model — see the **Remediation update** banner below)
 **Surface touched:** final-proof artifacts (this dir) + the build-regenerated
 `apps/web/src/routeTree.gen.ts`. No `apps/web/src` component/route logic changed
 in this task.
+
+---
+
+## ⚠️ Remediation update (2026-06-11) — read this first
+
+A post-recreation remediation (commits `2800b26` … `8f63259`) **replaced the
+URL-param "SSR-proof" interaction model described throughout this document with
+a live, hydrated, store-driven model.** This manifest is retained as the
+historical Task-13 record; the **current** architecture and validation evidence
+live in:
+
+> `proof/state-tailwind-cleanup/manifest.md`
+
+What changed since this document was written:
+
+- **URL "proof" params removed.** `?d=` (screener decisions), `?compose=`,
+  `?assistant=`, `?ask=`, and the `encodeDecisions`/`decodeDecisions`/
+  `decodeComposeMode` helpers are **gone**. Any reference below to seeding state
+  via those params is **historical** and no longer reflects the source.
+- **State moved to a shared store.** All interaction state lives in a TanStack
+  `Store` (`src/lib/atlas/atlas_state.tsx`) provided once at `routes/__root.tsx`
+  and persists across SPA navigation. Screener Accept/Reject, mail selection,
+  handling-state toggles, and the compose/assistant overlays are all live store
+  actions — the screener controls are `<button>`s, not `?d=` `<Link>`s.
+- **Tailwind migration.** Every primitive, shell, screen, overlay, and
+  onboarding surface now renders from Tailwind utility strings in
+  `src/lib/atlas/component_classes.ts`; `styles.css` is a **global-only**
+  boundary at **309 lines** (`wc -l apps/web/src/styles.css`).
+- **Lint file count** is now **66** files (was 64 when this doc was written).
+- **2026-06-11 gates re-run:** `typecheck` ✅, `lint` ✅ (66 files, no fixes),
+  `build` ✅. A fresh **live** `npx agent-browser` smoke (not the historical
+  screenshots in this dir) plus `curl` corroboration is recorded in the
+  remediation manifest.
+
+The "SSR-proof" / `?d=` / `?compose=` / `?assistant=` / `?ask=` rows in the
+sections below are kept **only as the Task-13 historical record**; treat the
+remediation manifest as the source of truth for current behavior.
 
 ---
 
@@ -21,6 +59,12 @@ engineering gates, drive a full browser smoke over every surface, verify the
 hard constraints (no React/backend in `apps/web`, `/dev/*` intact, the
 SSR-proof `?d=`/`?compose=`/`?assistant=`/`?ask=` plumbing intact), and hand the
 branch off as a PR.
+
+> **Historical note (superseded 2026-06-11):** the "SSR-proof `?d=`/`?compose=`/
+> `?assistant=`/`?ask=` plumbing" referenced here was **removed** by the
+> remediation. See the Remediation update banner above and
+> `proof/state-tailwind-cleanup/manifest.md` for the current live store-driven
+> model.
 
 One **generated-file correction** was applied: `vite build` regenerates
 `apps/web/src/routeTree.gen.ts` without a stale hand-appended
