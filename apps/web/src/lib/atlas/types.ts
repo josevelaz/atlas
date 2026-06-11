@@ -272,6 +272,15 @@ export type ToggleSet = Record<string, boolean>;
  */
 export type ComposeMode = "closed" | "new" | "reply";
 
+/**
+ * Compose overlay state: the current {@link ComposeMode} plus the recipient
+ * address captured when a reply is opened from a thread (empty for `new`).
+ */
+export interface ComposeState {
+	mode: ComposeMode;
+	replyAddr: string;
+}
+
 /** Visibility of the overlay surfaces. */
 export interface OverlayState {
 	composeOpen: boolean;
@@ -279,8 +288,9 @@ export interface OverlayState {
 }
 
 /**
- * The full Atlas interaction model. The Solid app owns these as signals /
- * stores; this interface documents the contract and keeps the shape typed.
+ * The full Atlas interaction model. The Solid app owns these via the shared
+ * Atlas state provider (`atlas_state.tsx`); this interface documents the
+ * contract and keeps the shape typed.
  */
 export interface AtlasState {
 	/** Whether onboarding has been completed/dismissed. */
@@ -293,8 +303,15 @@ export interface AtlasState {
 	selected: SelectionState;
 	/** Screener accept/reject decisions. */
 	screener: ScreenerDecisions;
-	/** Overlay visibility. */
-	overlay: OverlayState;
+	/** Compose overlay state (mode + reply recipient). */
+	compose: ComposeState;
+	/** Whether the Ask Atlas assistant overlay is open. */
+	assistantOpen: boolean;
+	/**
+	 * The mail id of the most recently selected assistant citation, or `null`.
+	 * Set when a citation chip is clicked so the cited thread can be focused.
+	 */
+	citation: string | null;
 	/** Per-mail "set aside" toggles. */
 	setAside: ToggleSet;
 	/** Per-mail "reply later" toggles. */

@@ -29,7 +29,7 @@ import type {
 /**
  * Build the initial Atlas interaction state, matching the prototype's defaults:
  * onboarding shown first, inbox view, `i1` selected, no screener decisions, no
- * overlays open, empty toggle sets.
+ * overlays open, no citation selected, empty toggle sets.
  */
 export function createInitialState(): AtlasState {
 	return {
@@ -38,7 +38,9 @@ export function createInitialState(): AtlasState {
 		view: "inbox",
 		selected: { inbox: "i1", feed: null, paper: null },
 		screener: { accepted: {}, rejected: {} },
-		overlay: { composeOpen: false, assistantOpen: false },
+		compose: { mode: "closed", replyAddr: "" },
+		assistantOpen: false,
+		citation: null,
 		setAside: {},
 		replyLater: {},
 	};
@@ -156,25 +158,39 @@ export function selectInView(
 	return selected;
 }
 
-/** Next decisions after accepting screener item `sid` into `category`. */
+/**
+ * Next decisions after accepting screener item `sid` into `category`.
+ *
+ * Accepting clears any prior rejection for the same `sid`, so accept/reject are
+ * mutually exclusive for a screener id — the latest decision always wins.
+ */
 export function acceptScreener(
 	decisions: ScreenerDecisions,
 	sid: string,
 	category: AiCategory,
 ): ScreenerDecisions {
+	const rejected = { ...decisions.rejected };
+	delete rejected[sid];
 	return {
-		...decisions,
 		accepted: { ...decisions.accepted, [sid]: category },
+		rejected,
 	};
 }
 
-/** Next decisions after rejecting screener item `sid`. */
+/**
+ * Next decisions after rejecting screener item `sid`.
+ *
+ * Rejecting clears any prior acceptance for the same `sid`, so accept/reject are
+ * mutually exclusive for a screener id — the latest decision always wins.
+ */
 export function rejectScreener(
 	decisions: ScreenerDecisions,
 	sid: string,
 ): ScreenerDecisions {
+	const accepted = { ...decisions.accepted };
+	delete accepted[sid];
 	return {
-		...decisions,
+		accepted,
 		rejected: { ...decisions.rejected, [sid]: true },
 	};
 }

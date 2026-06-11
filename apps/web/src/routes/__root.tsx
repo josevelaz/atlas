@@ -9,6 +9,7 @@ import { QueryClientProvider } from "@tanstack/solid-query";
 import type * as Solid from "solid-js";
 import { HydrationScript } from "solid-js/web";
 import appCss from "../styles.css?url";
+import { AtlasProvider } from "../lib/atlas/atlas_state";
 import { queryClient } from "../lib/tanstack/query";
 
 export const Route = createRootRoute({
@@ -49,7 +50,9 @@ function RootComponent() {
 	return (
 		<RootDocument>
 			<QueryClientProvider client={queryClient}>
-				<Outlet />
+				<AtlasProvider>
+					<Outlet />
+				</AtlasProvider>
 			</QueryClientProvider>
 		</RootDocument>
 	);
