@@ -68,8 +68,9 @@ const Dialog: Component<DialogProps> = (raw_props) => {
 			}}
 		>
 			<div
-				// `atlas-overlay-card` is a selector hook for the compose / assistant
-				// overlay variants (`.atlas-compose-card`, `.atlas-assistant-card`).
+				// The compose / assistant overlay variants now pass their sizing via
+				// `class` (composeCardClasses / assistantCardClasses), composed onto
+				// overlayCardClasses. `atlas-overlay-card` is kept only as a stable hook.
 				class={cn("atlas-overlay-card", overlayCardClasses, local.class)}
 				role="dialog"
 				aria-modal="true"

@@ -14,6 +14,20 @@
 // routed through the shared `Dialog` primitive (`components/ui/dialog.tsx`).
 
 import type { Component } from "solid-js";
+import {
+	composeBodyClasses,
+	composeBodyTextareaClasses,
+	composeCardClasses,
+	composeFieldClasses,
+	composeFieldInputClasses,
+	composeFieldLabelClasses,
+	composeFootClasses,
+	composeHeadClasses,
+	composeTitleClasses,
+	gap8Classes,
+	rowClasses,
+} from "../../lib/atlas/component_classes";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Dialog } from "../ui/dialog";
 import { Input, Textarea } from "../ui/input";
@@ -53,11 +67,11 @@ const ComposeDialog: Component<ComposeDialogProps> = (props) => {
 		<Dialog
 			open={props.open}
 			onClose={props.onClose}
-			class="atlas-compose-card"
+			class={composeCardClasses}
 			aria-label={title()}
 		>
-			<div class="atlas-compose-head">
-				<h3 class="atlas-compose-title">{title()}</h3>
+			<div class={composeHeadClasses}>
+				<h3 class={composeTitleClasses}>{title()}</h3>
 				<Button
 					size="sm"
 					icon
@@ -69,29 +83,50 @@ const ComposeDialog: Component<ComposeDialogProps> = (props) => {
 				</Button>
 			</div>
 
-			<div class="atlas-compose-field">
-				<label for="compose-from">From</label>
-				<Input id="compose-from" value={FROM_ADDRESS} disabled />
+			<div class={composeFieldClasses}>
+				<label for="compose-from" class={composeFieldLabelClasses}>
+					From
+				</label>
+				<Input
+					id="compose-from"
+					class={composeFieldInputClasses}
+					value={FROM_ADDRESS}
+					disabled
+				/>
 			</div>
-			<div class="atlas-compose-field">
-				<label for="compose-to">To</label>
-				<Input id="compose-to" value={toValue()} placeholder="Recipient" />
+			<div class={composeFieldClasses}>
+				<label for="compose-to" class={composeFieldLabelClasses}>
+					To
+				</label>
+				<Input
+					id="compose-to"
+					class={composeFieldInputClasses}
+					value={toValue()}
+					placeholder="Recipient"
+				/>
 			</div>
-			<div class="atlas-compose-field">
-				<label for="compose-subject">Subject</label>
+			<div class={composeFieldClasses}>
+				<label for="compose-subject" class={composeFieldLabelClasses}>
+					Subject
+				</label>
 				<Input
 					id="compose-subject"
+					class={composeFieldInputClasses}
 					value={subjectValue()}
 					placeholder="Subject"
 				/>
 			</div>
 
-			<div class="atlas-compose-body">
-				<Textarea placeholder="Write your message…" value={bodyValue()} />
+			<div class={composeBodyClasses}>
+				<Textarea
+					class={composeBodyTextareaClasses}
+					placeholder="Write your message…"
+					value={bodyValue()}
+				/>
 			</div>
 
-			<div class="atlas-compose-foot">
-				<div class="atlas-row atlas-gap-8">
+			<div class={composeFootClasses}>
+				<div class={cn(rowClasses, gap8Classes)}>
 					<Button size="sm">
 						<AtlasIcon name="attach" size={14} /> Attach
 					</Button>
@@ -99,7 +134,7 @@ const ComposeDialog: Component<ComposeDialogProps> = (props) => {
 						<AtlasIcon name="sparkle" size={14} /> Suggest reply (off)
 					</Button>
 				</div>
-				<div class="atlas-row atlas-gap-8">
+				<div class={cn(rowClasses, gap8Classes)}>
 					<Button size="sm" onClick={props.onClose}>
 						Discard
 					</Button>

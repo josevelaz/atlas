@@ -7,13 +7,16 @@
 //   bg-secondary-background, border-border, shadow-[var(--shadow)],
 //   rounded-[var(--radius)], etc.
 //
-// Components compose these strings via `cn(...)`. The legacy `.atlas-*` marker
+// Components compose these strings via `cn(...)`. A few legacy `.atlas-*` marker
 // classes are still emitted by the components as *selector hooks* for the
-// app-shell / overlay CSS that styles primitives in context (e.g. the
-// `.atlas-app .atlas-btn.is-primary::after` star tick, the borderless
-// `.atlas-compose-field .atlas-input` override). Those marker classes no longer
-// carry any styling of their own — the styling lives entirely in the utilities
-// below.
+// remaining contextual CSS — the `.atlas-app .atlas-btn.is-primary::after` star
+// tick / chip-and-avatar tilt (scoped to the app shell) and the
+// `.atlas-onboarding-card` view-transition target (scoped to the onboarding
+// motion). The borderless compose-row / compose-body treatment is now composed
+// onto the Input/Textarea `class` prop (composeFieldInputClasses /
+// composeBodyTextareaClasses) rather than a contextual selector. Those marker
+// classes no longer carry any styling of their own — the styling lives entirely
+// in the utilities below.
 
 import { cva } from "class-variance-authority";
 
@@ -901,3 +904,415 @@ export const settingsRowSubClasses = cva("text-muted mt-0.5", {
 /** Trailing control slot (right-aligned; full-width left-aligned at ≤560px). */
 export const settingsControlClasses =
 	"flex items-center justify-end max-[560px]:col-[1/-1] max-[560px]:justify-start";
+
+/* ================================================================== */
+/*  Overlays — compose / assistant dialogs                            */
+/*                                                                    */
+/*  Component styling migrated out of the hand-written `.atlas-compose*` */
+/*  / `.atlas-assistant*` / `.atlas-chat*` / `.atlas-cite*` CSS into   */
+/*  Tailwind utility strings over the same design tokens. Both render  */
+/*  inside the shared `Dialog` primitive (overlayCardClasses) and only */
+/*  override the card sizing + author their own head/body/foot chrome. */
+/* ================================================================== */
+
+/* ------------------------------------------------------------------ */
+/*  Compose dialog                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Compose card sizing override (surface fill, 720px cap, 86vh tall). */
+export const composeCardClasses =
+	"bg-secondary-background max-w-[720px] max-h-[86vh]";
+
+/** Compose header: title + close, divided by an ink rule. */
+export const composeHeadClasses =
+	"flex items-center justify-between px-4 py-3 " +
+	"border-b-[length:var(--border-w)] border-solid border-border";
+
+/** Display-face compose title. */
+export const composeTitleClasses =
+	"font-[family-name:var(--font-display)] text-[16px] m-0";
+
+/** A compose row: 60px mono label · borderless field, divided by an ink rule. */
+export const composeFieldClasses =
+	"grid grid-cols-[60px_1fr] items-center gap-2.5 px-4 py-2 " +
+	"border-b-[length:var(--border-w)] border-solid border-border";
+
+/** Uppercase mono label inside a compose row. */
+export const composeFieldLabelClasses =
+	"font-[family-name:var(--font-mono)] text-[11px] font-bold uppercase tracking-[0.04em] text-muted";
+
+/**
+ * Borderless compose-row input override. Composed onto the `Input` primitive's
+ * `class` to drop the bordered field treatment (border / shadow / focus lift /
+ * padding) so the row reads as flush text in the grid cell.
+ */
+export const composeFieldInputClasses =
+	"border-0 bg-transparent shadow-none p-0 font-semibold w-full " +
+	"focus:shadow-none focus:translate-x-0 focus:translate-y-0";
+
+/** Compose body: scrollable, tall min-height, fills the remaining space. */
+export const composeBodyClasses = "p-4 min-h-[240px] flex-1 overflow-y-auto";
+
+/**
+ * Borderless compose-body textarea override. Composed onto the `Textarea`
+ * primitive's `class` to drop the border / shadow / resize / focus lift so the
+ * body reads as a flush writing surface.
+ */
+export const composeBodyTextareaClasses =
+	"w-full h-full min-h-[240px] resize-none border-0 bg-transparent shadow-none p-0 " +
+	"text-[14px] leading-[1.5] font-semibold " +
+	"focus:shadow-none focus:translate-x-0 focus:translate-y-0";
+
+/** Compose footer: split action groups, wraps, divided by a top ink rule. */
+export const composeFootClasses =
+	"flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-background " +
+	"border-t-[length:var(--border-w)] border-solid border-border";
+
+/* ------------------------------------------------------------------ */
+/*  Assistant dialog                                                   */
+/* ------------------------------------------------------------------ */
+
+/** Assistant card sizing override (720px cap, fixed 82vh tall). */
+export const assistantCardClasses = "max-w-[720px] h-[82vh] max-h-[82vh]";
+
+/** Electric-blue assistant header tint (composed onto overlayHeadClasses). */
+export const assistantHeadClasses = "bg-ai text-white";
+
+/** Display-face assistant title (white, on the blue head). */
+export const assistantTitleClasses =
+	"font-[family-name:var(--font-display)] text-[16px] m-0 text-white";
+
+/** White "SEMANTIC SEARCH" chip on the assistant head. */
+export const assistantChipClasses =
+	"font-[family-name:var(--font-base)] text-[11px] font-bold px-2 py-0.5 " +
+	"bg-white text-black border-[length:var(--border-w)] border-solid border-black rounded-[4px]";
+
+/** Scrolling chat transcript column. */
+export const assistantTranscriptClasses =
+	"flex-1 flex flex-col gap-3 p-4 overflow-y-auto";
+
+/** Footer ask form region, divided by a top ink rule. */
+export const assistantFootClasses =
+	"p-3 bg-background border-t-[length:var(--border-w)] border-solid border-border";
+
+/** Ask form fills the footer width. */
+export const assistantFormClasses = "w-full";
+
+/** Ask input grows to fill the form. */
+export const assistantInputClasses = "flex-1";
+
+/* ------------------------------------------------------------------ */
+/*  Chat bubble                                                        */
+/* ------------------------------------------------------------------ */
+
+/** Base chat bubble: ink border, surface fill, small offset shadow. */
+const CHAT_BUBBLE_BASE =
+	"px-3 py-2.5 text-[13px] leading-[1.5] " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)] " +
+	"shadow-[var(--shadow-sm)]";
+
+/** AI (assistant) bubble: surface fill, left-aligned. */
+export const chatBubbleAiClasses = `${CHAT_BUBBLE_BASE} bg-secondary-background`;
+
+/** User bubble: yellow fill, right-aligned, capped width. */
+export const chatBubbleUserClasses = `${CHAT_BUBBLE_BASE} bg-main text-main-foreground self-end max-w-[75%]`;
+
+/** Dimmed "Thinking…" busy bubble (AI-styled). */
+export const chatBusyClasses = `${chatBubbleAiClasses} opacity-60`;
+
+/** Pre-wrapped bubble text. */
+export const chatTextClasses = "whitespace-pre-wrap";
+
+/* ------------------------------------------------------------------ */
+/*  Citation chip                                                      */
+/* ------------------------------------------------------------------ */
+
+/** A citation chip on an AI reply: num tile · from/subject · time, hover-lifts. */
+export const citeClasses =
+	"flex items-center gap-2 mt-2 px-2 py-1.5 cursor-pointer no-underline text-inherit " +
+	"font-[family-name:var(--font-mono)] text-[11px] bg-background " +
+	"border-[1.5px] border-solid border-border rounded-[4px] " +
+	"transition-[transform,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-base)] " +
+	"hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[var(--shadow-sm)]";
+
+/** Electric-blue citation index tile. */
+export const citeNumClasses =
+	"inline-flex items-center justify-center shrink-0 w-[18px] h-[18px] " +
+	"bg-ai text-white border-[1.5px] border-solid border-border rounded-[3px] " +
+	"font-extrabold text-[10px]";
+
+/** Citation from/subject stack (base mono face). */
+export const citeBodyClasses =
+	"flex-1 min-w-0 font-[family-name:var(--font-base)]";
+
+/** Bold citation sender. */
+export const citeFromClasses = "font-extrabold text-[12px]";
+
+/** Muted citation subject. */
+export const citeSubjectClasses = "text-[11px] text-muted";
+
+/** Muted citation time. */
+export const citeTimeClasses = "shrink-0 text-[10px] text-muted";
+
+/* ------------------------------------------------------------------ */
+/*  Assistant example prompts                                          */
+/* ------------------------------------------------------------------ */
+
+/** Example-prompt block (shown while the intro bubble is alone). */
+export const assistantExamplesClasses = "mt-2";
+
+/** Uppercase mono "Try" label. */
+export const assistantExamplesLabelClasses =
+	"mb-2 text-[10px] font-extrabold uppercase tracking-[0.06em] text-muted";
+
+/** Vertical list of example chips. */
+export const assistantExamplesListClasses = "flex flex-col gap-1.5";
+
+/** A single example chip: left-aligned, wrapping, auto-height (composed onto Button). */
+export const assistantExampleClasses =
+	"justify-start h-auto px-2.5 py-2 text-left whitespace-normal leading-[1.4]";
+
+/* ================================================================== */
+/*  Onboarding — first-run / replay walkthrough                       */
+/*                                                                    */
+/*  Component styling migrated out of the hand-written `.atlas-onboarding*` */
+/*  / `.atlas-onb-*` / `.atlas-step-*` CSS into Tailwind utility strings */
+/*  over the same design tokens. The global view-transition slide rules */
+/*  (`view-transition-name` + directional keyframes keyed off            */
+/*  `data-onb-dir`) stay in styles.css — only the card itself keeps the  */
+/*  `atlas-onboarding-card` marker so those `::view-transition` rules can */
+/*  target it. The ≤560px adaptations are expressed as `max-[560px]:`    */
+/*  arbitrary variants here.                                             */
+/* ================================================================== */
+
+/** Full-screen onboarding backdrop (calm canvas, centered, scrollable). */
+export const onboardingClasses =
+	"fixed inset-0 z-[200] flex items-center justify-center p-6 overflow-y-auto bg-background " +
+	"max-[560px]:items-start max-[560px]:p-3";
+
+/**
+ * Onboarding card: 720px wide (capped to the viewport), 8px radius, large
+ * offset shadow. Keeps the `atlas-onboarding-card` marker (added at the call
+ * site) so the global directional view-transition slide can target it.
+ */
+export const onboardingCardClasses =
+	"w-[720px] max-w-[calc(100vw-48px)] overflow-hidden bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border " +
+	"rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] " +
+	"max-[560px]:max-w-full";
+
+/** Onboarding head: logo/progress · Skip, divided by an ink rule. */
+export const onboardingHeadClasses =
+	"flex items-center justify-between px-[18px] py-[14px] " +
+	"border-b-[length:var(--border-w)] border-solid border-border";
+
+/** Mono "Get started — N/5" progress label. */
+export const onboardingProgressClasses =
+	"font-[family-name:var(--font-mono)] text-[11px] text-muted whitespace-nowrap";
+
+/** Onboarding body: title + sub + visual panel; tall on desktop, compact ≤560px. */
+export const onboardingBodyClasses =
+	"p-7 min-h-[320px] max-[560px]:p-[18px] max-[560px]:min-h-0";
+
+/** Bungee onboarding step title (non-uppercase). */
+export const onboardingTitleClasses =
+	"font-[family-name:var(--font-display)] text-[32px] leading-[1.1] tracking-[-0.01em] normal-case mb-2 " +
+	"max-[560px]:text-[24px]";
+
+/** Muted onboarding sub-copy. */
+export const onboardingSubClasses =
+	"text-muted text-[14px] leading-[1.5] max-w-[540px] mb-6";
+
+/** Onboarding foot: Back · dots · Next/Open, divided by a top ink rule. */
+export const onboardingFootClasses =
+	"flex items-center justify-between px-[18px] py-[14px] bg-background " +
+	"border-t-[length:var(--border-w)] border-solid border-border";
+
+/** Onboarding footer/head button links keep the button look (no underline). */
+export const onboardingLinkClasses = "no-underline";
+
+/** Step-dot strip. */
+export const stepDotsClasses = "flex gap-1.5";
+
+/** One step dot: pill, hairline ink border; fills yellow when active. */
+export const stepDotClasses =
+	"w-7 h-2 rounded-[4px] bg-secondary-background border-[1.5px] border-solid border-border";
+
+/** Active step-dot fill add-on. */
+export const stepDotActiveClasses = "bg-main";
+
+/* ------------------------------------------------------------------ */
+/*  Onboarding step 1 — connect provider cards                         */
+/* ------------------------------------------------------------------ */
+
+/** Two connect cards side by side; stacks to one column ≤560px. */
+export const onbConnectGridClasses =
+	"flex flex-wrap gap-3 max-[560px]:flex-col";
+
+/** A connect card: ink border, 8px radius, offset shadow. */
+export const onbConnectClasses =
+	"flex-1 min-w-[200px] p-4 bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border " +
+	"rounded-[var(--radius-lg)] shadow-[var(--shadow)]";
+
+/** Provider icon tile · name/sub head row. */
+export const onbConnectHeadClasses = "flex items-center gap-2.5 mb-2.5";
+
+/** 36px coded provider icon tile. */
+export const onbConnectTileClasses =
+	"flex items-center justify-center shrink-0 w-9 h-9 " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)]";
+
+/** Provider name/sub text stack. */
+export const onbConnectTextClasses = "flex-1 min-w-0";
+
+/** Display-face provider name. */
+export const onbConnectNameClasses =
+	"font-[family-name:var(--font-display)] font-normal text-[15px] leading-[1.2]";
+
+/** Mono provider sub-label. */
+export const onbConnectSubClasses =
+	"font-[family-name:var(--font-mono)] text-[10px] text-muted mt-1";
+
+/** Full-width OAuth connect button (composed onto Button). */
+export const onbConnectBtnClasses = "w-full";
+
+/* ------------------------------------------------------------------ */
+/*  Onboarding step 2 — screener card                                  */
+/* ------------------------------------------------------------------ */
+
+/** Screener preview card: ink border, 8px radius, offset shadow. */
+export const onbScreenerClasses =
+	"overflow-hidden bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border " +
+	"rounded-[var(--radius-lg)] shadow-[var(--shadow)]";
+
+/** Screener card head: avatar · name/addr, divided by an ink rule. */
+export const onbScreenerHeadClasses =
+	"flex items-center gap-3 p-[14px] " +
+	"border-b-[length:var(--border-w)] border-solid border-border";
+
+/** 38px yellow screener avatar tile. */
+export const onbScreenerAvatarClasses =
+	"flex items-center justify-center shrink-0 w-[38px] h-[38px] bg-main " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)] " +
+	"font-black text-[13px]";
+
+/** Bold screener sender name. */
+export const onbScreenerNameClasses = "font-black";
+
+/** Mono screener address. */
+export const onbScreenerAddrClasses =
+	"font-[family-name:var(--font-mono)] text-[11px] text-muted";
+
+/** Screener body block. */
+export const onbScreenerBodyClasses = "p-[14px] text-[13px]";
+
+/** Bold screener subject. */
+export const onbScreenerSubjectClasses = "font-extrabold mb-1.5";
+
+/** Muted screener preview. */
+export const onbScreenerPreviewClasses = "text-muted";
+
+/** Accept / Reject split grid, divided by a top ink rule. */
+export const onbScreenerActionsClasses =
+	"grid grid-cols-2 border-t-[length:var(--border-w)] border-solid border-border";
+
+/** Mint Accept cell with the right divider rule. */
+export const onbScreenerAcceptClasses =
+	"py-4 text-center font-black bg-[#00d696] text-black " +
+	"border-r-[length:var(--border-w)] border-solid border-border";
+
+/** Alarm-red Reject cell. */
+export const onbScreenerRejectClasses =
+	"py-4 text-center font-black bg-danger text-black";
+
+/* ------------------------------------------------------------------ */
+/*  Onboarding step 3 — category rows                                  */
+/* ------------------------------------------------------------------ */
+
+/** Vertical stack of category rows. */
+export const onbCatsClasses = "flex flex-col gap-2.5";
+
+/** A category row: 44px tile · name/desc, small offset shadow. */
+export const onbCatClasses =
+	"grid grid-cols-[44px_1fr] items-center gap-3 p-3 bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border " +
+	"rounded-[var(--radius)] shadow-[var(--shadow-sm)]";
+
+/** 44px coded category icon tile. */
+export const onbCatTileClasses =
+	"flex items-center justify-center w-11 h-11 " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)]";
+
+/** Display-face category name. */
+export const onbCatNameClasses =
+	"font-[family-name:var(--font-display)] font-normal text-[15px]";
+
+/** Muted category description. */
+export const onbCatDescClasses = "text-muted text-[12px] mt-0.5";
+
+/* ------------------------------------------------------------------ */
+/*  Onboarding step 4 — AI summary                                     */
+/* ------------------------------------------------------------------ */
+
+/** Electric-blue AI summary card: ink border, 8px radius, offset shadow. */
+export const onbAiClasses =
+	"overflow-hidden bg-ai text-white " +
+	"border-[length:var(--border-w)] border-solid border-border " +
+	"rounded-[var(--radius-lg)] shadow-[var(--shadow)]";
+
+/** Uppercase AI summary head, divided by an ink rule. */
+export const onbAiHeadClasses =
+	"flex items-center gap-2 px-[14px] py-2.5 " +
+	"border-b-[length:var(--border-w)] border-solid border-border " +
+	"font-extrabold text-[12px] uppercase tracking-[0.04em]";
+
+/** White AI summary body block. */
+export const onbAiBodyClasses =
+	"px-4 py-[14px] bg-white text-black text-[13px] leading-[1.5]";
+
+/** White extracted-rows panel, divided by a top ink rule. */
+export const onbAiExtractedClasses =
+	"flex flex-col gap-1.5 px-[14px] py-2.5 bg-white text-black " +
+	"border-t-[length:var(--border-w)] border-solid border-border";
+
+/** One extracted row: coded dot · label · due. */
+export const onbExtractClasses =
+	"grid grid-cols-[20px_1fr_auto] items-center gap-2.5 px-2 py-1.5 bg-background " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius-sm)]";
+
+/** 20px coded extract dot. */
+export const onbExtractDotClasses =
+	"w-5 h-5 rounded-[3px] border-[length:var(--border-w)] border-solid border-border";
+
+/** Bold extract label. */
+export const onbExtractLabelClasses = "text-[12px] font-bold";
+
+/** Mono extract due. */
+export const onbExtractDueClasses =
+	"font-[family-name:var(--font-mono)] text-[10px] text-muted";
+
+/* ------------------------------------------------------------------ */
+/*  Onboarding step 5 — empty inbox                                    */
+/* ------------------------------------------------------------------ */
+
+/** Empty-inbox card: ink border, 8px radius, offset shadow, centered. */
+export const onbEmptyClasses =
+	"p-9 text-center bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border " +
+	"rounded-[var(--radius-lg)] shadow-[var(--shadow)]";
+
+/** 64px yellow icon box. */
+export const onbEmptyBoxClasses =
+	"inline-flex items-center justify-center w-16 h-16 mb-3 bg-main " +
+	"border-[length:var(--border-w)] border-solid border-border " +
+	"rounded-[var(--radius-lg)] shadow-[var(--shadow-sm)]";
+
+/** Bungee empty heading (non-uppercase). */
+export const onbEmptyHeadingClasses =
+	"font-[family-name:var(--font-display)] text-[20px] normal-case tracking-[-0.01em] mb-1";
+
+/** Muted empty body copy. */
+export const onbEmptyBodyClasses =
+	"text-muted text-[13px] leading-[1.5] max-w-[360px] mx-auto";

@@ -17,7 +17,23 @@ import type { Component } from "solid-js";
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
 import { ONBOARDING_STEPS } from "../../lib/atlas/app_state";
-import { buttonClasses } from "../../lib/atlas/component_classes";
+import {
+	buttonClasses,
+	gap8Classes,
+	onboardingBodyClasses,
+	onboardingCardClasses,
+	onboardingClasses,
+	onboardingFootClasses,
+	onboardingHeadClasses,
+	onboardingLinkClasses,
+	onboardingProgressClasses,
+	onboardingSubClasses,
+	onboardingTitleClasses,
+	rowClasses,
+	stepDotActiveClasses,
+	stepDotClasses,
+	stepDotsClasses,
+} from "../../lib/atlas/component_classes";
 import {
 	resetOnboardingDirection,
 	startOnboardingTransition,
@@ -57,20 +73,22 @@ const Onboarding: Component = () => {
 	});
 
 	return (
-		<div class="atlas-onboarding" data-screen-label="Onboarding">
-			<div class="atlas-onboarding-card">
-				<div class="atlas-onboarding-head">
-					<div class="atlas-row atlas-gap-8">
+		<div class={onboardingClasses} data-screen-label="Onboarding">
+			{/* `atlas-onboarding-card` is the surviving marker hook for the global
+			    directional view-transition slide (styles.css). */}
+			<div class={cn("atlas-onboarding-card", onboardingCardClasses)}>
+				<div class={onboardingHeadClasses}>
+					<div class={cn(rowClasses, gap8Classes)}>
 						<Logo markSize={24} />
-						<span class="atlas-onb-progress">
+						<span class={onboardingProgressClasses}>
 							Get started — {step() + 1}/{total}
 						</span>
 					</div>
 					<Link
 						to="/inbox"
 						class={cn(
-							"atlas-btn is-ghost is-sm",
 							buttonClasses({ variant: "ghost", size: "sm" }),
+							onboardingLinkClasses,
 						)}
 						data-action="skip"
 					>
@@ -78,19 +96,16 @@ const Onboarding: Component = () => {
 					</Link>
 				</div>
 
-				<div class="atlas-onboarding-body">
-					<h1 class="atlas-onb-title">{data().title}</h1>
-					<p class="atlas-onb-sub">{data().sub}</p>
+				<div class={onboardingBodyClasses}>
+					<h1 class={onboardingTitleClasses}>{data().title}</h1>
+					<p class={onboardingSubClasses}>{data().sub}</p>
 					<OnboardingVisualPanel visual={data().visual} />
 				</div>
 
-				<div class="atlas-onboarding-foot">
+				<div class={onboardingFootClasses}>
 					<button
 						type="button"
-						class={cn(
-							"atlas-btn is-sm",
-							buttonClasses({ size: "sm", disabled: step() === 0 }),
-						)}
+						class={buttonClasses({ size: "sm", disabled: step() === 0 })}
 						disabled={step() === 0}
 						aria-disabled={step() === 0}
 						data-action="back"
@@ -99,11 +114,14 @@ const Onboarding: Component = () => {
 						<AtlasIcon name="back" size={14} /> Back
 					</button>
 
-					<div class="atlas-step-dots">
+					<div class={stepDotsClasses}>
 						<For each={ONBOARDING_STEPS}>
 							{(_, i) => (
 								<div
-									class={cn("atlas-step-dot", i() === step() && "is-active")}
+									class={cn(
+										stepDotClasses,
+										i() === step() && stepDotActiveClasses,
+									)}
 								/>
 							)}
 						</For>
@@ -115,8 +133,8 @@ const Onboarding: Component = () => {
 							<Link
 								to="/inbox"
 								class={cn(
-									"atlas-btn is-primary is-sm",
 									buttonClasses({ variant: "primary", size: "sm" }),
+									onboardingLinkClasses,
 								)}
 								data-action="open"
 							>
@@ -127,10 +145,7 @@ const Onboarding: Component = () => {
 					>
 						<button
 							type="button"
-							class={cn(
-								"atlas-btn is-primary is-sm",
-								buttonClasses({ variant: "primary", size: "sm" }),
-							)}
+							class={buttonClasses({ variant: "primary", size: "sm" })}
 							data-action="next"
 							onClick={() => goToStep(step() + 1)}
 						>

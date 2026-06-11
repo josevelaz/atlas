@@ -23,7 +23,33 @@ import {
 	answerQuery,
 } from "../../lib/atlas/assistant_responses";
 import { useAtlasActions } from "../../lib/atlas/atlas_state";
-import { overlayHeadClasses } from "../../lib/atlas/component_classes";
+import {
+	assistantCardClasses,
+	assistantChipClasses,
+	assistantExampleClasses,
+	assistantExamplesClasses,
+	assistantExamplesLabelClasses,
+	assistantExamplesListClasses,
+	assistantFootClasses,
+	assistantFormClasses,
+	assistantHeadClasses,
+	assistantInputClasses,
+	assistantTitleClasses,
+	assistantTranscriptClasses,
+	chatBubbleAiClasses,
+	chatBubbleUserClasses,
+	chatBusyClasses,
+	chatTextClasses,
+	citeBodyClasses,
+	citeClasses,
+	citeFromClasses,
+	citeNumClasses,
+	citeSubjectClasses,
+	citeTimeClasses,
+	gap8Classes,
+	overlayHeadClasses,
+	rowClasses,
+} from "../../lib/atlas/component_classes";
 import { atlasCiteLinkFor } from "../../lib/atlas/nav_links";
 import type {
 	AssistantCitation,
@@ -77,6 +103,10 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 
 	const citeLink = (c: AssistantCitation) => atlasCiteLinkFor(c.id);
 
+	/** Resolve a chat bubble's Tailwind class by message role. */
+	const bubbleClass = (role: AssistantMessage["role"]) =>
+		role === "user" ? chatBubbleUserClasses : chatBubbleAiClasses;
+
 	/**
 	 * Focus the cited thread through the shared store, then close the overlay.
 	 * `select(view, id)` is a no-op for the Screener (no per-row selection), so
@@ -92,19 +122,14 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 		<Dialog
 			open={props.open}
 			onClose={props.onClose}
-			class="atlas-assistant-card"
+			class={assistantCardClasses}
 			aria-label="Ask Atlas"
 		>
-			<div
-				class={cn(
-					"atlas-overlay-head atlas-assistant-head",
-					overlayHeadClasses,
-				)}
-			>
-				<div class="atlas-row atlas-gap-8">
+			<div class={cn(overlayHeadClasses, assistantHeadClasses)}>
+				<div class={cn(rowClasses, gap8Classes)}>
 					<AtlasIcon name="sparkle" size={18} color="#fff" stroke={2.5} />
-					<h3 class="atlas-assistant-title">Ask Atlas</h3>
-					<span class="atlas-assistant-chip">SEMANTIC SEARCH</span>
+					<h3 class={assistantTitleClasses}>Ask Atlas</h3>
+					<span class={assistantChipClasses}>SEMANTIC SEARCH</span>
 				</div>
 				<Button
 					size="sm"
@@ -118,23 +143,23 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 				</Button>
 			</div>
 
-			<div class="atlas-assistant-transcript">
+			<div class={assistantTranscriptClasses}>
 				<For each={messages()}>
 					{(m) => (
-						<div class={`atlas-chat-bubble is-${m.role}`} data-role={m.role}>
-							<div class="atlas-chat-text">{m.text}</div>
+						<div class={bubbleClass(m.role)} data-role={m.role}>
+							<div class={chatTextClasses}>{m.text}</div>
 							<For each={m.cites}>
 								{(c) => (
 									<Show
 										when={citeLink(c)}
 										fallback={
-											<div class="atlas-cite" data-cite={c.id}>
-												<span class="atlas-cite-num">{c.num}</span>
-												<div class="atlas-cite-body">
-													<div class="atlas-cite-from">{c.from}</div>
-													<div class="atlas-cite-subject">{c.subject}</div>
+											<div class={citeClasses} data-cite={c.id}>
+												<span class={citeNumClasses}>{c.num}</span>
+												<div class={citeBodyClasses}>
+													<div class={citeFromClasses}>{c.from}</div>
+													<div class={citeSubjectClasses}>{c.subject}</div>
 												</div>
-												<span class="atlas-cite-time">{c.time}</span>
+												<span class={citeTimeClasses}>{c.time}</span>
 											</div>
 										}
 									>
@@ -142,16 +167,16 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 											<Link
 												to={link().to}
 												search={link().search}
-												class="atlas-cite"
+												class={citeClasses}
 												data-cite={c.id}
 												onClick={() => onCiteClick(c)}
 											>
-												<span class="atlas-cite-num">{c.num}</span>
-												<div class="atlas-cite-body">
-													<div class="atlas-cite-from">{c.from}</div>
-													<div class="atlas-cite-subject">{c.subject}</div>
+												<span class={citeNumClasses}>{c.num}</span>
+												<div class={citeBodyClasses}>
+													<div class={citeFromClasses}>{c.from}</div>
+													<div class={citeSubjectClasses}>{c.subject}</div>
 												</div>
-												<span class="atlas-cite-time">{c.time}</span>
+												<span class={citeTimeClasses}>{c.time}</span>
 											</Link>
 										)}
 									</Show>
@@ -162,18 +187,18 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 				</For>
 
 				<Show when={busy()}>
-					<div class="atlas-chat-bubble is-ai atlas-chat-busy">Thinking…</div>
+					<div class={chatBusyClasses}>Thinking…</div>
 				</Show>
 
 				<Show when={showExamples()}>
-					<div class="atlas-assistant-examples">
-						<div class="atlas-assistant-examples-label">Try</div>
-						<div class="atlas-assistant-examples-list">
+					<div class={assistantExamplesClasses}>
+						<div class={assistantExamplesLabelClasses}>Try</div>
+						<div class={assistantExamplesListClasses}>
 							<For each={ASSISTANT_EXAMPLES}>
 								{(example) => (
 									<Button
 										size="sm"
-										class="atlas-assistant-example"
+										class={assistantExampleClasses}
 										onClick={() => ask(example)}
 									>
 										{example}
@@ -185,10 +210,13 @@ const AssistantDialog: Component<AssistantDialogProps> = (props) => {
 				</Show>
 			</div>
 
-			<div class="atlas-assistant-foot">
-				<form class="atlas-row atlas-gap-8" onSubmit={handleSubmit}>
+			<div class={assistantFootClasses}>
+				<form
+					class={cn(rowClasses, gap8Classes, assistantFormClasses)}
+					onSubmit={handleSubmit}
+				>
 					<Input
-						class="atlas-assistant-input"
+						class={assistantInputClasses}
 						placeholder="Ask anything about your synced mail…"
 						value={query()}
 						onInput={(e) => setQuery(e.currentTarget.value)}

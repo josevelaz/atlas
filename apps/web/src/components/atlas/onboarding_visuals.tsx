@@ -8,7 +8,45 @@
 
 import type { Component } from "solid-js";
 import { For, Match, Switch } from "solid-js";
-import { buttonClasses } from "../../lib/atlas/component_classes";
+import {
+	buttonClasses,
+	onbAiBodyClasses,
+	onbAiClasses,
+	onbAiExtractedClasses,
+	onbAiHeadClasses,
+	onbCatClasses,
+	onbCatDescClasses,
+	onbCatNameClasses,
+	onbCatsClasses,
+	onbCatTileClasses,
+	onbConnectBtnClasses,
+	onbConnectClasses,
+	onbConnectGridClasses,
+	onbConnectHeadClasses,
+	onbConnectNameClasses,
+	onbConnectSubClasses,
+	onbConnectTextClasses,
+	onbConnectTileClasses,
+	onbEmptyBodyClasses,
+	onbEmptyBoxClasses,
+	onbEmptyClasses,
+	onbEmptyHeadingClasses,
+	onbExtractClasses,
+	onbExtractDotClasses,
+	onbExtractDueClasses,
+	onbExtractLabelClasses,
+	onbScreenerAcceptClasses,
+	onbScreenerActionsClasses,
+	onbScreenerAddrClasses,
+	onbScreenerAvatarClasses,
+	onbScreenerBodyClasses,
+	onbScreenerClasses,
+	onbScreenerHeadClasses,
+	onbScreenerNameClasses,
+	onbScreenerPreviewClasses,
+	onbScreenerRejectClasses,
+	onbScreenerSubjectClasses,
+} from "../../lib/atlas/component_classes";
 import type {
 	OnboardingCategoryRow,
 	OnboardingExtractedRow,
@@ -32,21 +70,21 @@ function ConnectCard(props: ConnectCardProps) {
 		props.provider === "Google" ? "var(--color-main)" : "var(--color-ai)";
 	const icon = () => (props.provider === "Google" ? "google" : "outlook");
 	return (
-		<div class="atlas-onb-connect">
-			<div class="atlas-onb-connect-head">
-				<span class="atlas-onb-connect-tile" style={{ background: tile() }}>
+		<div class={onbConnectClasses}>
+			<div class={onbConnectHeadClasses}>
+				<span class={onbConnectTileClasses} style={{ background: tile() }}>
 					<AtlasIcon name={icon()} size={20} color="#fff" stroke={2.5} />
 				</span>
-				<div class="atlas-onb-connect-text">
-					<div class="atlas-onb-connect-name">Connect {props.provider}</div>
-					<div class="atlas-onb-connect-sub">{props.sub}</div>
+				<div class={onbConnectTextClasses}>
+					<div class={onbConnectNameClasses}>Connect {props.provider}</div>
+					<div class={onbConnectSubClasses}>{props.sub}</div>
 				</div>
 			</div>
 			<button
 				type="button"
 				class={cn(
-					"atlas-btn is-primary is-sm atlas-onb-connect-btn",
 					buttonClasses({ variant: "primary", size: "sm" }),
+					onbConnectBtnClasses,
 				)}
 			>
 				Connect with OAuth
@@ -57,7 +95,7 @@ function ConnectCard(props: ConnectCardProps) {
 
 function ConnectVisual() {
 	return (
-		<div class="atlas-onb-connect-grid">
+		<div class={onbConnectGridClasses}>
 			<ConnectCard provider="Google" sub="Gmail · Google Workspace" />
 			<ConnectCard provider="Microsoft" sub="Outlook · Microsoft 365" />
 		</div>
@@ -70,21 +108,21 @@ function ConnectVisual() {
 
 function ScreenerCardVisual(props: { card: OnboardingScreenerCard }) {
 	return (
-		<div class="atlas-onb-screener">
-			<div class="atlas-onb-screener-head">
-				<div class="atlas-onb-screener-avatar">{props.card.initials}</div>
+		<div class={onbScreenerClasses}>
+			<div class={onbScreenerHeadClasses}>
+				<div class={onbScreenerAvatarClasses}>{props.card.initials}</div>
 				<div>
-					<div class="atlas-onb-screener-name">{props.card.name}</div>
-					<div class="atlas-onb-screener-addr">{props.card.addr}</div>
+					<div class={onbScreenerNameClasses}>{props.card.name}</div>
+					<div class={onbScreenerAddrClasses}>{props.card.addr}</div>
 				</div>
 			</div>
-			<div class="atlas-onb-screener-body">
-				<div class="atlas-onb-screener-subject">{props.card.subject}</div>
-				<div class="atlas-onb-screener-preview">{props.card.preview}</div>
+			<div class={onbScreenerBodyClasses}>
+				<div class={onbScreenerSubjectClasses}>{props.card.subject}</div>
+				<div class={onbScreenerPreviewClasses}>{props.card.preview}</div>
 			</div>
-			<div class="atlas-onb-screener-actions">
-				<div class="atlas-onb-screener-accept">ACCEPT</div>
-				<div class="atlas-onb-screener-reject">REJECT</div>
+			<div class={onbScreenerActionsClasses}>
+				<div class={onbScreenerAcceptClasses}>ACCEPT</div>
+				<div class={onbScreenerRejectClasses}>REJECT</div>
 			</div>
 		</div>
 	);
@@ -96,13 +134,13 @@ function ScreenerCardVisual(props: { card: OnboardingScreenerCard }) {
 
 function CatRow(props: { row: OnboardingCategoryRow }) {
 	return (
-		<div class="atlas-onb-cat">
-			<span class="atlas-onb-cat-tile" style={{ background: props.row.color }}>
+		<div class={onbCatClasses}>
+			<span class={onbCatTileClasses} style={{ background: props.row.color }}>
 				<AtlasIcon name={props.row.icon} size={22} stroke={2.5} />
 			</span>
 			<div>
-				<div class="atlas-onb-cat-name">{props.row.name}</div>
-				<div class="atlas-onb-cat-desc">{props.row.desc}</div>
+				<div class={onbCatNameClasses}>{props.row.name}</div>
+				<div class={onbCatDescClasses}>{props.row.desc}</div>
 			</div>
 		</div>
 	);
@@ -110,7 +148,7 @@ function CatRow(props: { row: OnboardingCategoryRow }) {
 
 function CategoriesVisual(props: { rows: OnboardingCategoryRow[] }) {
 	return (
-		<div class="atlas-onb-cats">
+		<div class={onbCatsClasses}>
 			<For each={props.rows}>{(row) => <CatRow row={row} />}</For>
 		</div>
 	);
@@ -122,13 +160,13 @@ function CategoriesVisual(props: { rows: OnboardingCategoryRow[] }) {
 
 function ExtractedRow(props: { row: OnboardingExtractedRow }) {
 	return (
-		<div class="atlas-onb-extract">
+		<div class={onbExtractClasses}>
 			<span
-				class="atlas-onb-extract-dot"
+				class={onbExtractDotClasses}
 				style={{ background: props.row.color }}
 			/>
-			<span class="atlas-onb-extract-label">{props.row.label}</span>
-			<span class="atlas-onb-extract-due">{props.row.due}</span>
+			<span class={onbExtractLabelClasses}>{props.row.label}</span>
+			<span class={onbExtractDueClasses}>{props.row.due}</span>
 		</div>
 	);
 }
@@ -138,13 +176,13 @@ function AiSummaryVisual(props: {
 	extracted: OnboardingExtractedRow[];
 }) {
 	return (
-		<div class="atlas-onb-ai">
-			<div class="atlas-onb-ai-head">
+		<div class={onbAiClasses}>
+			<div class={onbAiHeadClasses}>
 				<AtlasIcon name="sparkle" size={14} color="#fff" stroke={2.5} /> AI
 				summary
 			</div>
-			<div class="atlas-onb-ai-body">{props.summary}</div>
-			<div class="atlas-onb-ai-extracted">
+			<div class={onbAiBodyClasses}>{props.summary}</div>
+			<div class={onbAiExtractedClasses}>
 				<For each={props.extracted}>{(row) => <ExtractedRow row={row} />}</For>
 			</div>
 		</div>
@@ -157,12 +195,12 @@ function AiSummaryVisual(props: {
 
 function EmptyInboxVisual(props: { heading: string; body: string }) {
 	return (
-		<div class="atlas-onb-empty">
-			<div class="atlas-onb-empty-box">
+		<div class={onbEmptyClasses}>
+			<div class={onbEmptyBoxClasses}>
 				<AtlasIcon name="inbox" size={30} stroke={2.5} />
 			</div>
-			<h3 class="atlas-onb-empty-heading">{props.heading}</h3>
-			<p class="atlas-onb-empty-body">{props.body}</p>
+			<h3 class={onbEmptyHeadingClasses}>{props.heading}</h3>
+			<p class={onbEmptyBodyClasses}>{props.body}</p>
 		</div>
 	);
 }
