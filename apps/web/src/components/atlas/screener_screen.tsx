@@ -16,6 +16,13 @@ import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
 import { pendingScreener } from "../../lib/atlas/app_state";
 import { useAtlasActions, useAtlasState } from "../../lib/atlas/atlas_state";
+import {
+	screenerInnerClasses,
+	screenerIntroClasses,
+	screenerScrollClasses,
+	screenerSubClasses,
+	screenerTitleClasses,
+} from "../../lib/atlas/component_classes";
 import { EmptyState } from "./empty_state";
 import { ScreenerCard } from "./screener_card";
 
@@ -28,7 +35,7 @@ const ScreenerScreen: Component = () => {
 		<Show
 			when={pending().length > 0}
 			fallback={
-				<div class="atlas-screener-scroll" data-screener-state="clear">
+				<div class={screenerScrollClasses} data-screener-state="clear">
 					<EmptyState
 						icon="check"
 						iconSize={40}
@@ -39,11 +46,11 @@ const ScreenerScreen: Component = () => {
 				</div>
 			}
 		>
-			<div class="atlas-screener-scroll" data-screener-state="pending">
-				<div class="atlas-screener-inner">
-					<div class="atlas-screener-intro">
-						<h2 class="atlas-screener-title">The Screener</h2>
-						<p class="atlas-screener-sub">
+			<div class={screenerScrollClasses} data-screener-state="pending">
+				<div class={screenerInnerClasses}>
+					<div class={screenerIntroClasses}>
+						<h2 class={screenerTitleClasses}>The Screener</h2>
+						<p class={screenerSubClasses}>
 							First-time senders. Decide once — Atlas routes the rest.
 						</p>
 					</div>

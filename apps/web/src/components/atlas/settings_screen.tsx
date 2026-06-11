@@ -14,7 +14,19 @@
 
 import type { Component } from "solid-js";
 import { createSignal, For } from "solid-js";
-import { Badge, Button, Toggle } from "../ui/index";
+import {
+	gap8Classes,
+	rowClasses,
+	settingsCardClasses,
+	settingsInnerClasses,
+	settingsSectionClasses,
+	settingsTitleClasses,
+	threadBodyClasses,
+	threadClasses,
+	threadToolbarClasses,
+} from "../../lib/atlas/component_classes";
+import { cn } from "../../lib/utils";
+import { Badge, Button, Card, Toggle } from "../ui/index";
 import { SettingsRow } from "./settings_row";
 
 /** A toggle setting's initial state + descriptive copy (verbatim from proto). */
@@ -100,16 +112,16 @@ const ToggleSettingRow: Component<{ setting: ToggleSetting }> = (props) => {
 
 const SettingsScreen: Component = () => {
 	return (
-		<div class="atlas-thread" data-screen-label="Settings">
-			<div class="atlas-thread-toolbar">
-				<h2 class="atlas-settings-title">Settings</h2>
+		<div class={threadClasses} data-screen-label="Settings">
+			<div class={threadToolbarClasses}>
+				<h2 class={settingsTitleClasses}>Settings</h2>
 			</div>
 
-			<div class="atlas-thread-body">
-				<div class="atlas-settings-inner">
+			<div class={threadBodyClasses}>
+				<div class={settingsInnerClasses}>
 					{/* ---- Connected accounts ---- */}
-					<h3 class="atlas-settings-section">Connected accounts</h3>
-					<div class="atlas-card atlas-settings-card">
+					<h3 class={settingsSectionClasses}>Connected accounts</h3>
+					<Card class={settingsCardClasses}>
 						<SettingsRow
 							icon="google"
 							iconSize={24}
@@ -117,7 +129,7 @@ const SettingsScreen: Component = () => {
 							subMono
 							sub="Google Workspace · synced 24s ago · 142 threads"
 							control={
-								<div class="atlas-row atlas-gap-8">
+								<div class={cn(rowClasses, gap8Classes)}>
 									<Badge variant="paper">Active</Badge>
 									<Button size="sm">Disconnect</Button>
 								</div>
@@ -142,23 +154,23 @@ const SettingsScreen: Component = () => {
 							sub="Gmail, Google Workspace, Outlook, or Microsoft 365"
 							control={<Button size="sm">Connect</Button>}
 						/>
-					</div>
+					</Card>
 
 					{/* ---- AI & Privacy ---- */}
-					<h3 class="atlas-settings-section">AI &amp; Privacy</h3>
-					<div class="atlas-card atlas-settings-card">
+					<h3 class={settingsSectionClasses}>AI &amp; Privacy</h3>
+					<Card class={settingsCardClasses}>
 						<For each={AI_SETTINGS}>
 							{(setting) => <ToggleSettingRow setting={setting} />}
 						</For>
-					</div>
+					</Card>
 
 					{/* ---- Notifications ---- */}
-					<h3 class="atlas-settings-section">Notifications</h3>
-					<div class="atlas-card atlas-settings-card">
+					<h3 class={settingsSectionClasses}>Notifications</h3>
+					<Card class={settingsCardClasses}>
 						<For each={NOTIFICATION_SETTINGS}>
 							{(setting) => <ToggleSettingRow setting={setting} />}
 						</For>
-					</div>
+					</Card>
 				</div>
 			</div>
 		</div>

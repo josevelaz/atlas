@@ -11,6 +11,22 @@
 // flow into the inbox/feed/paper lists without a URL change.
 
 import type { Component } from "solid-js";
+import {
+	screenerAcceptClasses,
+	screenerActionsClasses,
+	screenerAddrClasses,
+	screenerAiClasses,
+	screenerCardClasses,
+	screenerHeadClasses,
+	screenerHintClasses,
+	screenerNameClasses,
+	screenerPillClasses,
+	screenerPreviewClasses,
+	screenerRejectClasses,
+	screenerSubjectClasses,
+	screenerTimeClasses,
+	screenerWhoClasses,
+} from "../../lib/atlas/component_classes";
 import type { AiCategory, ScreenerItem } from "../../lib/atlas/types";
 import { AtlasIcon } from "./atlas_icon";
 import { AtlasAvatar } from "./mail_row";
@@ -28,31 +44,31 @@ const ScreenerCard: Component<ScreenerCardProps> = (props) => {
 	const category = () => item().aiCategory.toUpperCase();
 
 	return (
-		<div class="atlas-screener-card" data-screener-id={item().id}>
-			<div class="atlas-screener-head">
+		<div class={screenerCardClasses} data-screener-id={item().id}>
+			<div class={screenerHeadClasses}>
 				<AtlasAvatar name={item().from} size="lg" />
-				<div style={{ flex: 1, "min-width": 0 }}>
-					<div class="atlas-screener-name">{item().from}</div>
-					<div class="atlas-screener-addr">{item().addr}</div>
+				<div class={screenerWhoClasses}>
+					<div class={screenerNameClasses}>{item().from}</div>
+					<div class={screenerAddrClasses}>{item().addr}</div>
 				</div>
-				<div class="atlas-screener-time">{item().time}</div>
+				<div class={screenerTimeClasses}>{item().time}</div>
 			</div>
 
-			<div class="atlas-screener-preview">
-				<div class="atlas-screener-subject">{item().subject}</div>
+			<div class={screenerPreviewClasses}>
+				<div class={screenerSubjectClasses}>{item().subject}</div>
 				<div>{item().preview}</div>
 			</div>
 
-			<div class="atlas-screener-ai">
+			<div class={screenerAiClasses}>
 				<AtlasIcon name="sparkle" size={14} color="#fff" stroke={2.5} />
-				<span style={{ flex: 1 }}>{item().aiHint}</span>
-				<span class="atlas-screener-pill">{category()}</span>
+				<span class={screenerHintClasses}>{item().aiHint}</span>
+				<span class={screenerPillClasses}>{category()}</span>
 			</div>
 
-			<div class="atlas-screener-actions">
+			<div class={screenerActionsClasses}>
 				<button
 					type="button"
-					class="atlas-screener-accept"
+					class={screenerAcceptClasses}
 					data-action="accept"
 					data-category={item().aiCategory}
 					onClick={() => props.onAccept(item().id, item().aiCategory)}
@@ -62,7 +78,7 @@ const ScreenerCard: Component<ScreenerCardProps> = (props) => {
 				</button>
 				<button
 					type="button"
-					class="atlas-screener-reject"
+					class={screenerRejectClasses}
 					data-action="reject"
 					onClick={() => props.onReject(item().id)}
 				>

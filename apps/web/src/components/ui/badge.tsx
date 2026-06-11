@@ -51,8 +51,10 @@ const Badge: Component<BadgeProps> = (raw_props) => {
 
 	return (
 		<span
-			// `atlas-badge` is a selector hook for the app-shell retro pass
-			// (e.g. `.atlas-app .atlas-tasks-col-head .atlas-badge` rotation).
+			// `atlas-badge` is a non-styling marker class kept as a stable hook
+			// for tests / future contextual styling; all badge styling lives in
+			// `badgeClasses`. Per-call tilt (e.g. the Tasks & Dates column heads)
+			// is passed via `class`.
 			class={cn(
 				"atlas-badge",
 				badgeClasses({

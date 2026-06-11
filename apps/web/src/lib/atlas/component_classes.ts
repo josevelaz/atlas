@@ -535,3 +535,369 @@ export const emptyHeadingClasses =
 
 /** Muted body copy under the heading. */
 export const emptyBodyClasses = "text-muted max-w-[320px] leading-[1.5]";
+
+/* ================================================================== */
+/*  Thread / message / AI-summary / screener / tasks / settings        */
+/*                                                                    */
+/*  Main content-screen styling migrated out of the hand-written      */
+/*  `.atlas-thread*` / `.atlas-message*` / `.atlas-ai-summary*` /     */
+/*  `.atlas-screener*` / `.atlas-tasks*` / `.atlas-task*` /           */
+/*  `.atlas-settings*` CSS selectors into Tailwind utility strings    */
+/*  over the same design tokens. The in-app retro flourishes that      */
+/*  used to live in `.atlas-app …` descendant rules (Bungee screener   */
+/*  action bars, VT323 pill, colored card shadows, col-head badge      */
+/*  tilt) are baked directly into the strings below so no contextual   */
+/*  selector pass remains. Responsive tablet/mobile behavior (former   */
+/*  `@media (max-width: 1100px|860px|560px)` rules for these regions)  */
+/*  is expressed with arbitrary `max-[…]` variants.                    */
+/* ================================================================== */
+
+/* ------------------------------------------------------------------ */
+/*  Thread pane                                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Thread/right-pane column body. Calm canvas, flex column. On mobile
+ * (≤860px) it keeps a tall min-height so the stacked region stays usable.
+ * Also reused by the Tasks & Dates and Settings full-width regions, which
+ * render their own toolbar + body inside it.
+ */
+export const threadClasses =
+	"flex-1 flex flex-col min-h-0 bg-background max-[860px]:min-h-[60vh]";
+
+/**
+ * Thread toolbar: archive/trash/set-aside/reply-later + prev/next, divided
+ * from the body by a 3px ink rule. Wraps at ≤1100px so the packed control
+ * groups stay in-bounds inside the narrowed pane.
+ */
+export const threadToolbarClasses =
+	"flex items-center justify-between gap-2 px-5 py-3 " +
+	"border-b-[3px] border-solid border-border " +
+	"max-[1100px]:flex-wrap max-[1100px]:gap-y-2";
+
+/** Scrollable thread body; overflow goes visible in the mobile stack. */
+export const threadBodyClasses =
+	"flex-1 overflow-y-auto px-6 pt-5 pb-10 max-[860px]:overflow-visible";
+
+/** Display-face thread subject heading. */
+export const threadTitleClasses =
+	"font-[family-name:var(--font-display)] text-[26px] leading-[1.2] mb-2.5 " +
+	"uppercase tracking-[0.02em]";
+
+/** Thin vertical ink divider between the thread toolbar button groups. */
+export const threadDividerClasses = "w-px h-5 bg-border";
+
+/* ------------------------------------------------------------------ */
+/*  Message card                                                       */
+/* ------------------------------------------------------------------ */
+
+/** Message card: surface fill, ink border, yellow-keyed hard offset shadow. */
+export const messageClasses =
+	"mb-4 bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)] " +
+	"shadow-[var(--shadow-x)_var(--shadow-y)_0_0_var(--color-main)]";
+
+/** Message header: avatar · name/addr stack · date, divided by an ink rule. */
+export const messageHeadClasses =
+	"flex items-center gap-3 px-4 py-3 " +
+	"border-b-[length:var(--border-w)] border-solid border-border";
+
+/** Sender name/addr stack (fills the flexible middle column). */
+export const messageWhoClasses = "flex-1 min-w-0";
+
+/** Sender display name. */
+export const messageNameClasses = "font-extrabold text-[14px] leading-normal";
+
+/** VT323 sender address. */
+export const messageAddrClasses =
+	"font-[family-name:'VT323',var(--font-mono)] text-[15px] leading-normal text-muted";
+
+/** VT323 message timestamp. */
+export const messageDateClasses =
+	"font-[family-name:'VT323',var(--font-mono)] text-[15px] leading-normal text-muted whitespace-nowrap";
+
+/** Message body copy block (paragraphs spaced via `messageParaClasses`). */
+export const messageBodyClasses = "px-5 py-[18px] text-[14px] leading-[1.55]";
+
+/** A message body paragraph: 12px bottom gap, flush on the last. */
+export const messageParaClasses = "mb-3 last:mb-0";
+
+/* ------------------------------------------------------------------ */
+/*  AI summary                                                         */
+/* ------------------------------------------------------------------ */
+
+/** Electric-blue AI summary container (the machine's voice), ink border + yellow shadow. */
+export const aiSummaryClasses =
+	"mb-4 overflow-hidden bg-ai text-white " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)] " +
+	"shadow-[var(--shadow-x)_var(--shadow-y)_0_0_var(--color-main)]";
+
+/**
+ * AI summary header bar. Uppercase mono caps with a leading ★ glyph
+ * (former `::before`) and a trailing meta count pushed to the right.
+ */
+export const aiSummaryHeadClasses =
+	"flex items-center gap-2 px-[14px] py-2 whitespace-nowrap " +
+	"border-b-[length:var(--border-w)] border-solid border-border " +
+	"font-extrabold text-[12px] tracking-[0.04em] uppercase " +
+	"before:content-['★'] before:text-[10px] before:mr-0.5 before:opacity-70";
+
+/** Trailing "x messages · y tasks · z dates" meta on the AI head. */
+export const aiSummaryMetaClasses =
+	"ml-auto font-semibold text-[11px] opacity-85";
+
+/** White summary text body inside the blue card. */
+export const aiSummaryTextClasses =
+	"px-4 py-[14px] bg-white text-black text-[13px] leading-[1.55]";
+
+/** White "EXTRACTED" panel under the summary text. */
+export const aiExtractedClasses =
+	"flex flex-col gap-2 px-4 py-3 bg-white text-black " +
+	"border-t-[length:var(--border-w)] border-solid border-border";
+
+/** Uppercase mono "EXTRACTED" label. */
+export const aiExtractedLabelClasses =
+	"font-[family-name:var(--font-mono)] text-[10px] font-extrabold tracking-[0.06em] uppercase text-muted";
+
+/** One extracted task/date row: coded icon tile · label · due. */
+export const extractItemClasses =
+	"grid grid-cols-[22px_1fr_auto] items-center gap-2.5 px-2.5 py-2 text-[12px] " +
+	"bg-background border-[length:var(--border-w)] border-dashed border-border rounded-[var(--radius)]";
+
+/** Coded 22px icon tile inside an extract row (task = mint, date = yellow). */
+export const extractIconClasses = cva(
+	"inline-flex items-center justify-center w-[22px] h-[22px] " +
+		"border-[length:var(--border-w)] border-solid border-border rounded-[4px]",
+	{
+		variants: {
+			kind: {
+				task: "bg-paper",
+				date: "bg-feed",
+			},
+		},
+		defaultVariants: { kind: "task" },
+	},
+);
+
+/** VT323 due descriptor at the right of an extract row. */
+export const extractDueClasses =
+	"font-[family-name:'VT323',var(--font-mono)] text-[11px] text-muted whitespace-nowrap";
+
+/* ------------------------------------------------------------------ */
+/*  Screener                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Scrollable screener region (fills the list+pane span, calm canvas). */
+export const screenerScrollClasses =
+	"flex-1 min-h-0 overflow-y-auto bg-background max-[860px]:overflow-visible";
+
+/** Centered screener column. Shrinks padding at mobile widths. */
+export const screenerInnerClasses =
+	"w-full max-w-[720px] mx-auto px-6 pt-5 pb-[60px] " +
+	"max-[560px]:max-w-full max-[560px]:px-3 max-[560px]:pt-4 max-[560px]:pb-12";
+
+/** Screener intro block (title + sub). */
+export const screenerIntroClasses = "mb-5";
+
+/** Display-face "The Screener" title. */
+export const screenerTitleClasses =
+	"font-[family-name:var(--font-display)] text-[28px] leading-normal mb-1 " +
+	"uppercase tracking-[0.02em] max-[560px]:text-[24px]";
+
+/** Muted screener sub-copy. */
+export const screenerSubClasses = "text-muted text-[13px] leading-[1.5]";
+
+/** One screener card: surface fill, ink border, 8px radius, yellow-keyed shadow. */
+export const screenerCardClasses =
+	"mb-[18px] overflow-hidden bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius-lg)] " +
+	"shadow-[var(--shadow-x)_var(--shadow-y)_0_0_var(--color-main)]";
+
+/** Screener card head: avatar · name/addr stack · time, divided by an ink rule. */
+export const screenerHeadClasses =
+	"flex items-center gap-3.5 px-[18px] py-4 " +
+	"border-b-[length:var(--border-w)] border-solid border-border";
+
+/** Sender name/addr stack inside the screener head. */
+export const screenerWhoClasses = "flex-1 min-w-0";
+
+/** Bold sender name (single-line ellipsis). */
+export const screenerNameClasses =
+	"font-black text-[18px] overflow-hidden text-ellipsis whitespace-nowrap";
+
+/** Mono sender address (single-line ellipsis). */
+export const screenerAddrClasses =
+	"font-[family-name:var(--font-mono)] text-[12px] text-muted overflow-hidden text-ellipsis whitespace-nowrap";
+
+/** Mono timestamp on the screener head. */
+export const screenerTimeClasses =
+	"font-[family-name:var(--font-mono)] text-[12px] text-muted shrink-0";
+
+/**
+ * Clipped preview block with a fade-out gradient at the bottom (former
+ * `::after`). Capped at 110px tall.
+ */
+export const screenerPreviewClasses =
+	"relative px-[18px] py-[14px] text-[13px] leading-[1.5] max-h-[110px] overflow-hidden " +
+	"after:content-[''] after:absolute after:inset-x-0 after:bottom-0 after:h-10 " +
+	"after:bg-[linear-gradient(to_bottom,transparent,var(--color-secondary-background))]";
+
+/** Bold subject line above the preview body. */
+export const screenerSubjectClasses = "font-extrabold mb-1.5";
+
+/** Electric-blue AI recommendation strip (hint + category pill). */
+export const screenerAiClasses =
+	"flex items-center gap-2 px-4 py-2 bg-ai text-white text-[12px] font-bold " +
+	"border-t-[length:var(--border-w)] border-solid border-border";
+
+/** Hint copy (fills the strip). */
+export const screenerHintClasses = "flex-1";
+
+/** White VT323 category pill at the right of the AI strip. */
+export const screenerPillClasses =
+	"bg-white text-black px-2 py-0.5 rounded-full border-[1.5px] border-solid border-black " +
+	"font-[family-name:'VT323',var(--font-mono)] text-[13px] font-extrabold";
+
+/** Split Accept / Reject action grid. Stacks to one column at ≤560px. */
+export const screenerActionsClasses =
+	"grid grid-cols-2 " +
+	"border-t-[length:var(--border-w)] border-solid border-border max-[560px]:grid-cols-1";
+
+/**
+ * Shared screener action-bar treatment (Bungee caps, 56px tall). The accept /
+ * reject variants supply the coded fill + the divider rule between them.
+ */
+const SCREENER_ACTION_BASE =
+	"flex items-center justify-center gap-2 h-14 cursor-pointer select-none no-underline text-black " +
+	"font-[family-name:'Bungee',var(--font-display)] text-[13px] uppercase tracking-[0.06em] " +
+	"hover:brightness-90 " +
+	"focus-visible:outline-2 focus-visible:outline-[var(--color-ring)] focus-visible:[outline-offset:-4px]";
+
+/** Mint Accept bar with the right divider rule (drops to bottom rule when stacked). */
+export const screenerAcceptClasses =
+	`${SCREENER_ACTION_BASE} bg-paper ` +
+	"border-r-[length:var(--border-w)] border-solid border-border " +
+	"max-[560px]:border-r-0 max-[560px]:border-b-[length:var(--border-w)]";
+
+/** Alarm-red Reject bar (no divider). */
+export const screenerRejectClasses = `${SCREENER_ACTION_BASE} bg-danger`;
+
+/* ------------------------------------------------------------------ */
+/*  Tasks & Dates                                                      */
+/* ------------------------------------------------------------------ */
+
+/** Display-face "Tasks & Dates" title. */
+export const tasksTitleClasses =
+	"font-[family-name:var(--font-display)] text-[22px] leading-[1.1] uppercase tracking-[-0.01em]";
+
+/** Mono AI-extracted subtitle under the title. */
+export const tasksSubtitleClasses =
+	"font-[family-name:var(--font-mono)] text-[11px] text-muted mt-0.5";
+
+/** Two-column Tasks / Dates grid. Stacks to one column at ≤860px. */
+export const tasksGridClasses =
+	"grid grid-cols-2 gap-4 p-5 flex-1 min-h-0 overflow-y-auto " +
+	"max-[860px]:grid-cols-[minmax(0,1fr)] max-[860px]:overflow-visible";
+
+/** Column heading row: coded badge + count. */
+export const tasksColHeadClasses = "flex items-center gap-2 mb-2.5 text-[16px]";
+
+/** Mono count beside the column badge. */
+export const tasksColCountClasses =
+	"font-[family-name:var(--font-mono)] text-[12px] font-bold text-muted";
+
+/** Task / date card: surface fill, ink border, yellow-keyed hard offset shadow. */
+export const taskCardClasses =
+	"mb-3 px-3.5 py-3 bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)] " +
+	"shadow-[var(--shadow-x)_var(--shadow-y)_0_0_var(--color-main)]";
+
+/** Card body row: leading tile/checkbox · main stack. */
+export const taskRowClasses = "flex items-start gap-2.5";
+
+/** Square ink checkbox on a task card. */
+export const taskCheckClasses =
+	"w-[18px] h-[18px] mt-0.5 shrink-0 " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[4px]";
+
+/** Coded yellow calendar tile (month + day) on a date card. */
+export const dateTileClasses =
+	"flex flex-col items-center justify-center w-9 h-9 mt-0.5 shrink-0 leading-none " +
+	"bg-feed text-[#1d1f27] " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[4px]";
+
+/** Mono month abbreviation stamped on the date tile. */
+export const dateTileMonthClasses =
+	"font-[family-name:var(--font-mono)] text-[9px] font-extrabold";
+
+/** Day number stamped on the date tile. */
+export const dateTileDayClasses = "text-[14px] font-black";
+
+/** Main label + due stack on a task/date card. */
+export const taskMainClasses = "flex-1 min-w-0";
+
+/** Bold task/date label. */
+export const taskLabelClasses = "text-[13px] font-bold leading-[1.4]";
+
+/** Mono "Due: …" line. */
+export const taskDueClasses =
+	"font-[family-name:var(--font-mono)] text-[11px] text-muted mt-1";
+
+/** Mono dashed-rule "From: …" source footer. */
+export const taskSrcClasses =
+	"font-[family-name:var(--font-mono)] text-[11px] text-muted mt-2 pt-2 " +
+	"border-t-[1.5px] border-dashed border-border";
+
+/* ------------------------------------------------------------------ */
+/*  Settings                                                           */
+/* ------------------------------------------------------------------ */
+
+/** Display-face "Settings" title. */
+export const settingsTitleClasses =
+	"font-[family-name:var(--font-display)] text-[22px] leading-[1.1] uppercase tracking-[-0.01em]";
+
+/** Centered 760px settings body column. */
+export const settingsInnerClasses = "w-full max-w-[760px] mx-auto";
+
+/** Uppercase mono section heading ("Connected accounts" etc.). */
+export const settingsSectionClasses =
+	"font-[family-name:var(--font-mono)] text-[14px] font-bold tracking-[0.06em] uppercase text-muted mb-2";
+
+/** 24px gap under each carded settings section. */
+export const settingsCardClasses = "mb-6";
+
+/**
+ * One settings row: 48px coded tile · text stack · trailing control. At
+ * ≤560px the control drops to its own full-width row so it never gets
+ * crushed against the title.
+ */
+export const settingsRowClasses =
+	"grid grid-cols-[48px_1fr_auto] items-center gap-3.5 px-4 py-3.5 " +
+	"border-b-[length:var(--border-w)] border-solid border-border last:border-b-0 " +
+	"max-[560px]:grid-cols-[48px_minmax(0,1fr)] max-[560px]:gap-y-3";
+
+/** 48px coded icon tile. */
+export const settingsIconClasses =
+	"inline-flex items-center justify-center w-12 h-12 font-black bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)]";
+
+/** Title + sub text stack. */
+export const settingsTextClasses = "min-w-0";
+
+/** Bold row title. */
+export const settingsRowTitleClasses = "font-extrabold text-[15px]";
+
+/** Muted row sub-label; mono variant for account meta rows. */
+export const settingsRowSubClasses = cva("text-muted mt-0.5", {
+	variants: {
+		mono: {
+			true: "font-[family-name:var(--font-mono)] text-[11px]",
+			false: "text-[12px]",
+		},
+	},
+	defaultVariants: { mono: false },
+});
+
+/** Trailing control slot (right-aligned; full-width left-aligned at ≤560px). */
+export const settingsControlClasses =
+	"flex items-center justify-end max-[560px]:col-[1/-1] max-[560px]:justify-start";

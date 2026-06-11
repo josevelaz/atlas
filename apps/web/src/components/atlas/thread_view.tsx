@@ -7,7 +7,25 @@
 
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
-import { tagAppClasses, tagClasses } from "../../lib/atlas/component_classes";
+import {
+	gap8Classes,
+	messageAddrClasses,
+	messageBodyClasses,
+	messageClasses,
+	messageDateClasses,
+	messageHeadClasses,
+	messageNameClasses,
+	messageParaClasses,
+	messageWhoClasses,
+	rowClasses,
+	tagAppClasses,
+	tagClasses,
+	threadBodyClasses,
+	threadClasses,
+	threadDividerClasses,
+	threadTitleClasses,
+	threadToolbarClasses,
+} from "../../lib/atlas/component_classes";
 import type { MailTag, Thread } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/index";
@@ -46,22 +64,16 @@ const ThreadView: Component<ThreadViewProps> = (props) => {
 			}
 		>
 			{(thread) => (
-				<div class="atlas-thread">
-					<div class="atlas-thread-toolbar">
-						<div class="atlas-row atlas-gap-8">
+				<div class={threadClasses}>
+					<div class={threadToolbarClasses}>
+						<div class={cn(rowClasses, gap8Classes)}>
 							<Button size="sm" onClick={props.onArchive}>
 								<AtlasIcon name="archive" size={14} /> Archive
 							</Button>
 							<Button size="sm" onClick={props.onTrash}>
 								<AtlasIcon name="trash" size={14} /> Trash
 							</Button>
-							<div
-								style={{
-									width: "1px",
-									height: "20px",
-									background: "var(--color-border)",
-								}}
-							/>
+							<div class={threadDividerClasses} />
 							<Button
 								size="sm"
 								variant={props.setAside ? "primary" : "default"}
@@ -79,7 +91,7 @@ const ThreadView: Component<ThreadViewProps> = (props) => {
 								<AtlasIcon name="reply" size={14} /> Reply later
 							</Button>
 						</div>
-						<div class="atlas-row atlas-gap-8">
+						<div class={cn(rowClasses, gap8Classes)}>
 							<Button size="sm" icon aria-label="Previous thread">
 								<AtlasIcon name="chevron-up" size={14} />
 							</Button>
@@ -89,13 +101,10 @@ const ThreadView: Component<ThreadViewProps> = (props) => {
 						</div>
 					</div>
 
-					<div class="atlas-thread-body">
-						<div style={{ "margin-bottom": "18px" }}>
-							<h2 class="atlas-thread-title">{thread().subject}</h2>
-							<div
-								class="atlas-row atlas-gap-8"
-								style={{ "flex-wrap": "wrap" }}
-							>
+					<div class={threadBodyClasses}>
+						<div class="mb-[18px]">
+							<h2 class={threadTitleClasses}>{thread().subject}</h2>
+							<div class={cn(rowClasses, gap8Classes, "flex-wrap")}>
 								<Show when={thread().priority}>
 									{(p) => <PriorityChip priority={p()} withLabel />}
 								</Show>
@@ -118,26 +127,25 @@ const ThreadView: Component<ThreadViewProps> = (props) => {
 
 						<For each={thread().body?.messages ?? []}>
 							{(message) => (
-								<div class="atlas-message">
-									<div class="atlas-message-head">
+								<div class={messageClasses}>
+									<div class={messageHeadClasses}>
 										<AtlasAvatar name={message.from} />
-										<div class="atlas-who">
-											<div class="atlas-name">{message.from}</div>
-											<div class="atlas-addr">{message.addr}</div>
+										<div class={messageWhoClasses}>
+											<div class={messageNameClasses}>{message.from}</div>
+											<div class={messageAddrClasses}>{message.addr}</div>
 										</div>
-										<div class="atlas-date">{message.time}</div>
+										<div class={messageDateClasses}>{message.time}</div>
 									</div>
-									<div class="atlas-message-body">
-										<For each={message.body}>{(p) => <p>{p}</p>}</For>
+									<div class={messageBodyClasses}>
+										<For each={message.body}>
+											{(p) => <p class={messageParaClasses}>{p}</p>}
+										</For>
 									</div>
 								</div>
 							)}
 						</For>
 
-						<div
-							class={cn("atlas-row", "atlas-gap-8")}
-							style={{ "margin-top": "18px", "flex-wrap": "wrap" }}
-						>
+						<div class={cn(rowClasses, gap8Classes, "mt-[18px] flex-wrap")}>
 							<Button
 								variant="primary"
 								onClick={() => props.onReplyClick(thread().addr)}

@@ -9,6 +9,17 @@
 // matches byte-for-byte. No runtime imports from `docs/prototype/**`.
 
 import type { Component } from "solid-js";
+import {
+	dateTileClasses,
+	dateTileDayClasses,
+	dateTileMonthClasses,
+	taskCardClasses,
+	taskDueClasses,
+	taskLabelClasses,
+	taskMainClasses,
+	taskRowClasses,
+	taskSrcClasses,
+} from "../../lib/atlas/component_classes";
 import type { DateEntry } from "../../lib/atlas/types";
 
 /** Month abbreviation stamped on the tile (e.g. "FRI"/"WED"; "—" if none). */
@@ -27,20 +38,18 @@ export interface DateCardProps {
 
 const DateCard: Component<DateCardProps> = (props) => {
 	return (
-		<div class="atlas-task-card" data-date-id={props.entry.id}>
-			<div class="atlas-task-row">
-				<span class="atlas-date-tile" aria-hidden="true">
-					<span class="atlas-date-tile-month">
-						{tileMonth(props.entry.due)}
-					</span>
-					<span class="atlas-date-tile-day">{tileDay(props.entry.due)}</span>
+		<div class={taskCardClasses} data-date-id={props.entry.id}>
+			<div class={taskRowClasses}>
+				<span class={dateTileClasses} aria-hidden="true">
+					<span class={dateTileMonthClasses}>{tileMonth(props.entry.due)}</span>
+					<span class={dateTileDayClasses}>{tileDay(props.entry.due)}</span>
 				</span>
-				<div class="atlas-task-main">
-					<div class="atlas-task-label">{props.entry.label}</div>
-					<div class="atlas-task-due">{props.entry.due}</div>
+				<div class={taskMainClasses}>
+					<div class={taskLabelClasses}>{props.entry.label}</div>
+					<div class={taskDueClasses}>{props.entry.due}</div>
 				</div>
 			</div>
-			<div class="atlas-task-src">From: {props.entry.source}</div>
+			<div class={taskSrcClasses}>From: {props.entry.source}</div>
 		</div>
 	);
 };

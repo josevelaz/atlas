@@ -10,7 +10,19 @@
 
 import type { Component } from "solid-js";
 import { For } from "solid-js";
+import {
+	gap8Classes,
+	rowClasses,
+	tasksColCountClasses,
+	tasksColHeadClasses,
+	tasksGridClasses,
+	tasksSubtitleClasses,
+	tasksTitleClasses,
+	threadClasses,
+	threadToolbarClasses,
+} from "../../lib/atlas/component_classes";
 import { SAMPLE } from "../../lib/atlas/sample_data";
+import { cn } from "../../lib/utils";
 import { Badge, Button } from "../ui/index";
 import { AtlasIcon } from "./atlas_icon";
 import { DateCard } from "./date_card";
@@ -21,15 +33,15 @@ const TasksScreen: Component = () => {
 	const dates = SAMPLE.dates;
 
 	return (
-		<div class="atlas-thread" data-screen-label="Tasks & Dates">
-			<div class="atlas-thread-toolbar">
+		<div class={threadClasses} data-screen-label="Tasks & Dates">
+			<div class={threadToolbarClasses}>
 				<div>
-					<h2 class="atlas-tasks-title">Tasks &amp; Dates</h2>
-					<div class="atlas-tasks-subtitle">
+					<h2 class={tasksTitleClasses}>Tasks &amp; Dates</h2>
+					<div class={tasksSubtitleClasses}>
 						AI-extracted · sync to Google Tasks &amp; Calendar
 					</div>
 				</div>
-				<div class="atlas-row atlas-gap-8">
+				<div class={cn(rowClasses, gap8Classes)}>
 					<Button size="sm">
 						<AtlasIcon name="check" size={12} stroke={3} />
 						Sync {tasks.length} tasks
@@ -41,25 +53,25 @@ const TasksScreen: Component = () => {
 				</div>
 			</div>
 
-			<div class="atlas-tasks-grid">
-				<div class="atlas-tasks-col">
-					<h3 class="atlas-tasks-col-head">
-						<Badge variant="paper" square>
+			<div class={tasksGridClasses}>
+				<div>
+					<h3 class={tasksColHeadClasses}>
+						<Badge variant="paper" square class="-rotate-[1.2deg]">
 							<AtlasIcon name="check" size={12} stroke={3} />
 							TASKS
 						</Badge>
-						<span class="atlas-tasks-col-count">{tasks.length}</span>
+						<span class={tasksColCountClasses}>{tasks.length}</span>
 					</h3>
 					<For each={tasks}>{(task) => <TaskCard task={task} />}</For>
 				</div>
 
-				<div class="atlas-tasks-col">
-					<h3 class="atlas-tasks-col-head">
-						<Badge variant="feed" square>
+				<div>
+					<h3 class={tasksColHeadClasses}>
+						<Badge variant="feed" square class="-rotate-[1.2deg]">
 							<AtlasIcon name="calendar" size={12} />
 							DATES
 						</Badge>
-						<span class="atlas-tasks-col-count">{dates.length}</span>
+						<span class={tasksColCountClasses}>{dates.length}</span>
 					</h3>
 					<For each={dates}>{(entry) => <DateCard entry={entry} />}</For>
 				</div>

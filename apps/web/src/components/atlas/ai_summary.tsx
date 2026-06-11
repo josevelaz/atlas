@@ -6,7 +6,21 @@
 
 import type { Component } from "solid-js";
 import { For } from "solid-js";
+import {
+	aiExtractedClasses,
+	aiExtractedLabelClasses,
+	aiSummaryClasses,
+	aiSummaryHeadClasses,
+	aiSummaryMetaClasses,
+	aiSummaryTextClasses,
+	extractDueClasses,
+	extractIconClasses,
+	extractItemClasses,
+	gap8Classes,
+	rowClasses,
+} from "../../lib/atlas/component_classes";
 import type { ExtractedItem, ThreadBody } from "../../lib/atlas/types";
+import { cn } from "../../lib/utils";
 import { Button } from "../ui/index";
 import { AtlasIcon } from "./atlas_icon";
 
@@ -17,8 +31,8 @@ export interface AiSummaryProps {
 function ExtractRow(props: { item: ExtractedItem }) {
 	const isTask = () => props.item.kind === "task";
 	return (
-		<div class="atlas-extract-item">
-			<span class={`atlas-extract-ic ${isTask() ? "is-task" : "is-date"}`}>
+		<div class={extractItemClasses}>
+			<span class={extractIconClasses({ kind: isTask() ? "task" : "date" })}>
 				<AtlasIcon
 					name={isTask() ? "check" : "calendar"}
 					size={12}
@@ -26,7 +40,7 @@ function ExtractRow(props: { item: ExtractedItem }) {
 				/>
 			</span>
 			<span>{props.item.label}</span>
-			<span class="atlas-extract-due">{props.item.due}</span>
+			<span class={extractDueClasses}>{props.item.due}</span>
 		</div>
 	);
 }
@@ -43,18 +57,18 @@ const AiSummary: Component<AiSummaryProps> = (props) => {
 	};
 
 	return (
-		<div class="atlas-ai-summary">
-			<div class="atlas-ai-head">
+		<div class={aiSummaryClasses}>
+			<div class={aiSummaryHeadClasses}>
 				<AtlasIcon name="sparkle" size={14} color="#fff" stroke={2.5} />
 				AI summary
-				<span class="atlas-ai-meta">{counts()}</span>
+				<span class={aiSummaryMetaClasses}>{counts()}</span>
 			</div>
-			<div class="atlas-ai-text">{body().aiSummary}</div>
-			<div class="atlas-extracted">
-				<div class="atlas-extracted-label">EXTRACTED</div>
+			<div class={aiSummaryTextClasses}>{body().aiSummary}</div>
+			<div class={aiExtractedClasses}>
+				<div class={aiExtractedLabelClasses}>EXTRACTED</div>
 				<For each={body().tasks}>{(item) => <ExtractRow item={item} />}</For>
 				<For each={body().dates}>{(item) => <ExtractRow item={item} />}</For>
-				<div class="atlas-row atlas-gap-8" style={{ "margin-top": "4px" }}>
+				<div class={cn(rowClasses, gap8Classes, "mt-1")}>
 					<Button variant="primary" size="sm">
 						<AtlasIcon name="check" size={12} stroke={3} /> Confirm{" "}
 						{body().tasks.length} tasks

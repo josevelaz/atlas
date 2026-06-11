@@ -8,6 +8,14 @@
 
 import type { Component, JSX } from "solid-js";
 import { Show } from "solid-js";
+import {
+	settingsControlClasses,
+	settingsIconClasses,
+	settingsRowClasses,
+	settingsRowSubClasses,
+	settingsRowTitleClasses,
+	settingsTextClasses,
+} from "../../lib/atlas/component_classes";
 import { AtlasIcon, type IconName } from "./atlas_icon";
 
 export interface SettingsRowProps {
@@ -33,9 +41,9 @@ export interface SettingsRowProps {
 
 const SettingsRow: Component<SettingsRowProps> = (props) => {
 	return (
-		<div class="atlas-settings-row">
+		<div class={settingsRowClasses}>
 			<span
-				class="atlas-settings-ic"
+				class={settingsIconClasses}
 				style={
 					props.tileBackground
 						? { background: props.tileBackground }
@@ -49,18 +57,15 @@ const SettingsRow: Component<SettingsRowProps> = (props) => {
 					color={props.iconColor ?? "#000"}
 				/>
 			</span>
-			<div class="atlas-settings-text">
-				<div class="atlas-settings-row-title">{props.title}</div>
+			<div class={settingsTextClasses}>
+				<div class={settingsRowTitleClasses}>{props.title}</div>
 				<Show when={props.sub}>
-					<div
-						class="atlas-settings-row-sub"
-						classList={{ "is-mono": props.subMono }}
-					>
+					<div class={settingsRowSubClasses({ mono: props.subMono ?? false })}>
 						{props.sub}
 					</div>
 				</Show>
 			</div>
-			<div class="atlas-settings-control">{props.control}</div>
+			<div class={settingsControlClasses}>{props.control}</div>
 		</div>
 	);
 };
