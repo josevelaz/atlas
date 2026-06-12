@@ -78,6 +78,13 @@ let defaultJobsPromise: Promise<ConnectJobs> | undefined;
 const getDefaultJobs = (): Promise<ConnectJobs> => {
 	defaultJobsPromise ??= (async () => {
 		const { defineJob } = await import("../jobify.ts");
+		// Retry policy (attempts + exponential backoff) is fixed at enqueue time
+		// in BullMQ, so the watch-setup job options live with the worker module
+		// and are spread into `add` here. Dynamic import keeps the module graph
+		// acyclic (jobs/gmail_watch.ts statically imports this module).
+		const { GMAIL_WATCH_SETUP_JOB_OPTIONS } = await import(
+			"../../jobs/gmail_watch.ts"
+		);
 		const catchUp = defineJob(GMAIL_CATCH_UP_QUEUE).input<ConnectJobPayload>();
 		const watchSetup = defineJob(
 			GMAIL_WATCH_SETUP_QUEUE,
@@ -92,6 +99,7 @@ const getDefaultJobs = (): Promise<ConnectJobs> => {
 			enqueueWatchSetup: async (payload) => {
 				await watchSetup.add(GMAIL_WATCH_SETUP_QUEUE, payload, {
 					jobId: `${GMAIL_WATCH_SETUP_QUEUE}:${payload.connectedAccountId}`,
+					...GMAIL_WATCH_SETUP_JOB_OPTIONS,
 				});
 			},
 		};
