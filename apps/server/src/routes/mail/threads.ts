@@ -8,6 +8,7 @@ import {
 	MailAccountNotFoundError,
 	ThreadNotFoundError,
 } from "../../services/mail_queries.ts";
+import { overrideThreadCategory } from "../../services/screener.ts";
 
 /**
  * Mail read endpoints. Autoloaded by `elysia-autoload` (file path = route
@@ -23,6 +24,11 @@ import {
  *   - `GET /mail/threads/:id` — thread detail with messages (body_state,
  *     attachment metadata) and provenance. Strict ownership: ids owned by
  *     other users 404, indistinguishable from missing ids.
+ *   - `POST /mail/threads/:id/category {category, promote?}` — per-thread
+ *     category override (sets `category_overridden`). Without `promote`
+ *     the sender's routing rule is untouched; with `promote: true` the
+ *     sender is also accepted user-globally with this category as their
+ *     default. Same strict-ownership 404 semantics.
  */
 export default (app: Elysia) =>
 	app
@@ -87,5 +93,39 @@ export default (app: Elysia) =>
 			},
 			{
 				params: t.Object({ id: t.String() }),
+			},
+		)
+		.post(
+			"/:id/category",
+			async ({ authUser, params, body, set }) => {
+				if (!authUser) {
+					set.status = 401;
+					return { error: "Unauthorized" };
+				}
+				try {
+					return await overrideThreadCategory(
+						authUser.id,
+						params.id,
+						body.category,
+						{ promote: body.promote },
+					);
+				} catch (error) {
+					if (error instanceof ThreadNotFoundError) {
+						set.status = 404;
+						return { error: "Thread not found" };
+					}
+					throw error;
+				}
+			},
+			{
+				params: t.Object({ id: t.String() }),
+				body: t.Object({
+					category: t.Union([
+						t.Literal("inbox"),
+						t.Literal("feed"),
+						t.Literal("paper_trail"),
+					]),
+					promote: t.Optional(t.Boolean()),
+				}),
 			},
 		);
