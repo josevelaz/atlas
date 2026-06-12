@@ -4,7 +4,11 @@
 
 ### Screener
 
-A dedicated workflow for handling first-time senders. A sender is identified by exact email address. When an email arrives from an exact sender email address that has not been previously screened, it is intercepted and placed in the Screener instead of being delivered to any other bucket. The user makes a sender-level decision: **Accept** (the sender is assigned a default category, the current thread moves to that category, and future threads from this sender bypass the Screener) or **Reject** (future threads from this sender are hidden in the app without modifying the connected account). Rejected senders are recoverable: the user can view rejected senders, accept a rejected sender later, and optionally restore hidden historical threads from that sender. The Screener operates at **sender granularity** within a connected account — the decision applies to the sender for that connected account, not globally across all of the user's connected accounts and not to an individual email or thread. Screening applies to new threads initiated by an unscreened sender. If an unscreened sender replies inside an already-accepted thread, the reply remains in that thread and the sender remains unscreened for future threads they initiate.
+A dedicated workflow for handling first-time senders. A sender is identified by exact email address. When an email arrives from an exact sender email address that has not been previously screened by the User, it is intercepted and placed in the Screener instead of being delivered to any other bucket. The user makes a sender-level decision: **Accept** (the sender becomes globally known to the User, the current thread moves to a category, and future threads from this sender bypass the Screener) or **Reject** (future threads from this sender are hidden in the app without modifying the connected account). Rejected senders are recoverable: the user can view rejected senders, accept a rejected sender later, and optionally restore hidden historical threads from that sender. The Screener operates at **sender granularity**: trust decisions and default category routing apply across all of the User's connected accounts rather than per connected account. Screening applies to new threads initiated by an unscreened sender. If an unscreened sender replies inside an already-active thread, the reply remains in that thread and the sender remains unscreened for future new threads they initiate.
+
+### Spam
+
+Inbound mail the provider classifies as spam **at the moment of initial ingest**; it is ingested by Atlas but kept separate from the Screener and normal category views in a dedicated Spam queue. The provider's spam opinion is consulted exactly once, at initial ingest. Once a thread is admitted into Atlas, later provider-side reclassification never moves it into or out of the Spam queue — only the user's actions inside Atlas move it.
 
 ### Thread
 
@@ -20,7 +24,7 @@ A classification for accepted threads. Each thread lives in exactly one category
 
 ### Sender Routing Rule
 
-A mapping from a screened sender to a default category within a connected account. Established when a sender is Accepted from the Screener using the Accept category dropdown. Future threads initiated by that sender in that connected account are routed to the assigned default category unless overridden.
+A mapping from a screened sender to a default category for a User. Established when a sender is Accepted from the Screener or later recategorized. Future threads initiated by that sender across all connected accounts are routed to the assigned default category unless overridden.
 
 ### Per-Thread Override
 
@@ -72,6 +76,22 @@ A third-party email account that the user authorizes the product to access. The 
 
 The connected account Atlas uses by default when a mailbox-specific choice is required and the user has not explicitly chosen a different account.
 
+### Checkpoint
+
+The forward-only sync origin of a Connected Account, established when the account is connected. Each Connected Account has its own Checkpoint. Mail is ingested only from the Checkpoint forward, and the Checkpoint only ever moves forward. If a Checkpoint becomes unusable (a sync gap), it is reset to the mailbox's current position and sync resumes from there — mail that arrived inside the gap is not backfilled.
+
+### Degraded Sync
+
+A visible state of a Connected Account that remains connected while real-time mail delivery is unavailable. During Degraded Sync, new mail continues to arrive through polling and Atlas automatically retries restoring real-time delivery. Degraded Sync neither disconnects the account nor blocks ingestion.
+
+### Provenance
+
+The record of which Connected Account a thread and its messages were ingested from. Provenance is first-class: every ingested thread retains its source Connected Account, supports per-account filtering in the Unified View, and persists even after the source account is disconnected.
+
+### Read-only Retention
+
+The visibility of already-ingested threads after their Connected Account is disconnected. Retained threads stay visible in Atlas read-only rather than being purged, keeping their provenance, category, and other app-owned metadata. No new mail is ingested from, and no mail can be sent through, a disconnected account.
+
 ### User
 
 The person who signs in to Atlas and owns one or more connected accounts.
@@ -91,6 +111,13 @@ A cross-account view that combines threads from all connected accounts into one 
 - A **User** may designate exactly one **Primary Connected Account** at a time.
 - A **Primary Connected Account** must belong to the same **User**.
 - A **User** is **Onboarded** when signed in with at least one **Connected Account**; only **Onboarded** users can access the main app views.
+- A **User** may have one global screening trust decision per exact sender email address.
+- A **User** may have one global **Sender Routing Rule** per exact sender email address.
+- A **Thread** may appear in **Spam** when its source mail is provider-flagged spam at initial ingest.
+- A **Spam** thread is not a **Screener** decision by default.
+- A **Connected Account** carries exactly one forward-only **Checkpoint** while connected.
+- A **Connected Account** may be in **Degraded Sync** while still connected and ingesting mail.
+- A **Thread** keeps its **Provenance** to the **Connected Account** it was ingested from, including under **Read-only Retention** after that account is disconnected.
 
 ## Example dialogue
 
@@ -100,3 +127,4 @@ A cross-account view that combines threads from all connected accounts into one 
 ## Flagged Ambiguities
 
 - **Account** is overloaded — use **User** for the Atlas identity and **Connected Account** for an authorized mailbox.
+- **Sign up** is ambiguous for ingestion timing — use **User created an Atlas account** for product auth, **Connected Account connected** for mailbox authorization, and **Onboarded** for signed in plus at least one Connected Account.

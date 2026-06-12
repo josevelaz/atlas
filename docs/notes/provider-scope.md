@@ -1,13 +1,21 @@
 # Provider Scope
 
-## MVP
+## v1 Implementation: Gmail-only
+
+The first implementation (v1) supports connecting only:
+
+- Gmail / Google Workspace
+
+Outlook / Microsoft 365 remains in the product's MVP scope but is **gated in v1**: it stays visible in the UI as a clearly marked "coming soon" option and cannot be connected yet.
+
+## MVP (product scope)
 
 The MVP supports connected accounts from:
 
 - Gmail / Google Workspace
-- Outlook / Microsoft 365
+- Outlook / Microsoft 365 (visible but gated "coming soon" in v1)
 
-Users can sync mail from these connected accounts and send mail through the connected account, so outgoing messages appear from the user's existing email address.
+Users can sync mail from these connected accounts and send mail through the connected account, so outgoing messages appear from the user's existing email address. Send reply / compose through a connected account remains supported at the product level regardless of the v1 provider gate.
 
 The MVP syncs these actions back to the connected account:
 
