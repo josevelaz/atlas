@@ -10,7 +10,7 @@
 // `ui/Avatar` uses different initials + palette logic).
 
 import type { Component } from "solid-js";
-import { For, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import {
 	avatarClasses,
 	mailFromClasses,
@@ -57,21 +57,41 @@ function avatarColor(name: string): string {
 export interface AtlasAvatarProps {
 	name: string;
 	size?: "sm" | "default" | "lg";
+	/** Optional avatar image URL; falls back to initials when absent or broken. */
+	src?: string;
 }
 
-/** Prototype-faithful avatar (initials + charCode palette). */
+/** Prototype-faithful avatar (initials + charCode palette, optional image). */
 export const AtlasAvatar: Component<AtlasAvatarProps> = (props) => {
 	const size = () => props.size ?? "default";
+	// Tracks a failed image load so we fall back to initials. Keyed by the
+	// current `src` so a later (different) URL gets a fresh attempt.
+	const [failedSrc, setFailedSrc] = createSignal<string>();
+	const imageSrc = () => {
+		const src = props.src;
+		return src && src !== failedSrc() ? src : undefined;
+	};
 	return (
 		<div
 			// The app-shell retro pass (sticker tilt) is baked into `avatarClasses`
 			// via a `[.atlas-app_&]:` ancestor variant.
-			class={avatarClasses({ size: size() })}
+			class={cn(avatarClasses({ size: size() }), "overflow-hidden")}
 			style={{ background: avatarColor(props.name) }}
 			role="img"
 			aria-label={props.name}
 		>
-			{initials(props.name)}
+			<Show when={imageSrc()} fallback={initials(props.name)}>
+				{(src) => (
+					<img
+						src={src()}
+						alt=""
+						class="h-full w-full object-cover"
+						referrerpolicy="no-referrer"
+						loading="lazy"
+						onError={() => setFailedSrc(src())}
+					/>
+				)}
+			</Show>
 		</div>
 	);
 };
