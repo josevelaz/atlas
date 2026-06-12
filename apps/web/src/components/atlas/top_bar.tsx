@@ -11,6 +11,7 @@ import {
 	topBarClasses,
 	topBarVersionClasses,
 } from "../../lib/atlas/component_classes";
+import { useUser } from "../../lib/identity/queries";
 import { Button, Kbd } from "../ui/index";
 import { AtlasIcon } from "./atlas_icon";
 import { Logo } from "./logo";
@@ -22,6 +23,12 @@ export interface TopBarProps {
 }
 
 const TopBar: Component<TopBarProps> = (props) => {
+	const user = useUser();
+	// Empty name → AtlasAvatar renders a neutral placeholder while loading or
+	// signed-out (transient behind the auth guard), keeping the chip footprint
+	// identical so there is no layout shift once the profile resolves.
+	const avatarName = () => user.data?.name ?? "·";
+	const avatarSrc = () => user.data?.image ?? undefined;
 	return (
 		<div class={topBarClasses}>
 			<Logo markSize={26} />
@@ -43,7 +50,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 				</Kbd>
 			</Button>
 			<div class={dividerVClasses} />
-			<AtlasAvatar name="Rob Barrett" size="sm" />
+			<AtlasAvatar name={avatarName()} src={avatarSrc()} size="sm" />
 		</div>
 	);
 };
