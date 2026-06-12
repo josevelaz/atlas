@@ -11,6 +11,7 @@ import { authSessionPlugin, requireAuth } from "./plugins/auth_session.ts";
 import {
 	ConnectedAccountForbiddenError,
 	ConnectedAccountNotFoundError,
+	disconnectConnectedAccount,
 	listConnectedAccounts,
 	setPrimaryConnectedAccount,
 } from "./services/connected_accounts.ts";
@@ -115,6 +116,35 @@ export const app = new Elysia()
 		},
 		{
 			body: t.Object({ accountId: t.String() }),
+		},
+	)
+	.post(
+		"/me/connected-accounts/:id/disconnect",
+		async ({ authUser, params, set }) => {
+			if (!authUser) {
+				set.status = 401;
+				return { error: "Unauthorized" };
+			}
+			try {
+				// Best-effort watch stop happens inside; threads are retained.
+				await disconnectConnectedAccount(authUser.id, params.id);
+			} catch (error) {
+				// Not-found also covers other users' account ids — ownership is
+				// checked in the service and deliberately indistinguishable.
+				if (error instanceof ConnectedAccountNotFoundError) {
+					set.status = 404;
+					return { error: "Connected account not found" };
+				}
+				if (error instanceof ConnectedAccountForbiddenError) {
+					set.status = 403;
+					return { error: "Account is not a connected OAuth account" };
+				}
+				throw error;
+			}
+			set.status = 204;
+		},
+		{
+			params: t.Object({ id: t.String() }),
 		},
 	);
 
