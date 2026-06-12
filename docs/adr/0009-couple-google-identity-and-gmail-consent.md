@@ -1,0 +1,5 @@
+# Couple Google identity and Gmail consent
+
+Signing in to Atlas is done exclusively with Google, and the sign-in flow requests Gmail scopes in the same consent screen, so completing sign-up always produces both an identity and the user's first Connected Account. Credential (email/password) authentication is dropped entirely: an Atlas account without at least one Gmail mailbox has nothing to do, so a separate identity step would only add an empty state and a second consent hop. Additional mailboxes are attached later through account linking, which reuses the same Google OAuth flow but appends a Connected Account to the existing user instead of creating a new one.
+
+The trade-off is reduced flexibility. Users cannot create an Atlas account before deciding to grant mailbox access, users who refuse Gmail scopes cannot sign in at all, and supporting a future non-Google provider will require introducing a second sign-in path rather than just a second connection type. We accept this because the v1 product is Gmail-only and the coupled flow removes an entire class of states (identity without mailbox, partial consent) from the onboarding, sync, and billing logic.
