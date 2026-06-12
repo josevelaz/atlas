@@ -74,9 +74,10 @@ function ConnectCard(props: ConnectCardProps) {
 
 	const handleConnect = () => {
 		if (props.provider === "Google") {
+			const callbackURL = new URL("/inbox", window.location.origin).toString();
 			getAuthClient().signIn.social({
 				provider: "google",
-				callbackURL: "/inbox",
+				callbackURL,
 			});
 		}
 		// Microsoft / other providers: not yet configured — no-op for now.
