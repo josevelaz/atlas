@@ -15,7 +15,7 @@
 // the prototype. No runtime imports from `docs/prototype/**`.
 
 import type { Component } from "solid-js";
-import { createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, Show } from "solid-js";
 import {
 	settingsCardClasses,
 	settingsInnerClasses,
@@ -29,9 +29,12 @@ import { getAuthClient } from "../../lib/auth";
 import {
 	useConnectedAccounts,
 	useSetPrimary,
+	useUpdateDisplayName,
+	useUser,
 } from "../../lib/identity/queries";
-import { Badge, Button, Card, Toggle } from "../ui/index";
+import { Badge, Button, Card, Input, Toggle } from "../ui/index";
 import type { IconName } from "./atlas_icon";
+import { AtlasAvatar } from "./mail_row";
 import { SettingsRow } from "./settings_row";
 
 /** Icon + human label for a Better Auth `providerId`. */
@@ -55,6 +58,100 @@ function providerMeta(providerId: string): ProviderMeta {
 		}
 	);
 }
+
+/**
+ * Profile card — the signed-in user's avatar (read-only), an editable display
+ * name, and the read-only login email. All three read from the shared
+ * `['identity','me']` cache via `useUser()`.
+ *
+ * Saving the display name round-trips through Better Auth
+ * (`useUpdateDisplayName()`), which invalidates `['identity','me']` on success.
+ * Because the top bar's avatar/name also read that same cache through
+ * `useUser()`, the chip re-renders reactively the moment the refetch lands —
+ * no extra wiring needed.
+ *
+ * Save is disabled while the mutation is pending, while the field is empty,
+ * and while the trimmed draft matches the persisted name (nothing to save).
+ */
+const ProfileCard: Component = () => {
+	const user = useUser();
+	const updateName = useUpdateDisplayName();
+
+	// Editable draft, seeded once and overridden by user edits. `undefined`
+	// means "untouched" — fall back to the live cache value so a background
+	// refetch (or the initial load) flows through until the user types.
+	const [draft, setDraft] = createSignal<string>();
+	const value = () => draft() ?? user.data?.name ?? "";
+
+	// Unchanged when the trimmed draft equals the persisted name. Empty (after
+	// trim) is also non-savable.
+	const trimmed = createMemo(() => value().trim());
+	const isUnchanged = () => trimmed() === (user.data?.name ?? "");
+	const canSave = () =>
+		!updateName.isPending && trimmed().length > 0 && !isUnchanged();
+
+	const handleSave = () => {
+		if (!canSave()) return;
+		updateName.mutate(trimmed(), {
+			// Snap the draft back to "untouched" so it tracks the freshly
+			// invalidated cache value once the refetch resolves.
+			onSuccess: () => setDraft(undefined),
+		});
+	};
+
+	return (
+		<Card class={settingsCardClasses}>
+			{/* Avatar (read-only) — same chip the top bar shows, sourced from the
+			    shared identity cache via `useUser()`. */}
+			<div class="flex items-center gap-3.5 border-b-[length:var(--border-w)] border-border border-solid px-4 py-3.5">
+				<AtlasAvatar
+					name={user.data?.name ?? "·"}
+					src={user.data?.image ?? undefined}
+					size="lg"
+				/>
+				<div class="font-[family-name:var(--font-mono)] text-[14px] font-bold">
+					{user.data?.name ?? ""}
+				</div>
+			</div>
+			<SettingsRow
+				icon="user"
+				iconSize={24}
+				tileBackground="var(--color-background)"
+				title="Display name"
+				sub="Shown on the top bar and as your sender name."
+				control={
+					<div class="flex items-center gap-2">
+						<Input
+							value={value()}
+							onInput={(e) => setDraft(e.currentTarget.value)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter") handleSave();
+							}}
+							aria-label="Display name"
+							class="w-48 max-[560px]:w-full"
+						/>
+						<Button
+							size="sm"
+							variant="primary"
+							disabled={!canSave()}
+							onClick={handleSave}
+						>
+							{updateName.isPending ? "Saving…" : "Save"}
+						</Button>
+					</div>
+				}
+			/>
+			<SettingsRow
+				icon="user"
+				iconSize={24}
+				title="Login email"
+				sub={user.data?.email ?? ""}
+				subMono
+				control={<Badge>Read-only</Badge>}
+			/>
+		</Card>
+	);
+};
 
 /**
  * Connected-account rows backed by the shared identity query cache. The
@@ -207,6 +304,10 @@ const SettingsScreen: Component = () => {
 
 			<div class={threadBodyClasses}>
 				<div class={settingsInnerClasses}>
+					{/* ---- Profile ---- */}
+					<h3 class={settingsSectionClasses}>Profile</h3>
+					<ProfileCard />
+
 					{/* ---- Connected accounts ---- */}
 					<h3 class={settingsSectionClasses}>Connected accounts</h3>
 					<ConnectedAccountsCard />
