@@ -15,8 +15,7 @@ import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
 import { For, Show } from "solid-js";
 
-import { ASSIST_NAV_ITEMS, mailNavItems } from "../../lib/atlas/app_state";
-import { useAtlasState } from "../../lib/atlas/atlas_state";
+import { ASSIST_NAV_ITEMS } from "../../lib/atlas/app_state";
 import {
 	navCountActiveClasses,
 	navCountClasses,
@@ -28,6 +27,7 @@ import {
 	spacerClasses,
 } from "../../lib/atlas/component_classes";
 import type { NavItem, Screen } from "../../lib/atlas/types";
+import { useMailNavItems } from "../../lib/mail/queries";
 import { cn } from "../../lib/utils";
 import { AiUsageCard } from "./ai_usage_card";
 import { AtlasIcon } from "./atlas_icon";
@@ -133,14 +133,14 @@ export interface SidebarNavProps {
 }
 
 const SidebarNav: Component<SidebarNavProps> = (props) => {
-	const decisions = useAtlasState((s) => s.screener);
+	const mailNavItems = useMailNavItems();
 	const linkFor = (id: Screen): NavLinkTarget | undefined =>
 		props.linkFor?.(id);
 
 	return (
 		<div class={sidebarClasses}>
 			<div class={sectionTitleClasses}>Mail</div>
-			<For each={mailNavItems(decisions())}>
+			<For each={mailNavItems()}>
 				{(item) => (
 					<NavRow
 						item={item}

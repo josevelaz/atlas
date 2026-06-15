@@ -23,6 +23,8 @@ export interface MailListProps {
 	items: MailItem[];
 	selectedId: string | null;
 	onSelect: (id: string) => void;
+	/** Whether the list is still loading from the server. */
+	loading?: boolean;
 	/** Optional AI banner rendered under the header (inbox only). */
 	aiBanner?: JSX.Element;
 }
@@ -43,8 +45,12 @@ const MailList: Component<MailListProps> = (props) => {
 					fallback={
 						<EmptyState
 							icon="inbox"
-							heading="Nothing here yet"
-							body="New mail you've accepted will appear here."
+							heading={props.loading ? "Loading…" : "Nothing here yet"}
+							body={
+								props.loading
+									? "Fetching your mail."
+									: "New mail you've accepted will appear here."
+							}
 						/>
 					}
 				>
