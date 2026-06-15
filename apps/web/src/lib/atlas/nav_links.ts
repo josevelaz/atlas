@@ -27,6 +27,7 @@ const ROUTES: Partial<Record<Screen, string>> = {
 	inbox: "/inbox",
 	feed: "/feed",
 	paper: "/paper-trail",
+	spam: "/spam",
 	tasks: "/tasks",
 	settings: "/settings",
 };

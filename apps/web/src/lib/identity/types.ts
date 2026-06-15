@@ -21,6 +21,28 @@ export interface UserProfile {
 }
 
 /**
+ * Connection status of a connected account (mirrors
+ * `connected_account.status`). "disconnected" sources are read-only.
+ */
+export type ConnectedAccountStatus = "active" | "disconnected" | string;
+
+/**
+ * Product-level sync state of a connected account (mirrors
+ * `connected_account.sync_state`):
+ *   - "pending"  — connection committing; not syncing yet.
+ *   - "watching" — live push subscription is active.
+ *   - "polling"  — falling back to periodic polling (no push).
+ *   - "degraded" — watch failing; retrying.
+ * `null` until the connection checkpoint commits.
+ */
+export type ConnectedAccountSyncState =
+	| "pending"
+	| "watching"
+	| "polling"
+	| "degraded"
+	| string;
+
+/**
  * A connected OAuth account (Google, etc.) as returned by
  * `GET /me/connected-accounts`. Credential (email/password) rows are
  * never included.
@@ -34,6 +56,15 @@ export interface ConnectedAccount {
 	isPrimary: boolean;
 	/** ISO 8601 timestamp. */
 	createdAt: string;
+	/**
+	 * Connection status; `null` until the connection checkpoint commits.
+	 * "disconnected" sources are read-only.
+	 */
+	status?: ConnectedAccountStatus | null;
+	/** Product-level sync state; `null` until the checkpoint commits. */
+	syncState?: ConnectedAccountSyncState | null;
+	/** ISO 8601 timestamp of the last completed sync, or null. */
+	lastSyncedAt?: string | null;
 }
 
 /** Response body of `GET /me/connected-accounts`. */

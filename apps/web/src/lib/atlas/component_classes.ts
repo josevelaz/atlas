@@ -440,6 +440,18 @@ export const listMetaClasses =
 export const listScrollClasses =
 	"flex-1 min-h-0 overflow-y-auto max-[860px]:overflow-visible";
 
+/**
+ * Compact account filter `<select>` in the list header (unified views). A
+ * small mono token with a 1.5px ink border + radius — narrows the list to one
+ * connected account, or "All accounts" for the unified cross-account view.
+ */
+export const listAccountFilterClasses =
+	"max-w-[160px] h-[22px] px-1.5 cursor-pointer " +
+	"font-[family-name:var(--font-mono)] text-[11px] font-bold tracking-[0.02em] " +
+	"bg-secondary-background text-foreground " +
+	"border-[1.5px] border-solid border-border rounded-[var(--radius)] " +
+	"focus-visible:outline-2 focus-visible:outline-[var(--color-ring)] focus-visible:outline-offset-1";
+
 /* ------------------------------------------------------------------ */
 /*  Generic flex helpers (former .atlas-row / .atlas-gap-8)            */
 /* ------------------------------------------------------------------ */
@@ -497,6 +509,40 @@ export const mailMetaTextClasses =
 
 /** Tag chip row under the sender stack. */
 export const rowTagsClasses = "flex flex-wrap gap-1 mt-1.5";
+
+/* ------------------------------------------------------------------ */
+/*  Account provenance chip                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Small "coded token" provenance chip attributing a row/thread to its source
+ * connected account. A 1.5px-bordered pill with a leading lilac dot (the
+ * `inbox` coded accent) + the account email in mono caps — a small token, not
+ * a field (DESIGN.md), and never AI-blue (reserved for the machine's voice).
+ * Dims its label to ink-on-yellow when the row is selected.
+ */
+export const provenanceChipClasses =
+	"inline-flex items-center gap-1 max-w-full px-1.5 py-px leading-none whitespace-nowrap " +
+	"font-[family-name:var(--font-mono)] text-[10px] font-bold tracking-[0.04em] " +
+	"bg-secondary-background text-muted " +
+	"border-[1.5px] border-solid border-border rounded-full";
+
+/** The leading coded dot inside a provenance chip (lilac `inbox` accent). */
+export const provenanceDotClasses =
+	"inline-block w-1.5 h-1.5 rounded-full shrink-0 " +
+	"border-[1.5px] border-solid border-border bg-inbox";
+
+/** The truncating email label inside a provenance chip. */
+export const provenanceEmailClasses =
+	"overflow-hidden text-ellipsis whitespace-nowrap";
+
+/**
+ * "Disconnected — read only" variant: alarm-red dot keeps the source
+ * attributed while flagging that the account is no longer syncing.
+ */
+export const provenanceDotDisconnectedClasses =
+	"inline-block w-1.5 h-1.5 rounded-full shrink-0 " +
+	"border-[1.5px] border-solid border-border bg-danger";
 
 /* ------------------------------------------------------------------ */
 /*  Tag chip                                                           */
@@ -619,6 +665,46 @@ export const threadTitleClasses =
 
 /** Thin vertical ink divider between the thread toolbar button groups. */
 export const threadDividerClasses = "w-px h-5 bg-border";
+
+/**
+ * Thread-body loading placeholder (lazy body fetch in flight). A bordered
+ * surface card with a centered mono "loading" line + a pulsing skeleton bar,
+ * matching the neobrutalist card treatment (ink border, yellow-keyed shadow).
+ */
+export const threadBodyLoadingClasses =
+	"flex flex-col items-center justify-center gap-3 mb-4 px-6 py-10 text-center " +
+	"bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)] " +
+	"shadow-[var(--shadow-x)_var(--shadow-y)_0_0_var(--color-main)]";
+
+/** Mono caption inside the body-loading placeholder. */
+export const threadBodyLoadingTextClasses =
+	"font-[family-name:var(--font-mono)] text-[12px] font-bold uppercase tracking-[0.06em] text-muted";
+
+/** Pulsing skeleton bar inside the body-loading placeholder. */
+export const threadBodySkeletonClasses =
+	"w-2/3 h-2 rounded-full bg-[rgba(128,128,128,0.25)] animate-pulse";
+
+/**
+ * Disconnected-source explanation banner. The thread's source account is
+ * disconnected, so un-fetched message bodies cannot be retrieved (a full body
+ * fetch resolves to `account_disconnected`); the pane shows previews only. An
+ * alarm-red-keyed bordered card explains the read-only state — NOT AI-blue,
+ * which is reserved for the machine's voice.
+ */
+export const threadDisconnectedBannerClasses =
+	"flex items-start gap-2.5 mb-4 px-4 py-3 " +
+	"bg-secondary-background text-foreground " +
+	"border-[length:var(--border-w)] border-solid border-border rounded-[var(--radius)] " +
+	"shadow-[var(--shadow-x)_var(--shadow-y)_0_0_var(--color-danger)]";
+
+/** Bold title line in the disconnected banner. */
+export const threadDisconnectedTitleClasses =
+	"font-extrabold text-[13px] leading-snug";
+
+/** Muted explanation copy in the disconnected banner. */
+export const threadDisconnectedBodyClasses =
+	"text-[12px] text-muted leading-[1.45] mt-0.5";
 
 /* ------------------------------------------------------------------ */
 /*  Message card                                                       */

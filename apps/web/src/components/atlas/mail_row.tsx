@@ -25,6 +25,7 @@ import {
 import type { MailItem, MailTag } from "../../lib/atlas/types";
 import { cn } from "../../lib/utils";
 import { PriorityChip } from "./priority_chip";
+import { ProvenanceChip } from "./provenance_chip";
 
 /** Prototype avatar palette (docs/prototype/screens.jsx). */
 const AVATAR_COLORS = [
@@ -110,7 +111,10 @@ export interface MailRowProps {
 const MailRow: Component<MailRowProps> = (props) => {
 	const mail = () => props.mail;
 	const tags = () => mail().tags ?? [];
-	const hasChips = () => Boolean(mail().priority || tags().length > 0);
+	// The provenance chip is always shown when present, so the chip row renders
+	// whenever there is provenance, a priority, or any tag.
+	const hasChips = () =>
+		Boolean(mail().priority || tags().length > 0 || mail().provenance);
 
 	return (
 		<button
@@ -141,6 +145,9 @@ const MailRow: Component<MailRowProps> = (props) => {
 								</span>
 							)}
 						</For>
+						<Show when={mail().provenance}>
+							{(p) => <ProvenanceChip provenance={p()} />}
+						</Show>
 					</div>
 				</Show>
 			</div>

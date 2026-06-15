@@ -37,7 +37,7 @@ export function createInitialState(): AtlasState {
 		onboarded: false,
 		onbStep: 0,
 		view: "inbox",
-		selected: { inbox: "i1", feed: null, paper: null },
+		selected: { inbox: "i1", feed: null, paper: null, spam: null },
 		screener: { accepted: {}, rejected: {} },
 		compose: { mode: "closed", replyAddr: "" },
 		assistantOpen: false,
@@ -59,6 +59,7 @@ export function selectedIdForView(
 	if (view === "inbox") return selected.inbox;
 	if (view === "feed") return selected.feed;
 	if (view === "paper") return selected.paper;
+	if (view === "spam") return selected.spam;
 	return null;
 }
 
@@ -75,6 +76,7 @@ export function selectInView(
 	if (view === "inbox") return { ...selected, inbox: id };
 	if (view === "feed") return { ...selected, feed: id };
 	if (view === "paper") return { ...selected, paper: id };
+	if (view === "spam") return { ...selected, spam: id };
 	return selected;
 }
 
@@ -155,6 +157,7 @@ export function listTitle(view: Screen): string {
 	if (view === "inbox") return "Inbox";
 	if (view === "feed") return "The Feed";
 	if (view === "paper") return "Paper Trail";
+	if (view === "spam") return "Spam";
 	return "";
 }
 

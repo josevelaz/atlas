@@ -92,3 +92,33 @@ export async function putPrimaryConnectedAccount(
 		throw await responseError(response, "PUT /me/primary-connected-account");
 	}
 }
+
+/**
+ * Disconnect a connected account (task 11 endpoint
+ * `POST /me/connected-accounts/:id/disconnect`).
+ *
+ * The server stops the mailbox watch (best-effort) and marks the account
+ * "disconnected" — its already-synced threads are retained but read-only.
+ * Resolves on success (server responds 204); throws on any non-2xx
+ * (404 — unknown/foreign account, 403 — credential row, 401 — signed out).
+ */
+export async function postDisconnectConnectedAccount(
+	accountId: string,
+): Promise<void> {
+	const response = await fetch(
+		apiUrl(
+			`/me/connected-accounts/${encodeURIComponent(accountId)}/disconnect`,
+		),
+		{
+			method: "POST",
+			credentials: "include",
+		},
+	);
+
+	if (!response.ok) {
+		throw await responseError(
+			response,
+			"POST /me/connected-accounts/:id/disconnect",
+		);
+	}
+}

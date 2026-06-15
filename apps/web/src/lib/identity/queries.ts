@@ -28,6 +28,7 @@ import { getAuthClient } from "../auth";
 import {
 	fetchConnectedAccounts,
 	fetchMe,
+	postDisconnectConnectedAccount,
 	putPrimaryConnectedAccount,
 } from "./api";
 import type { ConnectedAccount } from "./types";
@@ -165,6 +166,22 @@ export function useSetPrimary() {
 	const client = useQueryClient();
 	return useMutation(() => ({
 		mutationFn: (accountId: string) => putPrimaryConnectedAccount(accountId),
+		onSuccess: () =>
+			client.invalidateQueries({ queryKey: identityKeys.connectedAccounts }),
+	}));
+}
+
+/**
+ * Disconnect a connected account (task 11 endpoint), then refetch connected
+ * accounts so the row flips to its read-only "Disconnected" state. Server
+ * rejections (404 unknown/foreign row, 403 credential row, 401 signed out)
+ * surface as mutation errors.
+ */
+export function useDisconnectAccount() {
+	const client = useQueryClient();
+	return useMutation(() => ({
+		mutationFn: (accountId: string) =>
+			postDisconnectConnectedAccount(accountId),
 		onSuccess: () =>
 			client.invalidateQueries({ queryKey: identityKeys.connectedAccounts }),
 	}));

@@ -49,7 +49,9 @@ export interface AtlasAppProps {
 
 /** The mail workspace views — the only views with list/pane + overlay wiring. */
 function isMailView(view: Screen): boolean {
-	return view === "inbox" || view === "feed" || view === "paper";
+	return (
+		view === "inbox" || view === "feed" || view === "paper" || view === "spam"
+	);
 }
 
 const AtlasApp: Component<AtlasAppProps> = (props) => {

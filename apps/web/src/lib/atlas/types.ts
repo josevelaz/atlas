@@ -51,6 +51,20 @@ export interface ScreenerItem {
 	aiCategory: AiCategory;
 }
 
+/**
+ * Provenance of a thread/row — the connected mailbox it was synced from.
+ * Always present on server-backed rows so the unified views can attribute
+ * every row to its source account and mark disconnected sources read-only.
+ */
+export interface MailProvenance {
+	/** Owning connected-account id. */
+	connectedAccountId: string;
+	/** The connected mailbox address (e.g. "alice@gmail.com"). */
+	accountEmail: string;
+	/** "disconnected" sources are read-only; "connected" is the active state. */
+	accountStatus: string;
+}
+
 /** A row in any of the category mail lists (inbox / feed / paper trail). */
 export interface MailItem {
 	id: string;
@@ -64,6 +78,8 @@ export interface MailItem {
 	selected?: boolean;
 	priority?: Priority;
 	tags?: MailTag[];
+	/** Source-account provenance (always present on server-backed rows). */
+	provenance?: MailProvenance;
 }
 
 // ---------------------------------------------------------------------------
@@ -231,6 +247,7 @@ export type Screen =
 	| "inbox"
 	| "feed"
 	| "paper"
+	| "spam"
 	| "tasks"
 	| "settings";
 
@@ -254,6 +271,7 @@ export interface SelectionState {
 	inbox: string | null;
 	feed: string | null;
 	paper: string | null;
+	spam: string | null;
 }
 
 /** Screener decisions: accepted maps id → routed category; rejected is a set. */

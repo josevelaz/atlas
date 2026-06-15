@@ -33,6 +33,7 @@ import type {
 	AiCategory,
 	ExtractedItem,
 	MailItem,
+	MailProvenance,
 	NavItem,
 	Priority,
 	Screen,
@@ -73,6 +74,8 @@ export function viewToMailView(view: Screen): MailView | null {
 			return "paper_trail";
 		case "screener":
 			return "screener";
+		case "spam":
+			return "spam";
 		default:
 			return null;
 	}
@@ -152,6 +155,15 @@ export function formatThreadTime(iso: string | null): string {
 	return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+/** Source-account provenance for a thread row (always present server-side). */
+function provenanceFor(dto: ThreadListItemDto): MailProvenance {
+	return {
+		connectedAccountId: dto.connectedAccountId,
+		accountEmail: dto.accountEmail,
+		accountStatus: dto.accountStatus,
+	};
+}
+
 /** Map a thread list row to the UI `MailItem` shape. */
 export function threadToMailItem(dto: ThreadListItemDto): MailItem {
 	return {
@@ -162,6 +174,7 @@ export function threadToMailItem(dto: ThreadListItemDto): MailItem {
 		preview: dto.preview ?? "",
 		time: formatThreadTime(dto.lastMessageAt),
 		unread: !dto.read,
+		provenance: provenanceFor(dto),
 	};
 }
 
@@ -346,6 +359,68 @@ export function useThread(
 	);
 }
 
+/**
+ * Whether a thread's full message bodies are still being lazily fetched.
+ *
+ * The thread list/detail returns message previews plus a per-message
+ * `bodyState` (`"none" | "preview" | "full"`). Until a message reaches
+ * `"full"`, the body view shows a loading affordance. (The dedicated lazy
+ * body-fetch route is owned by task 19; this reads the state already present
+ * on the detail DTO so the seam works against current data.)
+ */
+function isBodyLoading(dto: ThreadDetailDto | undefined): boolean {
+	if (!dto || dto.messages.length === 0) return false;
+	return dto.messages.every((m) => m.bodyState !== "full");
+}
+
+/**
+ * Rich thread-detail view for the thread pane: the mapped `Thread`, the query
+ * lifecycle (pending/fetching/error), and the lazy-body/disconnect seams.
+ *
+ * `bodyLoading` drives the body loading state on open. `disconnected` is true
+ * when the thread's source account is disconnected — a read-only state where
+ * un-fetched bodies cannot be retrieved (a full body fetch would resolve to
+ * `account_disconnected`), so the pane shows the preview-only explanation
+ * banner instead of an empty body. SSR-safe.
+ */
+export function useThreadDetail(id: Accessor<string | null>): {
+	thread: Accessor<Thread | null>;
+	isPending: Accessor<boolean>;
+	isError: Accessor<boolean>;
+	/** Full message bodies are still loading (lazy body fetch in flight). */
+	bodyLoading: Accessor<boolean>;
+	/** Source account is disconnected (read-only; un-fetched bodies blocked). */
+	disconnected: Accessor<boolean>;
+} {
+	const query = useQuery(() => {
+		const tid = id();
+		return {
+			...threadDetailQueryOptions(tid ?? ""),
+			enabled: !isServer && tid != null && tid.length > 0,
+		};
+	});
+
+	const thread = createMemo<Thread | null>(() =>
+		query.data ? threadDetailToThread(query.data) : null,
+	);
+	const disconnected = createMemo<boolean>(
+		() => query.data?.accountStatus === "disconnected",
+	);
+	// On a disconnected source the body can never be fetched — never show the
+	// spinner; show the preview-only explanation instead.
+	const bodyLoading = createMemo<boolean>(
+		() => !disconnected() && isBodyLoading(query.data),
+	);
+
+	return {
+		thread,
+		isPending: () => query.isPending && id() != null,
+		isError: () => query.isError,
+		bodyLoading,
+		disconnected,
+	};
+}
+
 /** The user's rejected senders (recovery UI). SSR-safe. */
 export function useRejectedSenders() {
 	return useQuery(() => ({
@@ -449,6 +524,10 @@ export function useMailNavItems(): Accessor<NavItem[]> {
 		...threadsQueryOptions("paper_trail"),
 		enabled: !isServer,
 	}));
+	const spam = useQuery(() => ({
+		...threadsQueryOptions("spam"),
+		enabled: !isServer,
+	}));
 
 	return createMemo<NavItem[]>(() => [
 		{
@@ -478,6 +557,16 @@ export function useMailNavItems(): Accessor<NavItem[]> {
 			icon: "paper",
 			count: paper.data?.threads.length ?? 0,
 			color: "var(--color-paper)",
+		},
+		{
+			// Provider-flagged spam, kept distinct from the Screener (which is
+			// first-time senders awaiting a decision). Count is the page-bounded
+			// spam-thread total.
+			id: "spam",
+			label: "Spam",
+			icon: "shield",
+			count: spam.data?.threads.length ?? 0,
+			color: "var(--color-danger)",
 		},
 	]);
 }
