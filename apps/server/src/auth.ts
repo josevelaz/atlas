@@ -80,9 +80,16 @@ export const auth = betterAuth({
 					google: {
 						clientId: config.GOOGLE_CLIENT_ID,
 						clientSecret: config.GOOGLE_CLIENT_SECRET,
+						scope: ["https://www.googleapis.com/auth/gmail.readonly"],
+						accessType: "offline",
+						prompt: "select_account consent",
 					},
 				}
 			: {}),
+	},
+
+	account: {
+		encryptOAuthTokens: true,
 	},
 
 	databaseHooks: {
