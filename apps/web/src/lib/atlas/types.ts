@@ -192,6 +192,7 @@ export interface OnboardingStep {
 
 /** Tagged-union description of an onboarding step's visual. */
 export type OnboardingVisual =
+	| { kind: "welcome" }
 	| { kind: "connect" }
 	| { kind: "screener-card"; card: OnboardingScreenerCard }
 	| { kind: "categories"; rows: OnboardingCategoryRow[] }

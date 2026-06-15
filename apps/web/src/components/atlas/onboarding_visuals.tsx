@@ -7,9 +7,10 @@
 // imports from `docs/prototype/**`.
 
 import type { Component } from "solid-js";
-import { For, Match, Switch } from "solid-js";
+import { For, Match, Show, Switch } from "solid-js";
 
 import {
+	badgeClasses,
 	buttonClasses,
 	onbAiBodyClasses,
 	onbAiClasses,
@@ -18,10 +19,12 @@ import {
 	onbCatClasses,
 	onbCatDescClasses,
 	onbCatNameClasses,
-	onbCatTileClasses,
 	onbCatsClasses,
+	onbCatTileClasses,
+	onbComingSoonClasses,
 	onbConnectBtnClasses,
 	onbConnectClasses,
+	onbConnectGatedClasses,
 	onbConnectGridClasses,
 	onbConnectHeadClasses,
 	onbConnectNameClasses,
@@ -47,6 +50,8 @@ import {
 	onbScreenerPreviewClasses,
 	onbScreenerRejectClasses,
 	onbScreenerSubjectClasses,
+	onbWelcomeBoxClasses,
+	onbWelcomeClasses,
 } from "../../lib/atlas/component_classes";
 import type {
 	OnboardingCategoryRow,
@@ -57,6 +62,7 @@ import type {
 import { getAuthClient } from "../../lib/auth";
 import { cn } from "../../lib/utils";
 import { AtlasIcon } from "./atlas_icon";
+import { Logo } from "./logo";
 
 // ---------------------------------------------------------------------------
 // Step 1 — connect provider cards
@@ -65,6 +71,8 @@ import { AtlasIcon } from "./atlas_icon";
 interface ConnectCardProps {
 	provider: "Google" | "Microsoft";
 	sub: string;
+	/** When set, the card is a non-interactive gate (e.g. "Coming soon"). */
+	comingSoon?: boolean;
 }
 
 function ConnectCard(props: ConnectCardProps) {
@@ -72,19 +80,22 @@ function ConnectCard(props: ConnectCardProps) {
 		props.provider === "Google" ? "var(--color-main)" : "var(--color-ai)";
 	const icon = () => (props.provider === "Google" ? "google" : "outlook");
 
+	// Google starts the OAuth consent flow with `/inbox` as the post-auth
+	// callback. Microsoft is an explicit, visible "Coming soon" gate — rendered
+	// disabled with no click handler so it can't be used to bypass consent.
 	const handleConnect = () => {
-		if (props.provider === "Google") {
-			const callbackURL = new URL("/inbox", window.location.origin).toString();
-			getAuthClient().signIn.social({
-				provider: "google",
-				callbackURL,
-			});
-		}
-		// Microsoft / other providers: not yet configured — no-op for now.
+		const callbackURL = new URL("/inbox", window.location.origin).toString();
+		getAuthClient().signIn.social({
+			provider: "google",
+			callbackURL,
+		});
 	};
 
 	return (
-		<div class={onbConnectClasses}>
+		<div
+			class={cn(onbConnectClasses, props.comingSoon && onbConnectGatedClasses)}
+			aria-disabled={props.comingSoon ? "true" : undefined}
+		>
 			<div class={onbConnectHeadClasses}>
 				<span class={onbConnectTileClasses} style={{ background: tile() }}>
 					<AtlasIcon name={icon()} size={20} color="#fff" stroke={2.5} />
@@ -94,16 +105,27 @@ function ConnectCard(props: ConnectCardProps) {
 					<div class={onbConnectSubClasses}>{props.sub}</div>
 				</div>
 			</div>
-			<button
-				type="button"
-				class={cn(
-					buttonClasses({ variant: "primary", size: "sm" }),
-					onbConnectBtnClasses,
-				)}
-				onClick={handleConnect}
+			<Show
+				when={props.comingSoon}
+				fallback={
+					<button
+						type="button"
+						class={cn(
+							buttonClasses({ variant: "primary", size: "sm" }),
+							onbConnectBtnClasses,
+						)}
+						onClick={handleConnect}
+					>
+						Connect with Google
+					</button>
+				}
 			>
-				Connect with OAuth
-			</button>
+				<span
+					class={cn(badgeClasses({ variant: "muted" }), onbComingSoonClasses)}
+				>
+					Coming soon
+				</span>
+			</Show>
 		</div>
 	);
 }
@@ -112,7 +134,25 @@ function ConnectVisual() {
 	return (
 		<div class={onbConnectGridClasses}>
 			<ConnectCard provider="Google" sub="Gmail · Google Workspace" />
-			<ConnectCard provider="Microsoft" sub="Outlook · Microsoft 365" />
+			<ConnectCard
+				provider="Microsoft"
+				sub="Outlook · Microsoft 365"
+				comingSoon
+			/>
+		</div>
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Step 0 — welcome
+// ---------------------------------------------------------------------------
+
+function WelcomeVisual() {
+	return (
+		<div class={onbWelcomeClasses}>
+			<div class={onbWelcomeBoxClasses}>
+				<Logo markSize={40} />
+			</div>
 		</div>
 	);
 }
@@ -231,6 +271,9 @@ export interface OnboardingVisualProps {
 const OnboardingVisualPanel: Component<OnboardingVisualProps> = (props) => {
 	return (
 		<Switch>
+			<Match when={props.visual.kind === "welcome"}>
+				<WelcomeVisual />
+			</Match>
 			<Match when={props.visual.kind === "connect"}>
 				<ConnectVisual />
 			</Match>

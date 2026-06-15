@@ -1211,6 +1211,26 @@ export const onbConnectSubClasses =
 /** Full-width OAuth connect button (composed onto Button). */
 export const onbConnectBtnClasses = "w-full";
 
+/** A gated (non-interactive) connect card: dimmed, no hover/press affordance. */
+export const onbConnectGatedClasses = "opacity-60 cursor-not-allowed";
+
+/** Full-width "Coming soon" gate badge in place of the connect button. */
+export const onbComingSoonClasses =
+	"w-full uppercase tracking-[0.08em] rounded-[var(--radius)]";
+
+/* ------------------------------------------------------------------ */
+/*  Onboarding step 0 — welcome                                        */
+/* ------------------------------------------------------------------ */
+
+/** Centered welcome panel framing the Atlas logo mark. */
+export const onbWelcomeClasses = "flex items-center justify-center py-6";
+
+/** Inked, shadowed logo plinth on warm surface. */
+export const onbWelcomeBoxClasses =
+	"flex items-center justify-center w-20 h-20 bg-secondary-background " +
+	"border-[length:var(--border-w)] border-solid border-border " +
+	"rounded-[var(--radius-lg)] shadow-[var(--shadow)]";
+
 /* ------------------------------------------------------------------ */
 /*  Onboarding step 2 — screener card                                  */
 /* ------------------------------------------------------------------ */

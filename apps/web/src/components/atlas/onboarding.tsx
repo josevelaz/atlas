@@ -8,11 +8,14 @@
 // The active step is owned by local client state (a signal), NOT the URL — the
 // flow no longer uses a `?step=N` query param. Back/Next are buttons that mutate
 // the step signal inside a directional view transition (see
-// `startOnboardingTransition`); Skip / Open Atlas are real links to
-// `/inbox`. Entering the flow always starts at step 0 (the cached
-// transition state is reset on mount), so a fresh entry / replay is clean.
+// `startOnboardingTransition`). Entering the flow always starts at step 0 (the
+// cached transition state is reset on mount), so a fresh entry / replay is clean.
+//
+// There is no "Skip"/"Open Atlas" bypass: the walkthrough leads and the final
+// step is the connect/consent gate, whose visual hosts the only forward path
+// (Connect with Google). Un-onboarded users are bounced from gated routes by
+// the route guards, so removing the bypass links keeps the UI honest.
 
-import { Link } from "@tanstack/solid-router";
 import type { Component } from "solid-js";
 import { createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
@@ -25,7 +28,6 @@ import {
 	onboardingClasses,
 	onboardingFootClasses,
 	onboardingHeadClasses,
-	onboardingLinkClasses,
 	onboardingProgressClasses,
 	onboardingSubClasses,
 	onboardingTitleClasses,
@@ -85,16 +87,6 @@ const Onboarding: Component = () => {
 							Get started — {step() + 1}/{total}
 						</span>
 					</div>
-					<Link
-						to="/inbox"
-						class={cn(
-							buttonClasses({ variant: "ghost", size: "sm" }),
-							onboardingLinkClasses,
-						)}
-						data-action="skip"
-					>
-						Skip
-					</Link>
 				</div>
 
 				<div class={onboardingBodyClasses}>
@@ -128,20 +120,27 @@ const Onboarding: Component = () => {
 						</For>
 					</div>
 
+					{/* On the final (connect/consent) step there is no Next/Open
+					    Atlas: the connect card's "Connect with Google" CTA is the
+					    only forward path. A disabled spacer keeps the footer
+					    balanced and signals the gate. */}
 					<Show
 						when={!isLast()}
 						fallback={
-							<Link
-								to="/inbox"
-								class={cn(
-									buttonClasses({ variant: "primary", size: "sm" }),
-									onboardingLinkClasses,
-								)}
-								data-action="open"
+							<button
+								type="button"
+								class={buttonClasses({
+									variant: "primary",
+									size: "sm",
+									disabled: true,
+								})}
+								disabled
+								aria-disabled="true"
+								data-action="connect-gate"
 							>
-								Open Atlas{" "}
+								Connect to finish{" "}
 								<AtlasIcon name="chevron-right" size={14} stroke={2.5} />
-							</Link>
+							</button>
 						}
 					>
 						<button

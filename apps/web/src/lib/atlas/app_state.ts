@@ -318,13 +318,19 @@ export function resolveShortcut(e: KeyboardEvent): KeyboardAction | null {
 
 // ---------------------------------------------------------------------------
 // Onboarding steps (5 steps, copy & visuals preserved from the prototype)
+//
+// The walkthrough leads (welcome → screener → categories → AI → empty inbox)
+// and the connect/consent step is LAST: the user reads how Atlas works before
+// being asked to authorize an account. The final step's `connect` visual hosts
+// the real CTA (Connect with Google) — there is no "Skip"/"Open Atlas" bypass,
+// since un-onboarded users are bounced from gated routes by the route guards.
 // ---------------------------------------------------------------------------
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
 	{
 		title: "Welcome to Atlas.",
 		sub: "A smarter inbox on top of your Gmail or Outlook account. We protect your attention — you keep your address.",
-		visual: { kind: "connect" },
+		visual: { kind: "welcome" },
 	},
 	{
 		title: "Strangers go to the Screener.",
@@ -397,5 +403,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
 			heading: "Your Inbox is empty.",
 			body: "That's because everyone is still unscreened. New mail will land in the Screener as it arrives — we'll show you.",
 		},
+	},
+	{
+		title: "Connect your mailbox.",
+		sub: "Atlas works on top of your Gmail or Outlook account. We protect your attention — you keep your address. Authorize Atlas to get started.",
+		visual: { kind: "connect" },
 	},
 ];
