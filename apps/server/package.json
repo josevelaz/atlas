@@ -6,6 +6,7 @@
     "dev": "bun --watch src/index.ts",
     "dev:server": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
+    "reset:google-plaintext-accounts": "bun run scripts/reset_plaintext_google_accounts.ts",
     "lint": "biome lint ./src",
     "lint:fix": "biome lint --write ./src",
     "typecheck": "tsc --noEmit",
