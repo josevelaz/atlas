@@ -140,20 +140,26 @@ Reject cross-site forged unsafe requests to cookie-authenticated app routes at t
      - Allowed-origin `OPTIONS` preflight with `Access-Control-Request-Headers: x-atlas-csrf` → **204** and `Access-Control-Allow-Headers: Content-Type, Authorization, x-atlas-csrf`
   4. Interpretation: the two forged unsafe requests fail at the CSRF layer before auth/session or route validation; the header-bearing variants pass the guard and continue to downstream validation.
 
-- [ ] 8. Full verification sweep
+- [x] 8. Full verification sweep
   **What**: Run the whole server test suite, typecheck, and lint; build the web app.
   **Acceptance**: `cd apps/server && bun test && bun run typecheck && bun run lint` all pass; `cd apps/web && bun run build` passes.
 
+  **Results (2026-06-15)**
+  - `cd apps/server && bun test` → **PASS** (`266 pass`, `0 fail`)
+  - `cd apps/server && bun run typecheck` → **PASS** (`tsc --noEmit` clean)
+  - `cd apps/server && bun run lint` → **PASS** (`biome lint ./src` clean)
+  - `cd apps/web && bun run build` → **PASS** (client + SSR/prerender build completed successfully)
+
 ## Verification
-- [ ] `cd apps/server && bun test` (all suites green, incl. `csrf_guard.test.ts`)
-- [ ] `cd apps/server && bun run typecheck`
-- [ ] `cd apps/server && bun run lint`
-- [ ] `cd apps/web && bun run build`
+- [x] `cd apps/server && bun test` (all suites green, incl. `csrf_guard.test.ts`)
+- [x] `cd apps/server && bun run typecheck`
+- [x] `cd apps/server && bun run lint`
+- [x] `cd apps/web && bun run build`
 - [x] Manual curl matrix from Task 7 returns expected codes, including: untrusted-origin+no-header → 403, no-origin+no-header → 403, no-origin+header → passes CSRF, trusted-origin+header → passes CSRF
 - [x] Allowed-origin `OPTIONS` preflight with `Access-Control-Request-Headers: x-atlas-csrf` returns 204 and advertises `x-atlas-csrf` in `Access-Control-Allow-Headers` (Task 6 test + Task 7 curl)
-- [ ] `Access-Control-Allow-Headers` includes `x-atlas-csrf` (Task 1)
-- [ ] No change to `auth.ts` cookie attributes; no change to `strictCors` origin handling
-- [ ] Guard demonstrably skips `/api/auth/*` and `/gmail/push`
+- [x] `Access-Control-Allow-Headers` includes `x-atlas-csrf` (Task 1)
+- [x] No change to `auth.ts` cookie attributes; no change to `strictCors` origin handling
+- [x] Guard demonstrably skips `/api/auth/*` and `/gmail/push`
 - [ ] No regressions to GET routes (`/health`, `/`, `/me`, list endpoints)
 
 ## Decisions & Tradeoffs (captured for reviewers)
