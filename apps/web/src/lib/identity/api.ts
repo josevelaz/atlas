@@ -13,7 +13,7 @@
  * This module is independent of `lib/atlas/**` by design.
  */
 
-import { apiUrl } from "../api";
+import { apiFetch } from "../api";
 import type { ConnectedAccountsResponse, UserProfile } from "./types";
 
 /** Build an Error from a failed response, including any server message. */
@@ -39,9 +39,7 @@ async function responseError(
  * Resolves to `null` on 401 (signed out); throws on other non-2xx.
  */
 export async function fetchMe(): Promise<UserProfile | null> {
-	const response = await fetch(apiUrl("/me"), {
-		credentials: "include",
-	});
+	const response = await apiFetch("/me");
 
 	if (response.status === 401) {
 		return null;
@@ -61,9 +59,7 @@ export async function fetchMe(): Promise<UserProfile | null> {
  * a signed-in session, e.g. via `fetchMe()`).
  */
 export async function fetchConnectedAccounts(): Promise<ConnectedAccountsResponse> {
-	const response = await fetch(apiUrl("/me/connected-accounts"), {
-		credentials: "include",
-	});
+	const response = await apiFetch("/me/connected-accounts");
 
 	if (!response.ok) {
 		throw await responseError(response, "GET /me/connected-accounts");
@@ -81,9 +77,8 @@ export async function fetchConnectedAccounts(): Promise<ConnectedAccountsRespons
 export async function putPrimaryConnectedAccount(
 	accountId: string,
 ): Promise<void> {
-	const response = await fetch(apiUrl("/me/primary-connected-account"), {
+	const response = await apiFetch("/me/primary-connected-account", {
 		method: "PUT",
-		credentials: "include",
 		headers: { "Content-Type": "application/json" },
 		body: JSON.stringify({ accountId }),
 	});
@@ -105,13 +100,10 @@ export async function putPrimaryConnectedAccount(
 export async function postDisconnectConnectedAccount(
 	accountId: string,
 ): Promise<void> {
-	const response = await fetch(
-		apiUrl(
-			`/me/connected-accounts/${encodeURIComponent(accountId)}/disconnect`,
-		),
+	const response = await apiFetch(
+		`/me/connected-accounts/${encodeURIComponent(accountId)}/disconnect`,
 		{
 			method: "POST",
-			credentials: "include",
 		},
 	);
 

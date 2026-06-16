@@ -10,7 +10,7 @@
  * This module is independent of `lib/atlas/**` by design.
  */
 
-import { apiUrl } from "../api";
+import { apiFetch } from "../api";
 import type {
 	AcceptSenderResult,
 	MailView,
@@ -57,9 +57,7 @@ export async function fetchThreads(
 	if (params.cursor) search.set("cursor", params.cursor);
 	if (params.limit != null) search.set("limit", String(params.limit));
 
-	const response = await fetch(apiUrl(`/mail/threads?${search.toString()}`), {
-		credentials: "include",
-	});
+	const response = await apiFetch(`/mail/threads?${search.toString()}`);
 
 	if (!response.ok) {
 		throw await responseError(response, "GET /mail/threads");
@@ -72,9 +70,8 @@ export async function fetchThreads(
 export async function fetchThreadDetail(
 	threadId: string,
 ): Promise<ThreadDetailDto> {
-	const response = await fetch(
-		apiUrl(`/mail/threads/${encodeURIComponent(threadId)}`),
-		{ credentials: "include" },
+	const response = await apiFetch(
+		`/mail/threads/${encodeURIComponent(threadId)}`,
 	);
 
 	if (!response.ok) {
@@ -92,11 +89,10 @@ export async function postAcceptSender(
 	email: string,
 	category: ServerMailCategory,
 ): Promise<AcceptSenderResult> {
-	const response = await fetch(
-		apiUrl(`/screener/senders/${encodeURIComponent(email)}/accept`),
+	const response = await apiFetch(
+		`/screener/senders/${encodeURIComponent(email)}/accept`,
 		{
 			method: "POST",
-			credentials: "include",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ category }),
 		},
@@ -116,11 +112,10 @@ export async function postAcceptSender(
 export async function postRejectSender(
 	email: string,
 ): Promise<RejectSenderResult> {
-	const response = await fetch(
-		apiUrl(`/screener/senders/${encodeURIComponent(email)}/reject`),
+	const response = await apiFetch(
+		`/screener/senders/${encodeURIComponent(email)}/reject`,
 		{
 			method: "POST",
-			credentials: "include",
 		},
 	);
 
@@ -133,9 +128,7 @@ export async function postRejectSender(
 
 /** List the user's rejected senders (recovery UI). Throws on any non-2xx. */
 export async function fetchRejectedSenders(): Promise<RejectedSendersResponse> {
-	const response = await fetch(apiUrl("/screener/rejected"), {
-		credentials: "include",
-	});
+	const response = await apiFetch("/screener/rejected");
 
 	if (!response.ok) {
 		throw await responseError(response, "GET /screener/rejected");
@@ -158,11 +151,10 @@ export async function postRecoverSender(
 	email: string,
 	body: RecoverSenderBody,
 ): Promise<RecoverSenderResult> {
-	const response = await fetch(
-		apiUrl(`/screener/senders/${encodeURIComponent(email)}/recover`),
+	const response = await apiFetch(
+		`/screener/senders/${encodeURIComponent(email)}/recover`,
 		{
 			method: "POST",
-			credentials: "include",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		},
@@ -189,11 +181,10 @@ export async function postThreadCategory(
 	threadId: string,
 	body: OverrideThreadCategoryBody,
 ): Promise<OverrideThreadCategoryResult> {
-	const response = await fetch(
-		apiUrl(`/mail/threads/${encodeURIComponent(threadId)}/category`),
+	const response = await apiFetch(
+		`/mail/threads/${encodeURIComponent(threadId)}/category`,
 		{
 			method: "POST",
-			credentials: "include",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		},
