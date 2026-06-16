@@ -134,8 +134,7 @@ const resolveOrigin = (request: Request): string | null => {
 	}
 };
 
-export const csrfGuard = new Elysia({ name: "csrf-guard" }).onBeforeHandle(
-	{ as: "global" },
+export const csrfGuard = new Elysia({ name: "csrf-guard" }).onRequest(
 	({ request, set }) => {
 		if (
 			CSRF_SAFE_METHODS.includes(
