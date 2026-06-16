@@ -8,6 +8,7 @@ import { autoload } from "elysia-autoload";
 import { auth } from "./auth.ts";
 import { config } from "./config.ts";
 import { authSessionPlugin, requireAuth } from "./plugins/auth_session.ts";
+import { CSRF_HEADER } from "./plugins/csrf_guard.ts";
 import {
 	ConnectedAccountForbiddenError,
 	ConnectedAccountNotFoundError,
@@ -16,7 +17,7 @@ import {
 } from "./services/connected_accounts.ts";
 
 const CORS_METHODS = "GET, POST, PUT, DELETE, OPTIONS";
-const CORS_HEADERS = "Content-Type, Authorization";
+const CORS_HEADERS = ["Content-Type", "Authorization", CSRF_HEADER].join(", ");
 
 const allowedOriginsSet = new Set(config.CORS_ALLOWED_ORIGINS);
 
