@@ -1,3 +1,7 @@
+import { Elysia } from "elysia";
+
+import { config } from "../config.ts";
+
 /**
  * Canonical CSRF rule for Atlas unsafe requests.
  *
@@ -99,3 +103,64 @@ export const CSRF_RULE_TABLE = [
 		reason: `${CSRF_HEADER} is always required on unsafe requests.`,
 	},
 ] as const;
+
+const allowedOriginsSet = new Set(config.CORS_ALLOWED_ORIGINS);
+
+const CSRF_FAILURE_BODY = { error: "CSRF check failed" } as const;
+
+const hasBypassPrefix = (path: string) =>
+	CSRF_BYPASS_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
+
+const hasBypassPath = (path: string) =>
+	CSRF_BYPASS_PATHS.some((bypassPath) => bypassPath === path);
+
+const resolveOrigin = (request: Request): string | null => {
+	const origin = request.headers.get("Origin");
+
+	if (origin) {
+		return origin;
+	}
+
+	const referer = request.headers.get("Referer");
+
+	if (!referer) {
+		return null;
+	}
+
+	try {
+		return new URL(referer).origin;
+	} catch {
+		return null;
+	}
+};
+
+export const csrfGuard = new Elysia({ name: "csrf-guard" }).onBeforeHandle(
+	{ as: "global" },
+	({ request, set }) => {
+		if (
+			CSRF_SAFE_METHODS.includes(
+				request.method as (typeof CSRF_SAFE_METHODS)[number],
+			)
+		) {
+			return;
+		}
+
+		const path = new URL(request.url).pathname;
+
+		if (hasBypassPath(path) || hasBypassPrefix(path)) {
+			return;
+		}
+
+		if (!request.headers.has(CSRF_HEADER)) {
+			set.status = 403;
+			return CSRF_FAILURE_BODY;
+		}
+
+		const origin = resolveOrigin(request);
+
+		if (origin && !allowedOriginsSet.has(origin)) {
+			set.status = 403;
+			return CSRF_FAILURE_BODY;
+		}
+	},
+);
