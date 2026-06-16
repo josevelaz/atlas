@@ -8,7 +8,7 @@ import { autoload } from "elysia-autoload";
 import { auth } from "./auth.ts";
 import { config } from "./config.ts";
 import { authSessionPlugin, requireAuth } from "./plugins/auth_session.ts";
-import { CSRF_HEADER } from "./plugins/csrf_guard.ts";
+import { CSRF_HEADER, csrfGuard } from "./plugins/csrf_guard.ts";
 import {
 	ConnectedAccountForbiddenError,
 	ConnectedAccountNotFoundError,
@@ -57,6 +57,7 @@ export const app = new Elysia()
 	.use(staticPlugin())
 	.get("/health", () => ({ status: "ok" }))
 	.all("/api/auth/*", ({ request }) => auth.handler(request))
+	.use(csrfGuard)
 	// Derive authSession / authUser for every downstream route
 	.use(authSessionPlugin)
 	.use(autoload({ failGlob: false }))
