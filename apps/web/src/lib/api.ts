@@ -15,6 +15,13 @@
 export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? "";
 
 /**
+ * Public wire contract for the anti-CSRF header expected by the API.
+ *
+ * Duplicated here intentionally rather than importing from the server app.
+ */
+export const ATLAS_CSRF_HEADER = "x-atlas-csrf";
+
+/**
  * Build a full API URL from a path.
  *
  * @example
@@ -25,4 +32,30 @@ export function apiUrl(path: string): string {
 	const base = API_BASE_URL.replace(/\/$/, "");
 	const normalised = path.startsWith("/") ? path : `/${path}`;
 	return `${base}${normalised}`;
+}
+
+const UNSAFE_HTTP_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * Shared API fetch wrapper.
+ *
+ * Always sends credentials and adds the anti-CSRF header for unsafe methods.
+ */
+export function apiFetch(
+	path: string,
+	init: RequestInit = {},
+): Promise<Response> {
+	const method = (init.method ?? "GET").toUpperCase();
+	const headers = new Headers(init.headers);
+
+	if (UNSAFE_HTTP_METHODS.has(method)) {
+		headers.set(ATLAS_CSRF_HEADER, "1");
+	}
+
+	return fetch(apiUrl(path), {
+		...init,
+		method,
+		credentials: init.credentials ?? "include",
+		headers,
+	});
 }
