@@ -36,7 +36,7 @@ export const CSRF_BYPASS_PATHS = ["/gmail/push"] as const;
 export const CSRF_BYPASS_PATH_PREFIXES = ["/api/auth/"] as const;
 
 /** Methods that are never subject to CSRF enforcement. */
-export const CSRF_SAFE_METHODS = ["GET", "HEAD", "OPTIONS", "TRACE"] as const;
+export const CSRF_SAFE_METHODS = ["GET", "HEAD", "OPTIONS"] as const;
 
 /** Methods that must follow the canonical CSRF rule. */
 export const CSRF_UNSAFE_METHODS = ["POST", "PUT", "PATCH", "DELETE"] as const;
