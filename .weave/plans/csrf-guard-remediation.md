@@ -35,23 +35,23 @@ Terminal reviews (Weft + Warp) REJECTED PR #31 (`real-user-profile-ui`) for miss
 Reject cross-site forged unsafe requests to cookie-authenticated app routes at the server, before any handler runs, without weakening the `SameSite=None; Secure` cookie policy or breaking Better Auth, the Gmail push webhook, same-origin web, or the Tauri desktop app.
 
 ### Deliverables
-- [ ] Server CORS allow-headers extended to permit `x-atlas-csrf` so the browser preflight for the header succeeds.
-- [ ] A reusable `csrfGuard` Elysia plugin enforcing the Canonical CSRF rule (always-required header + origin allowlist with the explicit missing-origin behavior) on unsafe methods.
-- [ ] The guard mounted so it covers every unsafe cookie-authenticated app route and excludes `/api/auth/*` and `/gmail/push`.
-- [ ] The web client sends the required `x-atlas-csrf` custom header on all unsafe requests.
-- [ ] Unit tests for the guard's accept/reject matrix, including the explicit missing-origin cases.
-- [ ] A preflight test asserting an allowed-origin `OPTIONS` with `Access-Control-Request-Headers: x-atlas-csrf` is permitted.
-- [ ] Documented validation steps that do not depend on Google OAuth or protected-route browser automation.
+- [x] Server CORS allow-headers extended to permit `x-atlas-csrf` so the browser preflight for the header succeeds.
+- [x] A reusable `csrfGuard` Elysia plugin enforcing the Canonical CSRF rule (always-required header + origin allowlist with the explicit missing-origin behavior) on unsafe methods.
+- [x] The guard mounted so it covers every unsafe cookie-authenticated app route and excludes `/api/auth/*` and `/gmail/push`.
+- [x] The web client sends the required `x-atlas-csrf` custom header on all unsafe requests.
+- [x] Unit tests for the guard's accept/reject matrix, including the explicit missing-origin cases.
+- [x] A preflight test asserting an allowed-origin `OPTIONS` with `Access-Control-Request-Headers: x-atlas-csrf` is permitted.
+- [x] Documented validation steps that do not depend on Google OAuth or protected-route browser automation.
 
 ### Definition of Done
-- [ ] `cd apps/server && bun test` passes (including new guard tests).
-- [ ] `cd apps/server && bun run typecheck` passes.
-- [ ] `cd apps/server && bun run lint` passes.
-- [ ] A forged cross-site `POST` (untrusted `Origin`, no `x-atlas-csrf` header) to each listed unsafe route returns **403** before the handler executes.
-- [ ] A `POST` with NO `Origin`/`Referer` and NO `x-atlas-csrf` header returns **403**.
-- [ ] A `POST` with NO `Origin`/`Referer` but WITH the `x-atlas-csrf` header passes the guard (Tauri case).
-- [ ] A legitimate same-origin/Tauri unsafe request (trusted or absent `Origin` + `x-atlas-csrf` header) still succeeds (verified at the guard layer with a stub handler).
-- [ ] An allowed-origin `OPTIONS` preflight with `Access-Control-Request-Headers: x-atlas-csrf` returns the header in `Access-Control-Allow-Headers`.
+- [x] `cd apps/server && bun test` passes (including new guard tests).
+- [x] `cd apps/server && bun run typecheck` passes.
+- [x] `cd apps/server && bun run lint` passes.
+- [x] A forged cross-site `POST` (untrusted `Origin`, no `x-atlas-csrf` header) to each listed unsafe route returns **403** before the handler executes.
+- [x] A `POST` with NO `Origin`/`Referer` and NO `x-atlas-csrf` header returns **403**.
+- [x] A `POST` with NO `Origin`/`Referer` but WITH the `x-atlas-csrf` header passes the guard (Tauri case).
+- [x] A legitimate same-origin/Tauri unsafe request (trusted or absent `Origin` + `x-atlas-csrf` header) still succeeds (verified at the guard layer with a stub handler).
+- [x] An allowed-origin `OPTIONS` preflight with `Access-Control-Request-Headers: x-atlas-csrf` returns the header in `Access-Control-Allow-Headers`.
 
 ### Guardrails (Must NOT)
 - Do NOT change the cookie policy in `auth.ts` (`SameSite=None; Secure` stays).
@@ -160,7 +160,17 @@ Reject cross-site forged unsafe requests to cookie-authenticated app routes at t
 - [x] `Access-Control-Allow-Headers` includes `x-atlas-csrf` (Task 1)
 - [x] No change to `auth.ts` cookie attributes; no change to `strictCors` origin handling
 - [x] Guard demonstrably skips `/api/auth/*` and `/gmail/push`
-- [ ] No regressions to GET routes (`/health`, `/`, `/me`, list endpoints)
+- [x] No regressions to GET routes (`/health`, `/`, `/me`, list endpoints)
+
+  **GET smoke check (2026-06-15)**
+  - `GET /health` → **200** `{"status":"ok"}`
+  - `GET /` → **200** `Hello World`
+  - `GET /me` → **401** `{"error":"Unauthorized"}`
+  - `GET /me/connected-accounts` → **401** `{"error":"Unauthorized"}`
+  - Minimal route-harness with `csrfGuard` + `routes/screener.ts` + `routes/mail/threads.ts`:
+    - `GET /screener/rejected` → **401** `{"error":"Unauthorized"}`
+    - `GET /mail/threads?view=screener` → **401** `{"error":"Unauthorized"}`
+  - Interpretation: safe-method bypass remains intact; GET routes continue to reach their existing auth/route behavior rather than failing the CSRF guard.
 
 ## Decisions & Tradeoffs (captured for reviewers)
 - **Layered defense (origin check + non-simple header), not token-based**: Avoids stateful CSRF-token storage/rotation while satisfying the reviewers' accepted directions. The custom header forces a CORS preflight for any cross-site attempt (and the preflight only succeeds because Task 1 advertises the header for *allowed origins only*), and the origin allowlist rejects untrusted/forgeable origins.
