@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { Elysia } from "elysia";
+import { Elysia, t } from "elysia";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -30,6 +30,15 @@ const testApp = new Elysia()
 	.get("/probe", () => ({ ok: true }))
 	.options("/probe", () => new Response(null, { status: 204 }))
 	.post("/probe", () => ({ ok: true }))
+	.post("/probe-validated", () => ({ ok: true }), {
+		body: t.Object({
+			category: t.Union([
+				t.Literal("inbox"),
+				t.Literal("feed"),
+				t.Literal("paper_trail"),
+			]),
+		}),
+	})
 	.post("/api/auth/test", () => ({ ok: true, skipped: "auth" }))
 	.post("/gmail/push", () => ({ ok: true, skipped: "push" }));
 
@@ -135,6 +144,36 @@ describe("csrfGuard", () => {
 				}),
 			),
 		);
+	});
+
+	it("rejects before body validation when an unsafe request fails CSRF", async () => {
+		await expectForbidden(
+			await testApp.handle(
+				new Request("http://localhost/probe-validated", {
+					method: "POST",
+					headers: {
+						"content-type": "application/json",
+						Origin: UNTRUSTED_ORIGIN,
+					},
+					body: JSON.stringify({}),
+				}),
+			),
+		);
+	});
+
+	it("lets validation run after the guard passes", async () => {
+		const response = await testApp.handle(
+			new Request("http://localhost/probe-validated", {
+				method: "POST",
+				headers: {
+					"content-type": "application/json",
+					[CSRF_HEADER]: "1",
+				},
+				body: JSON.stringify({}),
+			}),
+		);
+
+		expect(response.status).toBe(422);
 	});
 
 	it("bypasses POST requests under /api/auth/", async () => {
