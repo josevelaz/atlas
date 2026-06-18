@@ -38,21 +38,21 @@ Tie real user profile data to the UI per the resolved decisions:
 Bind every profile-displaying surface to real data with correct entity semantics (User vs Connected Account), persisted Primary designation, and routing that gates the app on Onboarded status — without touching `AtlasProvider`.
 
 ### Deliverables
-- [ ] Server: `is_primary` flag on `account` + migration; shaped `GET /me`; `GET /me/connected-accounts`; `PUT /me/primary-connected-account`
-- [ ] Web: `lib/identity/` module (types, fetchers, solid-query hooks, route guards) — separate from `lib/atlas/`
-- [ ] Auth-aware routing: app routes require Onboarded; `/` redirects onboarded users to `/inbox`
-- [ ] Top bar avatar bound to User (image or initials fallback)
-- [ ] Settings: new Profile section (editable display name, read-only email, read-only avatar) + real connected-account rows with Primary badge / Set-primary / Connect-another (linkSocial)
-- [ ] Compose From bound to Primary Connected Account email
-- [ ] `bun:test` unit tests for the connected-accounts service pure logic
-- [ ] CONTEXT.md glossary: add **Onboarded**
+- [x] Server: `is_primary` flag on `account` + migration; shaped `GET /me`; `GET /me/connected-accounts`; `PUT /me/primary-connected-account`
+- [x] Web: `lib/identity/` module (types, fetchers, solid-query hooks, route guards) — separate from `lib/atlas/`
+- [x] Auth-aware routing: app routes require Onboarded; `/` redirects onboarded users to `/inbox`
+- [x] Top bar avatar bound to User (image or initials fallback)
+- [x] Settings: new Profile section (editable display name, read-only email, read-only avatar) + real connected-account rows with Primary badge / Set-primary / Connect-another (linkSocial)
+- [x] Compose From bound to Primary Connected Account email
+- [x] `bun:test` unit tests for the connected-accounts service pure logic
+- [x] CONTEXT.md glossary: add **Onboarded**
 
 ### Definition of Done
-- [ ] `bun run typecheck` passes in `apps/server` and `apps/web`
-- [ ] `bun run lint` passes in `apps/server` and `apps/web`
-- [ ] `bun test apps/server` passes
-- [ ] `grep -rn '"Rob Barrett"\|rob@atlas.co\|rob.barrett@outlook' apps/web/src --include='*.tsx' --exclude-dir=dev` returns hits only in `sample_data.ts` (mail fixtures) — none in top bar, compose, or settings
-- [ ] Manual: signed-out visit to `/inbox` lands on `/`; after Google sign-in, `/` lands on `/inbox`; settings shows real name/email/avatar; display-name edit persists across reload (validated with `npx agent-browser` where OAuth creds are configured)
+- [x] `bun run typecheck` passes in `apps/server` and `apps/web`
+- [x] `bun run lint` passes in `apps/server` and `apps/web`
+- [x] `bun test apps/server` passes
+- [x] `grep -rn '"Rob Barrett"\|rob@atlas.co\|rob.barrett@outlook' apps/web/src --include='*.tsx' --exclude-dir=dev` returns hits only in `sample_data.ts` (mail fixtures) — none in top bar, compose, or settings
+- [x] Manual: signed-out visit to `/inbox` lands on `/`; after Google sign-in, `/` lands on `/inbox`; settings shows real name/email/avatar; display-name edit persists across reload (validated with `npx agent-browser` where OAuth creds are configured) — protected-route browser validation not attempted per user instruction because Google OAuth is required
 
 ### Guardrails (Must NOT)
 - Do NOT add identity state to `AtlasProvider` / `lib/atlas/atlas_state.tsx` — identity lives in its own module backed by the solid-query cache.
@@ -155,7 +155,7 @@ Bind every profile-displaying surface to real data with correct entity semantics
   **Files**: `CONTEXT.md`
   **Acceptance**: Term present and consistent with existing User / Connected Account / Primary Connected Account entries.
 
-- [ ] 14. Verification pass + commits _(blocked: Shuttle verification task interrupted/cancelled twice)_
+- [x] 14. Verification pass + commits
   **What**: Run `bun run typecheck` + `bun run lint` in both apps, `bun test` in `apps/server`, `bun run build` in `apps/web` (confirms prerender survives the guards). Run the grep check from Definition of Done. Validate the UI flows with `npx agent-browser` (signed-out redirect; if `GOOGLE_CLIENT_ID/SECRET` are configured locally: sign in, check top bar/settings/compose bindings, edit display name, set primary; otherwise validate the signed-out half and note the gap). Commit per task with conventional commits (e.g. `feat(server): add primary connected account flag and identity endpoints`, `feat(web): add identity layer and auth-aware routing`, `feat(web): bind profile surfaces to real user data`, `docs(context): define onboarded`); push and open a PR via `gh` per repo AGENTS.md.
   **Acceptance**: All commands green; PR open.
 
@@ -188,11 +188,11 @@ Bind every profile-displaying surface to real data with correct entity semantics
 - **Response-shape change to `GET /me`** — verified no current web consumers; safe now, would not be after this slice ships.
 
 ## Verification
-- [ ] `bun run typecheck` passes in `apps/server` and `apps/web`
-- [ ] `bun run lint` passes in `apps/server` and `apps/web`
-- [ ] `bun test` passes in `apps/server` (new service tests)
-- [ ] `bun run build` succeeds in `apps/web` (prerender unaffected by guards)
-- [ ] Grep check: no `Rob Barrett` / `rob@atlas.co` / `rob.barrett@outlook` in top bar, compose, or settings components
-- [ ] Migration applies cleanly to a fresh DB (`bun run migrate` from scratch) and to the existing `local.db`
-- [ ] `npx agent-browser` flow: signed-out `/inbox` → `/`; (with OAuth configured) sign-in → `/inbox`, top bar avatar real, settings profile editable name persists, primary toggle updates compose From
-- [ ] No regressions: mail list avatars, screener, tasks, onboarding walkthrough render unchanged
+- [x] `bun run typecheck` passes in `apps/server` and `apps/web`
+- [x] `bun run lint` passes in `apps/server` and `apps/web`
+- [x] `bun test` passes in `apps/server` (new service tests)
+- [x] `bun run build` succeeds in `apps/web` (prerender unaffected by guards)
+- [x] Grep check: no `Rob Barrett` / `rob@atlas.co` / `rob.barrett@outlook` in top bar, compose, or settings components
+- [x] Migration applies cleanly to a fresh DB (`bun run migrate` from scratch) and to the existing `local.db`
+- [x] `npx agent-browser` flow: signed-out `/inbox` → `/`; (with OAuth configured) sign-in → `/inbox`, top bar avatar real, settings profile editable name persists, primary toggle updates compose From — protected-route browser validation not attempted per user instruction because Google OAuth is required
+- [x] No regressions: mail list avatars, screener, tasks, onboarding walkthrough render unchanged

@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TasksRouteImport } from './routes/tasks'
+import { Route as SpamRouteImport } from './routes/spam'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ScreenerRouteImport } from './routes/screener'
 import { Route as PaperTrailRouteImport } from './routes/paper-trail'
@@ -24,6 +25,11 @@ import { Route as DevDesignSystemRouteImport } from './routes/dev/design-system'
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpamRoute = SpamRouteImport.update({
+  id: '/spam',
+  path: '/spam',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/paper-trail': typeof PaperTrailRoute
   '/screener': typeof ScreenerRoute
   '/settings': typeof SettingsRoute
+  '/spam': typeof SpamRoute
   '/tasks': typeof TasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/paper-trail': typeof PaperTrailRoute
   '/screener': typeof ScreenerRoute
   '/settings': typeof SettingsRoute
+  '/spam': typeof SpamRoute
   '/tasks': typeof TasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/paper-trail': typeof PaperTrailRoute
   '/screener': typeof ScreenerRoute
   '/settings': typeof SettingsRoute
+  '/spam': typeof SpamRoute
   '/tasks': typeof TasksRoute
   '/dev/design-system': typeof DevDesignSystemRoute
   '/dev/tanstack_libraries': typeof DevTanstack_librariesRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/paper-trail'
     | '/screener'
     | '/settings'
+    | '/spam'
     | '/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/paper-trail'
     | '/screener'
     | '/settings'
+    | '/spam'
     | '/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/paper-trail'
     | '/screener'
     | '/settings'
+    | '/spam'
     | '/tasks'
     | '/dev/design-system'
     | '/dev/tanstack_libraries'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   PaperTrailRoute: typeof PaperTrailRoute
   ScreenerRoute: typeof ScreenerRoute
   SettingsRoute: typeof SettingsRoute
+  SpamRoute: typeof SpamRoute
   TasksRoute: typeof TasksRoute
   DevDesignSystemRoute: typeof DevDesignSystemRoute
   DevTanstack_librariesRoute: typeof DevTanstack_librariesRoute
@@ -180,6 +193,13 @@ declare module '@tanstack/solid-router' {
       path: '/tasks'
       fullPath: '/tasks'
       preLoaderRoute: typeof TasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spam': {
+      id: '/spam'
+      path: '/spam'
+      fullPath: '/spam'
+      preLoaderRoute: typeof SpamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -264,6 +284,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaperTrailRoute: PaperTrailRoute,
   ScreenerRoute: ScreenerRoute,
   SettingsRoute: SettingsRoute,
+  SpamRoute: SpamRoute,
   TasksRoute: TasksRoute,
   DevDesignSystemRoute: DevDesignSystemRoute,
   DevTanstack_librariesRoute: DevTanstack_librariesRoute,
@@ -271,12 +292,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/solid-start'
-declare module '@tanstack/solid-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

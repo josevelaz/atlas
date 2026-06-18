@@ -1,5 +1,7 @@
 # Google Auth and Gmail Inbox Access
 
+> **⚠️ Superseded — ingestion scope only.** The ingestion/sync scope of this plan (single-account M1, watch/push-gated connect success, a provider-token encryption key framed as separate from `BETTER_AUTH_SECRET`, and earlier auth assumptions) is superseded by `.weave/plans/gmail-ingestion-pipeline.md` and ADRs 0009–0013 (coupled Google identity + Gmail consent, provider-token encryption at rest, per-account checkpoint with forward-only sync, metadata-first ingestion with lazy bodies, initial-ingest-only provider state). Where this document conflicts with those, they win. The remainder is retained as historical context.
+
 ## TL;DR
 > **Summary**: Add one Google OAuth button that signs the user into Atlas and atomically authorizes read-only Gmail inbox access, backed by a first-class Connected Account model, encrypted provider-token custody, Gmail watch/push ingestion, and fallback polling. M1 delivers a single connected Gmail/Google Workspace mailbox, new-mail-only inbox sync, reconnect/disconnect gates, and production-launch runbooks without implementing historical import, sending, multi-account UX, or provider mailbox mutations.
 > **Estimated Effort**: XL

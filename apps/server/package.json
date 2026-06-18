@@ -6,6 +6,7 @@
     "dev": "bun --watch src/index.ts",
     "dev:server": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
+    "reset:google-plaintext-accounts": "bun run scripts/reset_plaintext_google_accounts.ts",
     "lint": "biome lint ./src",
     "lint:fix": "biome lint --write ./src",
     "typecheck": "tsc --noEmit",
@@ -32,6 +33,7 @@
     "env-var": "^7.5.0",
     "ioredis": "^5.8.2",
     "jobify": "^0.1.6",
+    "jose": "^6.2.3",
     "posthog-node": "^5.11.2"
   },
   "devDependencies": {

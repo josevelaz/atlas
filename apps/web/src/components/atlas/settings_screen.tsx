@@ -28,10 +28,15 @@ import {
 import { getAuthClient } from "../../lib/auth";
 import {
 	useConnectedAccounts,
+	useDisconnectAccount,
 	useSetPrimary,
 	useUpdateDisplayName,
 	useUser,
 } from "../../lib/identity/queries";
+import type {
+	ConnectedAccount,
+	ConnectedAccountSyncState,
+} from "../../lib/identity/types";
 import { Badge, Button, Card, Input, Toggle } from "../ui/index";
 import type { IconName } from "./atlas_icon";
 import { AtlasAvatar } from "./mail_row";
@@ -153,15 +158,102 @@ const ProfileCard: Component = () => {
 	);
 };
 
+/** Badge variant name (mirrors the `Badge` primitive's variant union). */
+type BadgeVariant =
+	| "default"
+	| "main"
+	| "feed"
+	| "paper"
+	| "ai"
+	| "danger"
+	| "inbox"
+	| "muted";
+
 /**
- * Connected-account rows backed by the shared identity query cache. The
- * primary row shows a "Primary" badge; others offer "Set primary", which
- * round-trips through `PUT /me/primary-connected-account` and invalidates
- * the connected-accounts query (so compose and other consumers re-render).
+ * Resolve a connected account's sync-state chip (label + coded badge variant):
+ *   - disconnected (status)  → "Disconnected"         (alarm-red)
+ *   - "watching"             → "Watching"             (mint — live push)
+ *   - "polling"              → "Polling"              (lilac — periodic)
+ *   - "degraded"            → "Degraded — retrying"   (feed yellow)
+ *   - "pending" / null      → "Connecting…"           (muted)
+ *
+ * Coded accents stay small (a single badge) and AI-blue is never used here —
+ * it is reserved for the machine's voice (DESIGN.md).
+ */
+function syncStateChip(account: ConnectedAccount): {
+	label: string;
+	variant: BadgeVariant;
+} {
+	if (account.status === "disconnected") {
+		return { label: "Disconnected", variant: "danger" };
+	}
+	const state: ConnectedAccountSyncState | null | undefined = account.syncState;
+	if (state === "watching") return { label: "Watching", variant: "paper" };
+	if (state === "polling") return { label: "Polling", variant: "inbox" };
+	if (state === "degraded") {
+		return { label: "Degraded — retrying", variant: "feed" };
+	}
+	return { label: "Connecting…", variant: "muted" };
+}
+
+/** Trailing controls for one connected-account row. */
+const ConnectedAccountControls: Component<{ account: ConnectedAccount }> = (
+	props,
+) => {
+	const setPrimary = useSetPrimary();
+	const disconnect = useDisconnectAccount();
+
+	const chip = () => syncStateChip(props.account);
+	const isDisconnected = () => props.account.status === "disconnected";
+
+	return (
+		<div class="flex flex-wrap items-center justify-end gap-2">
+			{/* Per-account sync-state chip (always shown). */}
+			<Badge variant={chip().variant}>{chip().label}</Badge>
+			<Show
+				when={!isDisconnected()}
+				fallback={<Badge variant="muted">Read-only</Badge>}
+			>
+				<Show
+					when={props.account.isPrimary}
+					fallback={
+						<Button
+							size="sm"
+							disabled={setPrimary.isPending}
+							onClick={() => setPrimary.mutate(props.account.id)}
+						>
+							Set primary
+						</Button>
+					}
+				>
+					<Badge variant="paper">Primary</Badge>
+				</Show>
+				<Button
+					size="sm"
+					variant="danger"
+					disabled={disconnect.isPending}
+					onClick={() => disconnect.mutate(props.account.id)}
+				>
+					Disconnect
+				</Button>
+			</Show>
+		</div>
+	);
+};
+
+/**
+ * Connected-account rows backed by the shared identity query cache. Each row
+ * carries a sync-state chip (Watching / Polling / Degraded — retrying /
+ * Disconnected), a "Primary" badge (or "Set primary" —
+ * `PUT /me/primary-connected-account`), and a "Disconnect" action (task 11
+ * `POST /me/connected-accounts/:id/disconnect`).
+ *
+ * Disconnected accounts are marked read-only: their actions collapse to a
+ * single "Read-only" badge (no Set-primary / Disconnect), since a disconnected
+ * source no longer syncs and its threads are read-only.
  */
 const ConnectedAccountsCard: Component = () => {
 	const accounts = useConnectedAccounts();
-	const setPrimary = useSetPrimary();
 
 	const handleConnect = () => {
 		getAuthClient().linkSocial({
@@ -179,22 +271,7 @@ const ConnectedAccountsCard: Component = () => {
 						iconSize={24}
 						title={account.email}
 						sub={providerMeta(account.providerId).label}
-						control={
-							<Show
-								when={account.isPrimary}
-								fallback={
-									<Button
-										size="sm"
-										disabled={setPrimary.isPending}
-										onClick={() => setPrimary.mutate(account.id)}
-									>
-										Set primary
-									</Button>
-								}
-							>
-								<Badge variant="paper">Primary</Badge>
-							</Show>
-						}
+						control={<ConnectedAccountControls account={account} />}
 					/>
 				)}
 			</For>

@@ -2,23 +2,25 @@
 //
 // Typed port of the interaction model in `docs/prototype/app.jsx` and the
 // onboarding fixtures in `docs/prototype/onboarding.jsx`. This module is
-// framework-free: it defines the initial-state factory, pure derivation
-// helpers (active lists, screener pending, current thread, nav items), the
-// keyboard-shortcut map, and the onboarding step data. The Solid layer wires
-// these into signals / stores. No runtime imports from `docs/prototype/**`.
+// framework-free: it defines the initial-state factory, pure UI-state
+// transitions (selection, screener decisions), the keyboard-shortcut map, the
+// static "Assist" nav entries, and the onboarding step data. The Solid layer
+// wires these into signals / stores.
+//
+// Mail-list / thread / screener DATA now lives in `lib/mail/**` (server-backed
+// via solid-query); the sample fixtures (`SAMPLE`) are confined to the assistant
+// citation deep-link resolver (`viewForMailId`) and the `/dev/*` routes. No
+// runtime imports from `docs/prototype/**`.
 
 import { SAMPLE } from "./sample_data";
 import type {
 	AiCategory,
 	AtlasState,
-	MailItem,
 	NavItem,
 	OnboardingStep,
 	Screen,
 	ScreenerDecisions,
-	ScreenerItem,
 	SelectionState,
-	Thread,
 } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -35,7 +37,7 @@ export function createInitialState(): AtlasState {
 		onboarded: false,
 		onbStep: 0,
 		view: "inbox",
-		selected: { inbox: "i1", feed: null, paper: null },
+		selected: { inbox: "i1", feed: null, paper: null, spam: null },
 		screener: { accepted: {}, rejected: {} },
 		compose: { mode: "closed", replyAddr: "" },
 		assistantOpen: false,
@@ -46,75 +48,8 @@ export function createInitialState(): AtlasState {
 }
 
 // ---------------------------------------------------------------------------
-// Screener derivation
+// Selection
 // ---------------------------------------------------------------------------
-
-/** Screener items not yet accepted or rejected. */
-export function pendingScreener(decisions: ScreenerDecisions): ScreenerItem[] {
-	return SAMPLE.screener.filter(
-		(i) => !decisions.accepted[i.id] && !decisions.rejected[i.id],
-	);
-}
-
-/** Convert an accepted screener item into a synthetic mail row for a list. */
-function screenerToMail(item: ScreenerItem, category: AiCategory): MailItem {
-	const base: MailItem = {
-		id: `ns-${item.id}`,
-		from: item.from,
-		addr: item.addr,
-		subject: item.subject,
-		preview: item.preview,
-		time: item.time,
-	};
-	if (category === "inbox") {
-		return { ...base, unread: true, priority: 2 };
-	}
-	if (category === "feed") {
-		return { ...base, unread: true };
-	}
-	return base;
-}
-
-/** Synthetic rows produced by screener items accepted into `category`. */
-function acceptedExtras(
-	decisions: ScreenerDecisions,
-	category: AiCategory,
-): MailItem[] {
-	const extras: MailItem[] = [];
-	for (const [id, cat] of Object.entries(decisions.accepted)) {
-		if (cat !== category) continue;
-		const item = SAMPLE.screener.find((x) => x.id === id);
-		if (item) extras.push(screenerToMail(item, category));
-	}
-	return extras;
-}
-
-// ---------------------------------------------------------------------------
-// Active category lists (base sample + accepted screener items prepended)
-// ---------------------------------------------------------------------------
-
-export function inboxList(decisions: ScreenerDecisions): MailItem[] {
-	return [...acceptedExtras(decisions, "inbox"), ...SAMPLE.inbox];
-}
-
-export function feedList(decisions: ScreenerDecisions): MailItem[] {
-	return [...acceptedExtras(decisions, "feed"), ...SAMPLE.feed];
-}
-
-export function paperList(decisions: ScreenerDecisions): MailItem[] {
-	return [...acceptedExtras(decisions, "paper"), ...SAMPLE.paper];
-}
-
-/** The active category list for a given screen, `[]` for non-list screens. */
-export function listForView(
-	view: Screen,
-	decisions: ScreenerDecisions,
-): MailItem[] {
-	if (view === "inbox") return inboxList(decisions);
-	if (view === "feed") return feedList(decisions);
-	if (view === "paper") return paperList(decisions);
-	return [];
-}
 
 /** The selected mail id for a category screen, or `null`. */
 export function selectedIdForView(
@@ -124,21 +59,8 @@ export function selectedIdForView(
 	if (view === "inbox") return selected.inbox;
 	if (view === "feed") return selected.feed;
 	if (view === "paper") return selected.paper;
+	if (view === "spam") return selected.spam;
 	return null;
-}
-
-/** Resolve the currently open thread (mail row merged with its body), or null. */
-export function currentThread(
-	view: Screen,
-	selected: SelectionState,
-	decisions: ScreenerDecisions,
-): Thread | null {
-	const list = listForView(view, decisions);
-	const selId = selectedIdForView(view, selected);
-	if (!selId) return null;
-	const mail = list.find((m) => m.id === selId);
-	if (!mail) return null;
-	return { ...mail, body: SAMPLE.threadBody[mail.id] ?? null };
 }
 
 // ---------------------------------------------------------------------------
@@ -154,6 +76,7 @@ export function selectInView(
 	if (view === "inbox") return { ...selected, inbox: id };
 	if (view === "feed") return { ...selected, feed: id };
 	if (view === "paper") return { ...selected, paper: id };
+	if (view === "spam") return { ...selected, spam: id };
 	return selected;
 }
 
@@ -205,44 +128,11 @@ export function viewForMailId(id: string): Screen | null {
 
 // ---------------------------------------------------------------------------
 // Navigation
+//
+// The "Mail" sidebar entries with live counts are now server-backed via
+// `useMailNavItems()` in `lib/mail/queries`. The static "Assist" entries stay
+// here (no server data yet).
 // ---------------------------------------------------------------------------
-
-/** Primary "Mail" sidebar entries with live counts derived from decisions. */
-export function mailNavItems(decisions: ScreenerDecisions): NavItem[] {
-	const inbox = inboxList(decisions);
-	const feed = feedList(decisions);
-	const paper = paperList(decisions);
-	return [
-		{
-			id: "screener",
-			label: "Screener",
-			icon: "screener",
-			count: pendingScreener(decisions).length,
-			color: "var(--color-danger)",
-		},
-		{
-			id: "inbox",
-			label: "Inbox",
-			icon: "inbox",
-			count: inbox.filter((i) => i.unread).length,
-			color: "var(--color-main)",
-		},
-		{
-			id: "feed",
-			label: "Feed",
-			icon: "feed",
-			count: feed.filter((i) => i.unread).length,
-			color: "var(--color-feed)",
-		},
-		{
-			id: "paper",
-			label: "Paper Trail",
-			icon: "paper",
-			count: paper.length,
-			color: "var(--color-paper)",
-		},
-	];
-}
 
 /** Secondary "Assist" sidebar entries. */
 export const ASSIST_NAV_ITEMS: NavItem[] = [
@@ -267,6 +157,7 @@ export function listTitle(view: Screen): string {
 	if (view === "inbox") return "Inbox";
 	if (view === "feed") return "The Feed";
 	if (view === "paper") return "Paper Trail";
+	if (view === "spam") return "Spam";
 	return "";
 }
 
@@ -318,13 +209,19 @@ export function resolveShortcut(e: KeyboardEvent): KeyboardAction | null {
 
 // ---------------------------------------------------------------------------
 // Onboarding steps (5 steps, copy & visuals preserved from the prototype)
+//
+// The walkthrough leads (welcome → screener → categories → AI → empty inbox)
+// and the connect/consent step is LAST: the user reads how Atlas works before
+// being asked to authorize an account. The final step's `connect` visual hosts
+// the real CTA (Connect with Google) — there is no "Skip"/"Open Atlas" bypass,
+// since un-onboarded users are bounced from gated routes by the route guards.
 // ---------------------------------------------------------------------------
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
 	{
 		title: "Welcome to Atlas.",
 		sub: "A smarter inbox on top of your Gmail or Outlook account. We protect your attention — you keep your address.",
-		visual: { kind: "connect" },
+		visual: { kind: "welcome" },
 	},
 	{
 		title: "Strangers go to the Screener.",
@@ -397,5 +294,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
 			heading: "Your Inbox is empty.",
 			body: "That's because everyone is still unscreened. New mail will land in the Screener as it arrives — we'll show you.",
 		},
+	},
+	{
+		title: "Connect your mailbox.",
+		sub: "Atlas works on top of your Gmail or Outlook account. We protect your attention — you keep your address. Authorize Atlas to get started.",
+		visual: { kind: "connect" },
 	},
 ];

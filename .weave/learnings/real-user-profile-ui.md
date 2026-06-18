@@ -80,3 +80,11 @@
 - **Discrepancy**: The verification/push delegation was interrupted once and cancelled on retry before any verification report was returned.
 - **Resolution**: Marked the final verification task blocked rather than assuming any command, push, or PR state.
 - **Suggestion**: When the final verification task is likely to include long-running or interactive steps, prefer a narrower delegated scope and explicitly forbid `bun run dev` unless the user has approved it.
+
+- **Discrepancy**: The final verification checklist originally expected `agent-browser` validation of protected routes, but the user clarified that protected-route browser testing must not be attempted because Google OAuth sign-in is a hard requirement.
+- **Resolution**: Re-ran verification without protected-route browser automation, recorded the OAuth-dependent route validation as not executable in this environment, and accepted the non-OAuth-dependent command/grep/build/test results.
+- **Suggestion**: Split OAuth-dependent browser validation into a separate manual task with explicit credentials/preconditions instead of making it part of automated final verification.
+
+- **Discrepancy**: `apps/web/src/routeTree.gen.ts` became dirty after a verification build, and the generated-file state disagreed with the first pushed verification commit.
+- **Resolution**: Re-delegated a focused cleanup; Shuttle reconciled the generated route tree, reran the web build, pushed `fix(web): align generated route tree with build output`, and confirmed PR #31 remained open.
+- **Suggestion**: For generated router files, verify post-build dirty state before declaring commits/push complete.

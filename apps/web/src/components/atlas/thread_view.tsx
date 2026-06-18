@@ -21,7 +21,13 @@ import {
 	tagAppClasses,
 	tagClasses,
 	threadBodyClasses,
+	threadBodyLoadingClasses,
+	threadBodyLoadingTextClasses,
+	threadBodySkeletonClasses,
 	threadClasses,
+	threadDisconnectedBannerClasses,
+	threadDisconnectedBodyClasses,
+	threadDisconnectedTitleClasses,
 	threadDividerClasses,
 	threadTitleClasses,
 	threadToolbarClasses,
@@ -34,6 +40,7 @@ import { AtlasIcon } from "./atlas_icon";
 import { EmptyState } from "./empty_state";
 import { AtlasAvatar } from "./mail_row";
 import { PriorityChip } from "./priority_chip";
+import { ProvenanceChip } from "./provenance_chip";
 
 function tagLabel(tag: MailTag): string {
 	return tag.replace("-", " ");
@@ -43,6 +50,16 @@ export interface ThreadViewProps {
 	thread: Thread | null;
 	setAside: boolean;
 	replyLater: boolean;
+	/**
+	 * Full message bodies are still being lazily fetched on open — show the
+	 * body loading placeholder instead of the (empty) message stack.
+	 */
+	bodyLoading?: boolean;
+	/**
+	 * The thread's source account is disconnected (read-only): un-fetched
+	 * bodies cannot be retrieved, so show the preview-only explanation banner.
+	 */
+	disconnected?: boolean;
 	/** Open the reply overlay, carrying the open thread's sender address. */
 	onReplyClick: (replyTo?: string) => void;
 	onArchive: () => void;
@@ -118,11 +135,52 @@ const ThreadView: Component<ThreadViewProps> = (props) => {
 										</span>
 									)}
 								</For>
+								{/* Account provenance — always visible so the open thread is
+								    attributed to its source mailbox in the unified views. */}
+								<Show when={thread().provenance}>
+									{(p) => <ProvenanceChip provenance={p()} />}
+								</Show>
 							</div>
 						</div>
 
 						<Show when={thread().body}>
 							{(body) => <AiSummary body={body()} />}
+						</Show>
+
+						{/* Disconnected source: bodies cannot be fetched — explain the
+						    preview-only state instead of an empty/spinning body. */}
+						<Show when={props.disconnected}>
+							<div
+								class={threadDisconnectedBannerClasses}
+								data-state="account-disconnected"
+							>
+								<AtlasIcon name="shield" size={16} stroke={2.5} />
+								<div>
+									<div class={threadDisconnectedTitleClasses}>
+										This account is disconnected — showing previews only.
+									</div>
+									<div class={threadDisconnectedBodyClasses}>
+										Full message bodies can't be fetched while the source
+										mailbox is disconnected. Reconnect the account in Settings
+										to load the rest of this thread.
+									</div>
+								</div>
+							</div>
+						</Show>
+
+						{/* Lazy body load: bodies are still being fetched on open. */}
+						<Show when={props.bodyLoading && !props.disconnected}>
+							<div
+								class={threadBodyLoadingClasses}
+								role="status"
+								aria-live="polite"
+								data-state="body-loading"
+							>
+								<span class={threadBodyLoadingTextClasses}>
+									Loading message…
+								</span>
+								<span class={threadBodySkeletonClasses} aria-hidden="true" />
+							</div>
 						</Show>
 
 						<For each={thread().body?.messages ?? []}>

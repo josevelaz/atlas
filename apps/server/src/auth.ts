@@ -80,9 +80,47 @@ export const auth = betterAuth({
 					google: {
 						clientId: config.GOOGLE_CLIENT_ID,
 						clientSecret: config.GOOGLE_CLIENT_SECRET,
+						scope: ["https://www.googleapis.com/auth/gmail.readonly"],
+						accessType: "offline",
+						prompt: "select_account consent",
 					},
 				}
 			: {}),
+	},
+
+	account: {
+		encryptOAuthTokens: true,
+	},
+
+	databaseHooks: {
+		account: {
+			create: {
+				/**
+				 * Gmail connection checkpoint on Google OAuth completion.
+				 *
+				 * Fires once the OAuth `account` row is committed — for both
+				 * first sign-in creation AND the `linkSocial` linking path
+				 * (both go through Better Auth's internal `createAccount`).
+				 *
+				 * The handler persists a `connected_account` row (with the
+				 * Gmail profile checkpoint) in one transaction and enqueues
+				 * catch-up + watch-setup jobs after commit. On failure the
+				 * error propagates to the OAuth callback; the linked auth
+				 * account row stays intact (after-hooks run post-commit), so
+				 * re-running connect can recover. Re-runs are idempotent via
+				 * the connected_account unique constraint.
+				 *
+				 * Lazily imported so auth.ts never touches Redis/jobify at
+				 * module load.
+				 */
+				after: async (account) => {
+					const { handleAccountCreated } = await import(
+						"./services/ingestion/connect.ts"
+					);
+					await handleAccountCreated(account);
+				},
+			},
+		},
 	},
 
 	advanced: {

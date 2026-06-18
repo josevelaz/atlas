@@ -1,20 +1,42 @@
-import { describe, expect, it } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/libsql";
+import { migrate } from "drizzle-orm/libsql/migrator";
 
-import { user } from "../db/schema.ts";
+import * as schema from "../db/schema.ts";
+import {
+	GMAIL_WATCH_SETUP_ATTEMPTS,
+	runGmailWatchSetup,
+} from "../jobs/gmail_watch.ts";
 import {
 	CREDENTIAL_PROVIDER_ID,
 	type ConnectedAccountRow,
 	ConnectedAccountForbiddenError,
 	ConnectedAccountNotFoundError,
 	decodeJwtPayload,
+	disconnectConnectedAccount,
 	listConnectedAccounts,
 	pickEffectivePrimary,
 	setPrimaryConnectedAccount,
 	toConnectedAccountDto,
 } from "./connected_accounts.ts";
+import type { GmailProfile } from "./gmail/client.ts";
+import {
+	type ConnectJobPayload,
+	type ConnectJobs,
+	connectGoogleAccount,
+} from "./ingestion/connect.ts";
 
-type ListDb = Parameters<typeof listConnectedAccounts>[1];
 type SetPrimaryDb = Parameters<typeof setPrimaryConnectedAccount>[2];
+
+const MIGRATIONS_FOLDER = join(import.meta.dir, "../../drizzle");
+
+const USER_ID = "user-1";
+const AUTH_ACCOUNT_ID = "auth-acc-1";
+const CONNECTED_ACCOUNT_ID = "ca-1";
 
 /** Build a structurally valid (unsigned) JWT with the given payload claims. */
 const makeIdToken = (claims: Record<string, unknown>): string => {
@@ -33,8 +55,109 @@ const makeRow = (
 	idToken: null,
 	isPrimary: false,
 	createdAt: new Date("2026-01-01T00:00:00.000Z"),
+	status: null,
+	syncState: null,
+	lastSyncedAt: null,
 	...overrides,
 });
+
+/**
+ * Real libsql db (temp file) with the actual migrations applied — same
+ * harness as `services/ingestion/connect.test.ts` (a file, not `:memory:`,
+ * because the libsql client drops its connection between calls).
+ */
+const TEST_DB_DIR = mkdtempSync(join(tmpdir(), "atlas-connected-accounts-"));
+let dbCounter = 0;
+
+afterAll(() => {
+	rmSync(TEST_DB_DIR, { recursive: true, force: true });
+});
+
+const makeDb = async () => {
+	dbCounter += 1;
+	const db = drizzle({
+		connection: { url: `file:${join(TEST_DB_DIR, `db-${dbCounter}.sqlite`)}` },
+		schema,
+		casing: "snake_case",
+	});
+	await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+
+	await db.insert(schema.user).values({
+		id: USER_ID,
+		name: "Alice",
+		email: "alice@example.com",
+	});
+	await db.insert(schema.account).values({
+		id: AUTH_ACCOUNT_ID,
+		accountId: "google-sub-1",
+		providerId: "google",
+		userId: USER_ID,
+		createdAt: new Date("2026-01-01T00:00:00.000Z"),
+	});
+
+	return db;
+};
+
+type TestDb = Awaited<ReturnType<typeof makeDb>>;
+
+const insertConnectedAccount = async (
+	db: TestDb,
+	overrides: Partial<typeof schema.connectedAccount.$inferInsert> = {},
+) => {
+	await db.insert(schema.connectedAccount).values({
+		id: CONNECTED_ACCOUNT_ID,
+		userId: USER_ID,
+		authAccountId: AUTH_ACCOUNT_ID,
+		provider: "gmail",
+		emailAddress: "alice@gmail.com",
+		status: "active",
+		syncState: "pending",
+		checkpointHistoryId: "987654",
+		checkpointAt: new Date(),
+		...overrides,
+	});
+};
+
+const insertThreadWithMessage = async (db: TestDb) => {
+	await db.insert(schema.thread).values({
+		id: "thread-1",
+		userId: USER_ID,
+		connectedAccountId: CONNECTED_ACCOUNT_ID,
+		providerThreadId: "gm-thread-1",
+		senderEmail: "sender@example.com",
+	});
+	await db.insert(schema.message).values({
+		id: "msg-1",
+		threadId: "thread-1",
+		connectedAccountId: CONNECTED_ACCOUNT_ID,
+		providerMessageId: "gm-msg-1",
+		fromEmail: "sender@example.com",
+		sentAt: new Date("2026-06-01T00:00:00.000Z"),
+	});
+};
+
+const getConnectedAccountRow = async (db: TestDb) => {
+	const rows = await db
+		.select()
+		.from(schema.connectedAccount)
+		.where(eq(schema.connectedAccount.id, CONNECTED_ACCOUNT_ID));
+	const row = rows[0];
+	if (!row) throw new Error("expected a connected_account row");
+	return row;
+};
+
+const makeStopStub = (impl: () => Promise<void> = () => Promise.resolve()) => {
+	let calls = 0;
+	return {
+		gmail: {
+			stop: () => {
+				calls += 1;
+				return impl();
+			},
+		},
+		stopCalls: () => calls,
+	};
+};
 
 describe("decodeJwtPayload", () => {
 	it("decodes the email claim from a valid token", () => {
@@ -79,7 +202,24 @@ describe("toConnectedAccountDto", () => {
 			email: "provider@gmail.com",
 			isPrimary: false,
 			createdAt: "2026-01-01T00:00:00.000Z",
+			status: null,
+			syncState: null,
+			lastSyncedAt: null,
 		});
+	});
+
+	it("maps the joined sync fields and serialises lastSyncedAt", () => {
+		const row = makeRow({
+			status: "active",
+			syncState: "watching",
+			lastSyncedAt: new Date("2026-06-10T08:00:00.000Z"),
+		});
+
+		const dto = toConnectedAccountDto(row, "owner@example.com");
+
+		expect(dto.status).toBe("active");
+		expect(dto.syncState).toBe("watching");
+		expect(dto.lastSyncedAt).toBe("2026-06-10T08:00:00.000Z");
 	});
 
 	it("falls back to the user email for a malformed token", () => {
@@ -163,70 +303,82 @@ describe("pickEffectivePrimary", () => {
 	});
 });
 
-/**
- * Minimal chainable stub for the two drizzle selects in
- * `listConnectedAccounts`, routed by the table passed to `.from()`.
- */
-const makeListDbStub = (
-	userRows: Array<{ email: string }>,
-	accountRows: ConnectedAccountRow[],
-): ListDb => {
-	const stub = {
-		select: () => ({
-			from: (table: unknown) => {
-				const rows = table === user ? userRows : accountRows;
-				return {
-					where: () => ({
-						limit: () => Promise.resolve(rows),
-						orderBy: () => Promise.resolve(rows),
-					}),
-				};
-			},
-		}),
-	};
-	return stub as unknown as ListDb;
-};
-
 describe("listConnectedAccounts", () => {
-	it("marks the effective primary even when no row is flagged", async () => {
-		const oldest = makeRow({
-			id: "acc-old",
-			idToken: makeIdToken({ email: "old@gmail.com" }),
-			createdAt: new Date("2026-01-01T00:00:00.000Z"),
-		});
-		const newer = makeRow({
-			id: "acc-new",
-			createdAt: new Date("2026-02-01T00:00:00.000Z"),
-		});
-		const db = makeListDbStub(
-			[{ email: "owner@example.com" }],
-			[oldest, newer],
-		);
+	let db: TestDb;
 
-		const dtos = await listConnectedAccounts("user-1", db);
+	beforeEach(async () => {
+		db = await makeDb();
+	});
+
+	it("joins sync status from the connected_account domain row", async () => {
+		const lastSyncedAt = new Date("2026-06-10T08:00:00.000Z");
+		await insertConnectedAccount(db, {
+			syncState: "watching",
+			lastSyncedAt,
+		});
+
+		const dtos = await listConnectedAccounts(USER_ID, db);
 
 		expect(dtos).toEqual([
 			{
-				id: "acc-old",
+				id: AUTH_ACCOUNT_ID,
 				providerId: "google",
-				email: "old@gmail.com",
+				email: "alice@example.com",
 				isPrimary: true,
 				createdAt: "2026-01-01T00:00:00.000Z",
-			},
-			{
-				id: "acc-new",
-				providerId: "google",
-				email: "owner@example.com",
-				isPrimary: false,
-				createdAt: "2026-02-01T00:00:00.000Z",
+				status: "active",
+				syncState: "watching",
+				lastSyncedAt: lastSyncedAt.toISOString(),
 			},
 		]);
 	});
 
-	it("returns an empty list when the user has no connected accounts", async () => {
-		const db = makeListDbStub([{ email: "owner@example.com" }], []);
+	it("returns null sync fields when no domain row exists yet", async () => {
+		const dtos = await listConnectedAccounts(USER_ID, db);
 
-		expect(await listConnectedAccounts("user-1", db)).toEqual([]);
+		expect(dtos).toHaveLength(1);
+		expect(dtos[0]).toMatchObject({
+			id: AUTH_ACCOUNT_ID,
+			status: null,
+			syncState: null,
+			lastSyncedAt: null,
+		});
+	});
+
+	it("reflects a disconnect in the listing", async () => {
+		await insertConnectedAccount(db);
+		await disconnectConnectedAccount(USER_ID, AUTH_ACCOUNT_ID, {
+			db,
+			gmail: makeStopStub().gmail,
+		});
+
+		const dtos = await listConnectedAccounts(USER_ID, db);
+
+		expect(dtos[0]?.status).toBe("disconnected");
+	});
+
+	it("excludes credential rows and marks the oldest account as effective primary", async () => {
+		await db.insert(schema.account).values([
+			{
+				id: "auth-cred-1",
+				accountId: USER_ID,
+				providerId: CREDENTIAL_PROVIDER_ID,
+				userId: USER_ID,
+				createdAt: new Date("2025-12-01T00:00:00.000Z"),
+			},
+			{
+				id: "auth-acc-2",
+				accountId: "google-sub-2",
+				providerId: "google",
+				userId: USER_ID,
+				createdAt: new Date("2026-02-01T00:00:00.000Z"),
+			},
+		]);
+
+		const dtos = await listConnectedAccounts(USER_ID, db);
+
+		expect(dtos.map((dto) => dto.id)).toEqual([AUTH_ACCOUNT_ID, "auth-acc-2"]);
+		expect(dtos.map((dto) => dto.isPrimary)).toEqual([true, false]);
 	});
 });
 
@@ -306,5 +458,229 @@ describe("setPrimaryConnectedAccount", () => {
 		await setPrimaryConnectedAccount("user-1", "acc-1", db);
 
 		expect(updates).toEqual([{ isPrimary: false }, { isPrimary: true }]);
+	});
+});
+
+describe("disconnectConnectedAccount", () => {
+	let db: TestDb;
+
+	beforeEach(async () => {
+		db = await makeDb();
+	});
+
+	it("disconnects, stops the watch, and retains thread and message rows", async () => {
+		await insertConnectedAccount(db, {
+			syncState: "watching",
+			watchExpiration: new Date(Date.now() + 24 * 3600 * 1000),
+		});
+		await insertThreadWithMessage(db);
+		const { gmail, stopCalls } = makeStopStub();
+
+		const result = await disconnectConnectedAccount(USER_ID, AUTH_ACCOUNT_ID, {
+			db,
+			gmail,
+		});
+
+		expect(result).toEqual({
+			alreadyDisconnected: false,
+			watchStop: "stopped",
+		});
+		expect(stopCalls()).toBe(1);
+
+		const row = await getConnectedAccountRow(db);
+		expect(row.status).toBe("disconnected");
+		expect(row.disconnectedAt).toBeInstanceOf(Date);
+
+		// Retention: disconnect is read-only for ingested mail.
+		expect(await db.select().from(schema.thread)).toHaveLength(1);
+		expect(await db.select().from(schema.message)).toHaveLength(1);
+	});
+
+	it("still disconnects when the best-effort watch stop fails", async () => {
+		await insertConnectedAccount(db, { syncState: "watching" });
+		const stopErrors: unknown[] = [];
+		const { gmail, stopCalls } = makeStopStub(() =>
+			Promise.reject(new Error("gmail unavailable")),
+		);
+
+		const result = await disconnectConnectedAccount(USER_ID, AUTH_ACCOUNT_ID, {
+			db,
+			gmail,
+			onStopError: (error) => stopErrors.push(error),
+		});
+
+		expect(result).toEqual({
+			alreadyDisconnected: false,
+			watchStop: "failed",
+		});
+		expect(stopCalls()).toBe(1);
+		expect(stopErrors).toHaveLength(1);
+
+		const row = await getConnectedAccountRow(db);
+		expect(row.status).toBe("disconnected");
+		expect(row.disconnectedAt).toBeInstanceOf(Date);
+	});
+
+	it("skips the stop call when the account never had a watch", async () => {
+		await insertConnectedAccount(db, { syncState: "polling" });
+		const { gmail, stopCalls } = makeStopStub();
+
+		const result = await disconnectConnectedAccount(USER_ID, AUTH_ACCOUNT_ID, {
+			db,
+			gmail,
+		});
+
+		expect(result).toEqual({
+			alreadyDisconnected: false,
+			watchStop: "skipped",
+		});
+		expect(stopCalls()).toBe(0);
+		expect((await getConnectedAccountRow(db)).status).toBe("disconnected");
+	});
+
+	it("is idempotent for an already-disconnected account", async () => {
+		await insertConnectedAccount(db, { syncState: "watching" });
+		const { gmail, stopCalls } = makeStopStub();
+
+		await disconnectConnectedAccount(USER_ID, AUTH_ACCOUNT_ID, { db, gmail });
+		const firstDisconnectedAt = (await getConnectedAccountRow(db))
+			.disconnectedAt;
+
+		const second = await disconnectConnectedAccount(USER_ID, AUTH_ACCOUNT_ID, {
+			db,
+			gmail,
+		});
+
+		expect(second).toEqual({ alreadyDisconnected: true, watchStop: "skipped" });
+		expect(stopCalls()).toBe(1);
+		expect((await getConnectedAccountRow(db)).disconnectedAt).toEqual(
+			firstDisconnectedAt,
+		);
+	});
+
+	it("treats another user's account id as not found and leaves it active", async () => {
+		await db.insert(schema.user).values({
+			id: "user-2",
+			name: "Bob",
+			email: "bob@example.com",
+		});
+		await db.insert(schema.account).values({
+			id: "auth-acc-2",
+			accountId: "google-sub-2",
+			providerId: "google",
+			userId: "user-2",
+		});
+		await insertConnectedAccount(db, {
+			userId: "user-2",
+			authAccountId: "auth-acc-2",
+			emailAddress: "bob@gmail.com",
+		});
+		const { gmail, stopCalls } = makeStopStub();
+
+		await expect(
+			disconnectConnectedAccount(USER_ID, "auth-acc-2", { db, gmail }),
+		).rejects.toThrow(ConnectedAccountNotFoundError);
+
+		expect(stopCalls()).toBe(0);
+		expect((await getConnectedAccountRow(db)).status).toBe("active");
+	});
+
+	it("throws not-found for a missing account id", async () => {
+		await expect(
+			disconnectConnectedAccount(USER_ID, "acc-missing", {
+				db,
+				gmail: makeStopStub().gmail,
+			}),
+		).rejects.toThrow(ConnectedAccountNotFoundError);
+	});
+
+	it("rejects credential (email/password) rows", async () => {
+		await db.insert(schema.account).values({
+			id: "auth-cred-1",
+			accountId: USER_ID,
+			providerId: CREDENTIAL_PROVIDER_ID,
+			userId: USER_ID,
+		});
+
+		await expect(
+			disconnectConnectedAccount(USER_ID, "auth-cred-1", {
+				db,
+				gmail: makeStopStub().gmail,
+			}),
+		).rejects.toThrow(ConnectedAccountForbiddenError);
+	});
+
+	it("throws not-found when the OAuth account has no connected_account row", async () => {
+		await expect(
+			disconnectConnectedAccount(USER_ID, AUTH_ACCOUNT_ID, {
+				db,
+				gmail: makeStopStub().gmail,
+			}),
+		).rejects.toThrow(ConnectedAccountNotFoundError);
+	});
+
+	it("prevents future sync work for the disconnected account", async () => {
+		await insertConnectedAccount(db, { syncState: "watching" });
+		await disconnectConnectedAccount(USER_ID, AUTH_ACCOUNT_ID, {
+			db,
+			gmail: makeStopStub().gmail,
+		});
+
+		// 1. The watch-setup runner skips disconnected accounts entirely.
+		let watchCalls = 0;
+		const watchOutcome = await runGmailWatchSetup(
+			{ connectedAccountId: CONNECTED_ACCOUNT_ID },
+			{ attemptNumber: 1, maxAttempts: GMAIL_WATCH_SETUP_ATTEMPTS },
+			{
+				db,
+				gmail: {
+					watch: async () => {
+						watchCalls += 1;
+						return { historyId: "1", expiration: "1" };
+					},
+				},
+				push: { pushEnabled: true, topicName: "projects/t/topics/x" },
+			},
+		);
+
+		expect(watchOutcome).toEqual({
+			outcome: "skipped",
+			reason: "account_disconnected",
+		});
+		expect(watchCalls).toBe(0);
+
+		// 2. Re-running connect for the same mailbox is a no-op that enqueues
+		//    no sync jobs (the connected_account row already exists).
+		const catchUp: ConnectJobPayload[] = [];
+		const watchSetup: ConnectJobPayload[] = [];
+		const jobs: ConnectJobs = {
+			enqueueCatchUp: async (payload) => {
+				catchUp.push(payload);
+			},
+			enqueueWatchSetup: async (payload) => {
+				watchSetup.push(payload);
+			},
+		};
+		const profile: GmailProfile = {
+			emailAddress: "alice@gmail.com",
+			messagesTotal: 1,
+			threadsTotal: 1,
+			historyId: "987654",
+		};
+
+		const connectResult = await connectGoogleAccount({
+			authAccountId: AUTH_ACCOUNT_ID,
+			userId: USER_ID,
+			db,
+			gmail: { getProfile: () => Promise.resolve(profile) },
+			jobs,
+		});
+
+		expect(connectResult.created).toBe(false);
+
+		// Let the fire-and-forget post-commit enqueue path settle.
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		expect(catchUp).toHaveLength(0);
+		expect(watchSetup).toHaveLength(0);
 	});
 });

@@ -135,6 +135,61 @@ const CORS_ALLOWED_ORIGINS: string[] = rawCorsOrigins
 		]
 	: DEFAULT_CORS_ORIGINS;
 
+// ─────────────────────────────────────────────
+// Gmail ingestion
+// ─────────────────────────────────────────────
+
+// Master feature flag for the Gmail ingestion pipeline. Defaults to false so
+// the server boots unchanged when none of the Gmail env vars are set.
+const GMAIL_INGESTION_ENABLED = env
+	.get("GMAIL_INGESTION_ENABLED")
+	.default("false")
+	.asBool();
+
+// Pub/Sub push notification settings — all optional. When any of them is
+// missing, push is disabled and ingestion runs in polling-only mode (the
+// expected setup for local dev). All three are required to enable push.
+const GMAIL_PUBSUB_TOPIC = env.get("GMAIL_PUBSUB_TOPIC").asString();
+const GMAIL_PUSH_AUDIENCE = env.get("GMAIL_PUSH_AUDIENCE").asString();
+const GMAIL_PUSH_SERVICE_ACCOUNT = env
+	.get("GMAIL_PUSH_SERVICE_ACCOUNT")
+	.asString();
+
+const GMAIL_POLL_INTERVAL_SECONDS = env
+	.get("GMAIL_POLL_INTERVAL_SECONDS")
+	.default(120)
+	.asIntPositive();
+const GMAIL_WATCH_RENEWAL_HOURS = env
+	.get("GMAIL_WATCH_RENEWAL_HOURS")
+	.default(24)
+	.asIntPositive();
+
+/**
+ * Push readiness: true only when every Pub/Sub push var is present.
+ * When false (and ingestion is enabled), the pipeline must fall back to
+ * polling-only mode — never crash.
+ */
+const GMAIL_PUSH_ENABLED = Boolean(
+	GMAIL_PUBSUB_TOPIC && GMAIL_PUSH_AUDIENCE && GMAIL_PUSH_SERVICE_ACCOUNT,
+);
+
+if (GMAIL_INGESTION_ENABLED && !GMAIL_PUSH_ENABLED) {
+	const missing = [
+		["GMAIL_PUBSUB_TOPIC", GMAIL_PUBSUB_TOPIC],
+		["GMAIL_PUSH_AUDIENCE", GMAIL_PUSH_AUDIENCE],
+		["GMAIL_PUSH_SERVICE_ACCOUNT", GMAIL_PUSH_SERVICE_ACCOUNT],
+	]
+		.filter(([, value]) => !value)
+		.map(([name]) => name);
+
+	console.warn(
+		"[gmail-ingestion] Pub/Sub push disabled — missing " +
+			`${missing.join(", ")}. ` +
+			"Running in polling-only mode " +
+			`(poll interval: ${GMAIL_POLL_INTERVAL_SECONDS}s).`,
+	);
+}
+
 if (NODE_ENV === "production") {
 	if (isLocalhostUrl(BETTER_AUTH_URL)) {
 		throw new Error(
@@ -199,4 +254,13 @@ export const config = {
 	CORS_ALLOWED_ORIGINS,
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET,
+	// Gmail ingestion
+	GMAIL_INGESTION_ENABLED,
+	GMAIL_PUBSUB_TOPIC,
+	GMAIL_PUSH_AUDIENCE,
+	GMAIL_PUSH_SERVICE_ACCOUNT,
+	GMAIL_POLL_INTERVAL_SECONDS,
+	GMAIL_WATCH_RENEWAL_HOURS,
+	/** Derived: true when all Pub/Sub push vars are set; false → polling-only. */
+	GMAIL_PUSH_ENABLED,
 };

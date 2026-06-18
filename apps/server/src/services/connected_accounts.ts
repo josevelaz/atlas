@@ -1,13 +1,21 @@
 import { and, asc, eq, ne } from "drizzle-orm";
 
-import { account, user } from "../db/schema.ts";
+import { account, connectedAccount, user } from "../db/schema.ts";
+import { createGmailClient } from "./gmail/client.ts";
 
 /**
  * Connected-accounts service.
  *
  * "Connected accounts" are the OAuth provider rows in the `account` table
- * (Google, etc.). Credential rows (`providerId === "credential"` — email +
- * password) are NOT connected accounts and are always excluded.
+ * (Google, etc.), enriched with the product-level `connected_account`
+ * domain row (sync status, checkpoints, disconnect state) joined on
+ * `connected_account.auth_account_id`. Credential rows
+ * (`providerId === "credential"` — email + password) are NOT connected
+ * accounts and are always excluded.
+ *
+ * The domain row is nullable in the list DTO: an OAuth `account` row can
+ * exist without a `connected_account` row when the post-OAuth connection
+ * checkpoint (`services/ingestion/connect.ts`) has not committed (yet).
  *
  * Testability: this module performs NO db work at import time. The default
  * db client is resolved lazily (importing `../db/index.ts` eagerly would
@@ -30,13 +38,28 @@ const getDb = async (): Promise<Db> => {
 	return defaultDb;
 };
 
-/** Minimal shape of an `account` row needed by the pure helpers. */
+/** Product-level connection status (`connected_account.status`). */
+export type ConnectedAccountStatus =
+	(typeof connectedAccount.$inferSelect)["status"];
+
+/** Product-level sync state (`connected_account.sync_state`). */
+export type ConnectedAccountSyncState =
+	(typeof connectedAccount.$inferSelect)["syncState"];
+
+/**
+ * Minimal shape of an `account` row — left-joined with its
+ * `connected_account` domain row — needed by the pure helpers. The sync
+ * fields are null when no domain row exists for the account.
+ */
 export interface ConnectedAccountRow {
 	id: string;
 	providerId: string;
 	idToken: string | null;
 	isPrimary: boolean;
 	createdAt: Date;
+	status: ConnectedAccountStatus | null;
+	syncState: ConnectedAccountSyncState | null;
+	lastSyncedAt: Date | null;
 }
 
 export interface ConnectedAccountDto {
@@ -47,6 +70,12 @@ export interface ConnectedAccountDto {
 	isPrimary: boolean;
 	/** ISO 8601 timestamp. */
 	createdAt: string;
+	/** Null when the connection checkpoint has not committed (yet). */
+	status: ConnectedAccountStatus | null;
+	/** Null when the connection checkpoint has not committed (yet). */
+	syncState: ConnectedAccountSyncState | null;
+	/** ISO 8601 timestamp of the last completed sync, or null. */
+	lastSyncedAt: string | null;
 }
 
 /** Target account does not exist or does not belong to the user. */
@@ -118,6 +147,9 @@ export const toConnectedAccountDto = (
 		email,
 		isPrimary: row.isPrimary,
 		createdAt: row.createdAt.toISOString(),
+		status: row.status,
+		syncState: row.syncState,
+		lastSyncedAt: row.lastSyncedAt ? row.lastSyncedAt.toISOString() : null,
 	};
 };
 
@@ -175,8 +207,15 @@ export const listConnectedAccounts = async (
 				idToken: account.idToken,
 				isPrimary: account.isPrimary,
 				createdAt: account.createdAt,
+				status: connectedAccount.status,
+				syncState: connectedAccount.syncState,
+				lastSyncedAt: connectedAccount.lastSyncedAt,
 			})
 			.from(account)
+			.leftJoin(
+				connectedAccount,
+				eq(connectedAccount.authAccountId, account.id),
+			)
 			.where(
 				and(
 					eq(account.userId, userId),
@@ -248,4 +287,139 @@ export const setPrimaryConnectedAccount = async (
 			.set({ isPrimary: true })
 			.where(eq(account.id, accountId));
 	});
+};
+
+/** Minimal Gmail client surface the disconnect flow needs. */
+export type StopGmailClient = {
+	stop: () => Promise<void>;
+};
+
+/** What happened to the Gmail watch during disconnect. */
+export type DisconnectWatchStopOutcome =
+	/** `users.stop` succeeded. */
+	| "stopped"
+	/** No watch to stop (never watching), or already disconnected. */
+	| "skipped"
+	/** `users.stop` failed — best-effort only, disconnect still succeeded. */
+	| "failed";
+
+export interface DisconnectConnectedAccountResult {
+	alreadyDisconnected: boolean;
+	watchStop: DisconnectWatchStopOutcome;
+}
+
+export interface DisconnectConnectedAccountDeps {
+	/** Injectable db (defaults to the app db, resolved lazily). */
+	db?: Db;
+	/** Injectable Gmail client (defaults to `createGmailClient(authAccountId)`). */
+	gmail?: StopGmailClient;
+	/** Sink for best-effort watch-stop failures (defaults to console.error). */
+	onStopError?: (error: unknown) => void;
+}
+
+/**
+ * Disconnect a connected account, keyed by its Better Auth `account.id`
+ * (the same `id` the list DTO and the primary-account endpoint use).
+ *
+ * Semantics (per the ingestion plan glossary — disconnected sources become
+ * read-only, retained data stays):
+ *
+ *   1. The `connected_account` domain row gets `status: "disconnected"` and
+ *      `disconnected_at` — this is the authoritative kill switch: every sync
+ *      job runner (e.g. `jobs/gmail_watch.ts`) skips disconnected accounts,
+ *      so no future sync work happens for the mailbox.
+ *   2. Gmail watch is stopped BEST-EFFORT, after the status flip commits: a
+ *      Gmail outage must never block a disconnect. Failures go to
+ *      `onStopError`; an un-stopped watch lapses at `watch_expiration`
+ *      anyway. The stop call is skipped entirely when the account never had
+ *      a watch (no `watching` sync state and no recorded expiration).
+ *   3. All existing threads/messages are RETAINED — nothing is deleted.
+ *
+ * Idempotent: disconnecting an already-disconnected account is a no-op
+ * (`alreadyDisconnected: true`, no second stop call, timestamps untouched).
+ *
+ * Throws {@link ConnectedAccountNotFoundError} when the account does not
+ * exist, is not owned by `userId` (indistinguishable on purpose), or has no
+ * `connected_account` domain row (nothing was ever connected), and
+ * {@link ConnectedAccountForbiddenError} for credential rows.
+ */
+export const disconnectConnectedAccount = async (
+	userId: string,
+	accountId: string,
+	deps: DisconnectConnectedAccountDeps = {},
+): Promise<DisconnectConnectedAccountResult> => {
+	const db = deps.db ?? (await getDb());
+
+	const targets = await db
+		.select({
+			id: account.id,
+			userId: account.userId,
+			providerId: account.providerId,
+		})
+		.from(account)
+		.where(eq(account.id, accountId))
+		.limit(1);
+
+	const target = targets[0];
+	if (!target || target.userId !== userId) {
+		throw new ConnectedAccountNotFoundError(accountId);
+	}
+	if (target.providerId === CREDENTIAL_PROVIDER_ID) {
+		throw new ConnectedAccountForbiddenError(accountId);
+	}
+
+	const domainRows = await db
+		.select({
+			id: connectedAccount.id,
+			authAccountId: connectedAccount.authAccountId,
+			status: connectedAccount.status,
+			syncState: connectedAccount.syncState,
+			watchExpiration: connectedAccount.watchExpiration,
+		})
+		.from(connectedAccount)
+		.where(
+			and(
+				eq(connectedAccount.authAccountId, accountId),
+				eq(connectedAccount.userId, userId),
+			),
+		)
+		.limit(1);
+
+	const domain = domainRows[0];
+	if (!domain) {
+		throw new ConnectedAccountNotFoundError(accountId);
+	}
+
+	if (domain.status === "disconnected") {
+		return { alreadyDisconnected: true, watchStop: "skipped" };
+	}
+
+	// Flip the status FIRST — the disconnect must succeed regardless of
+	// Gmail availability. Threads/messages are deliberately untouched.
+	await db
+		.update(connectedAccount)
+		.set({ status: "disconnected", disconnectedAt: new Date() })
+		.where(eq(connectedAccount.id, domain.id));
+
+	const hadWatch =
+		domain.syncState === "watching" || domain.watchExpiration !== null;
+	if (!hadWatch) {
+		return { alreadyDisconnected: false, watchStop: "skipped" };
+	}
+
+	const gmail = deps.gmail ?? createGmailClient(domain.authAccountId);
+	try {
+		await gmail.stop();
+		return { alreadyDisconnected: false, watchStop: "stopped" };
+	} catch (error) {
+		const onStopError =
+			deps.onStopError ??
+			((stopError: unknown) =>
+				console.error(
+					"[connected_accounts] best-effort Gmail watch stop failed",
+					stopError,
+				));
+		onStopError(error);
+		return { alreadyDisconnected: false, watchStop: "failed" };
+	}
 };

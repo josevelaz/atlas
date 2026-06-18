@@ -23,7 +23,7 @@
 
 import type { Component } from "solid-js";
 import { createEffect, createMemo, Match, onCleanup, Switch } from "solid-js";
-import { currentThread, resolveShortcut } from "../../lib/atlas/app_state";
+import { resolveShortcut, selectedIdForView } from "../../lib/atlas/app_state";
 import { useAtlasActions, useAtlasState } from "../../lib/atlas/atlas_state";
 import {
 	fullPaneClasses,
@@ -31,6 +31,7 @@ import {
 } from "../../lib/atlas/component_classes";
 import { atlasMailLinkFor } from "../../lib/atlas/nav_links";
 import type { Screen } from "../../lib/atlas/types";
+import { useThread } from "../../lib/mail/queries";
 import { AppShell } from "./app_shell";
 import { AssistantDialog } from "./assistant_dialog";
 import { ComposeDialog } from "./compose_dialog";
@@ -48,7 +49,9 @@ export interface AtlasAppProps {
 
 /** The mail workspace views — the only views with list/pane + overlay wiring. */
 function isMailView(view: Screen): boolean {
-	return view === "inbox" || view === "feed" || view === "paper";
+	return (
+		view === "inbox" || view === "feed" || view === "paper" || view === "spam"
+	);
 }
 
 const AtlasApp: Component<AtlasAppProps> = (props) => {
@@ -57,22 +60,18 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 	const actions = useAtlasActions();
 	const linkFor = atlasMailLinkFor();
 
-	// Screener decisions live in the shared Atlas store; the accepted mail lists
-	// and the sidebar counts derive from it reactively.
-	const decisions = useAtlasState((s) => s.screener);
-
 	// Compose + assistant overlay state from the shared store.
 	const compose = useAtlasState((s) => s.compose);
 	const assistantOpen = useAtlasState((s) => s.assistantOpen);
 
-	// Resolve the selected thread's sender for the reply prefill, reading the
-	// selection from the shared store. Mirrors the prototype's
-	// `replyTo={currentMail ? currentMail.addr : ""}`.
+	// Resolve the selected thread's sender for the reply prefill. Selection is
+	// UI-only store state; the thread detail (and thus the sender address) is
+	// server-backed via the mail query layer. The query is shared/cached with
+	// the workspace's `useThread`, so this does not refetch.
 	const selection = useAtlasState((s) => s.selected);
-	const selectedReplyAddr = createMemo(() => {
-		const thread = currentThread(view(), selection(), decisions());
-		return thread?.addr ?? "";
-	});
+	const selectedId = createMemo(() => selectedIdForView(view(), selection()));
+	const selectedThread = useThread(selectedId);
+	const selectedReplyAddr = createMemo(() => selectedThread()?.addr ?? "");
 
 	// Open a blank compose from the top bar.
 	const openCompose = () => actions.openCompose();
@@ -125,11 +124,7 @@ const AtlasApp: Component<AtlasAppProps> = (props) => {
 		>
 			<Switch>
 				<Match when={isMailView(view())}>
-					<MailWorkspace
-						view={view()}
-						decisions={decisions()}
-						onCompose={openReply}
-					/>
+					<MailWorkspace view={view()} onCompose={openReply} />
 					<ComposeDialog
 						open={compose().mode !== "closed"}
 						onClose={() => actions.closeCompose()}
